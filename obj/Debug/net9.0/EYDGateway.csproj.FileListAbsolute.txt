@@ -290,3 +290,5 @@ C:\Users\james\Documents\EYDgateway\EYDGateway\bin\Debug\net9.0\EYDGateway.runti
 C:\Users\james\Documents\EYDgateway\EYDGateway\bin\Debug\net9.0\EYDGateway.pdb
 C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.genruntimeconfig.cache
 C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\ref\EYDGateway.dll
+C:\Users\james\Documents\EYDgateway\EYDGateway\bin\Debug\net9.0\appsettings.Production.json
+C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.sourcelink.json

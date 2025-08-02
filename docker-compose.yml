@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (for testing production setup locally)
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: eydgateway
+      POSTGRES_USER: eyduser
+      POSTGRES_PASSWORD: eydpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eyduser -d eydgateway"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # EYD Gateway Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - DATABASE_URL=postgres://eyduser:eydpassword@postgres:5432/eydgateway
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - app_data:/app/data
+
+volumes:
+  postgres_data:
+  app_data:

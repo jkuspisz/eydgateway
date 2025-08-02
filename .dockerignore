@@ -1,0 +1,75 @@
+# .dockerignore
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+LICENSE
+
+# Build artifacts
+bin/
+obj/
+out/
+
+# Dependencies
+node_modules/
+
+# IDE and editor files
+.vs/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# SQLite database (we'll use PostgreSQL in production)
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+logs/
+*.log
+
+# Runtime files
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage and test results
+coverage/
+*.cover
+.nyc_output
+.coverage
+*.lcov
+
+# Dependency directories
+packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Environment variables (should be set in Railway)
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Temporary files
+*.tmp
+*.temp

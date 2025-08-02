@@ -3,17 +3,66 @@ using EYDGateway.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
+// Helper method to convert Railway's postgres:// URL to connection string format
+static string ConvertPostgresUrl(string databaseUrl)
+{
+    var uri = new Uri(databaseUrl);
+    var db = uri.AbsolutePath.Trim('/');
+    var user = uri.UserInfo.Split(':')[0];
+    var password = uri.UserInfo.Split(':')[1];
+    var host = uri.Host;
+    var port = uri.Port;
+
+    return $"Host={host};Port={port};Database={db};Username={user};Password={password};SSL Mode=Require;Trust Server Certificate=true";
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure SQLite database (for development)
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+// Configure database based on environment
+if (builder.Environment.IsProduction())
+{
+    // Use PostgreSQL in production (Railway)
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+                         ?? Environment.GetEnvironmentVariable("DATABASE_URL");
+    
+    if (!string.IsNullOrEmpty(connectionString))
+    {
+        // Railway provides DATABASE_URL in a specific format, convert if needed
+        if (connectionString.StartsWith("postgres://"))
+        {
+            connectionString = ConvertPostgresUrl(connectionString);
+        }
+        
+        builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseNpgsql(connectionString));
+    }
+    else
+    {
+        throw new InvalidOperationException("Database connection string not found for production environment.");
+    }
+}
+else
+{
+    // Use SQLite for development
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+}
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddControllersWithViews();
+
+// Configure for Railway deployment
+if (builder.Environment.IsProduction())
+{
+    var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        options.ListenAnyIP(int.Parse(port));
+    });
+}
 
 var app = builder.Build();
 
