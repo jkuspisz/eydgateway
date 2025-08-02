@@ -97,42 +97,55 @@ namespace EYDGateway.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateUser(CreateUserViewModel model)
         {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser?.Role != "Admin")
+            {
+                return Unauthorized();
+            }
+
+            // Admin users cannot create Admin or Superuser accounts
+            if (model.Role == "Admin" || model.Role == "Superuser")
+            {
+                ModelState.AddModelError("Role", "You don't have permission to create this type of user.");
+            }
+
             if (ModelState.IsValid)
             {
                 var user = new ApplicationUser
                 {
-                    UserName = model.Username,
-                    Email = model.Email,
+                    UserName = model.Email, // Use email as username for consistency
+                    Email = model.Email,    // Allow non-email values for demo purposes
                     DisplayName = model.DisplayName,
                     Role = model.Role
                 };
 
-                // PHASE 2.2: Enhanced assignment logic
-                if (model.Role == "Admin")
+                // Apply assignment logic - consistent with SuperuserController
+                switch (model.Role)
                 {
-                    user.AreaId = model.AreaId > 0 ? model.AreaId : null;
-                    user.SchemeId = null;
-                }
-                else if (model.Role == "TPD" || model.Role == "EYD")
-                {
-                    user.SchemeId = model.SchemeId > 0 ? model.SchemeId : null;
-                    user.AreaId = null; // TPDs and EYDs are assigned to schemes, not areas
-                }
-                else if (model.Role == "ES")
-                {
-                    user.AreaId = model.AreaId > 0 ? model.AreaId : null;
-                    user.SchemeId = null; // ES users assigned to areas for geographic context
-                }
-                else // Dean, Superuser
-                {
-                    user.AreaId = null;
-                    user.SchemeId = null;
+                    case "Admin":
+                        user.AreaId = model.AreaId > 0 ? model.AreaId : null;
+                        user.SchemeId = null;
+                        break;
+                    case "TPD":
+                    case "EYD":
+                        user.SchemeId = model.SchemeId > 0 ? model.SchemeId : null;
+                        user.AreaId = null;
+                        break;
+                    case "ES":
+                        user.AreaId = model.AreaId > 0 ? model.AreaId : null;
+                        user.SchemeId = null;
+                        break;
+                    case "Dean":
+                    case "Superuser":
+                        user.AreaId = null;
+                        user.SchemeId = null;
+                        break;
                 }
 
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    TempData["SuccessMessage"] = $"User {model.DisplayName} created successfully.";
+                    TempData["SuccessMessage"] = $"User '{model.DisplayName}' created successfully.";
                     return RedirectToAction("Dashboard");
                 }
 
@@ -142,7 +155,7 @@ namespace EYDGateway.Controllers
                 }
             }
 
-            var currentUser = await _userManager.GetUserAsync(User);
+            // Reload data for view if validation failed
             var areas = await _context.Areas.ToListAsync();
             ViewBag.Areas = areas;
             
@@ -153,7 +166,7 @@ namespace EYDGateway.Controllers
                 : new List<Scheme>();
             
             ViewBag.Schemes = schemes;
-            ViewBag.Roles = new[] { "Admin", "Superuser", "ES", "TPD", "Dean", "EYD" };
+            ViewBag.Roles = new[] { "ES", "TPD", "Dean", "EYD" }; // Remove Admin/Superuser for Admin users
             return View(model);
         }
 
@@ -633,13 +646,12 @@ namespace EYDGateway.Controllers
 
     public class CreateUserViewModel
     {
-        public string Username { get; set; } = "";
         public string Email { get; set; } = "";
         public string DisplayName { get; set; } = "";
         public string Password { get; set; } = "";
         public string Role { get; set; } = "";
         public int? AreaId { get; set; }
-        public int? SchemeId { get; set; }  // NEW: For TPD/EYD assignments
+        public int? SchemeId { get; set; }  // For TPD/EYD assignments
     }
 
     public class SystemReportViewModel

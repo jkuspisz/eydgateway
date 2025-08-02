@@ -20,19 +20,18 @@ namespace EYDGateway.Data
                 }
             }
 
-            // Create initial admin user
+            // Create initial superuser - using email as username for consistency
             string adminEmail = "admin@site.com";
-            string adminUser = "admin";
             string adminPwd = "Admin123!";
 
-            var user = await userManager.FindByNameAsync(adminUser);
+            var user = await userManager.FindByNameAsync(adminEmail); // Look for email as username
             if (user == null)
             {
                 var admin = new ApplicationUser
                 {
-                    UserName = adminUser,
+                    UserName = adminEmail,  // Use email as username for consistency
                     Email = adminEmail,
-                    DisplayName = "Admin",
+                    DisplayName = "System Administrator",
                     Role = "Superuser"
                 };
                 var result = await userManager.CreateAsync(admin, adminPwd);

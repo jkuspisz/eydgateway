@@ -8,20 +8,17 @@
 }
 <form method="post">
     <div class="mb-3">
-        <label>Username</label>
-        <input name="username" class="form-control" required />
-    </div>
-    <div class="mb-3">
-        <label>Email</label>
+        <label>Email Address</label>
         <input name="email" class="form-control" type="email" required />
-    </div>
-    <div class="mb-3">
-        <label>Password</label>
-        <input name="password" class="form-control" type="password" required />
+        <div class="form-text">This will be used as the username.</div>
     </div>
     <div class="mb-3">
         <label>Display Name</label>
         <input name="displayName" class="form-control" required />
+    </div>
+    <div class="mb-3">
+        <label>Password</label>
+        <input name="password" class="form-control" type="password" required />
     </div>
     <div class="mb-3">
         <label>Role</label>
@@ -30,8 +27,6 @@
             <option value="ES">Educational Supervisor</option>
             <option value="TPD">Training Programme Director</option>
             <option value="Dean">Dean</option>
-            <option value="Admin">Admin</option>
-            <option value="Superuser">Superuser</option>
         </select>
     </div>
     <button class="btn btn-primary">Create</button>
