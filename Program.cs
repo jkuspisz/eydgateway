@@ -18,34 +18,51 @@ static string ConvertPostgresUrl(string databaseUrl)
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure database based on environment
-if (builder.Environment.IsProduction())
+// Configure database based on environment and connection string availability
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// Check if we have a PostgreSQL connection string
+if (!string.IsNullOrEmpty(connectionString) && 
+    (connectionString.Contains("Host=") || connectionString.Contains("Server=") || connectionString.StartsWith("postgres://")))
 {
-    // Use PostgreSQL in production (Railway)
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-                         ?? Environment.GetEnvironmentVariable("DATABASE_URL");
-    
-    if (!string.IsNullOrEmpty(connectionString))
+    // Use PostgreSQL (for public database or Railway)
+    if (connectionString.StartsWith("postgres://"))
     {
-        // Railway provides DATABASE_URL in a specific format, convert if needed
-        if (connectionString.StartsWith("postgres://"))
+        // Convert Railway-style postgres:// URL to connection string format
+        connectionString = ConvertPostgresUrl(connectionString);
+    }
+    
+    Console.WriteLine("Using PostgreSQL database");
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseNpgsql(connectionString));
+}
+else if (builder.Environment.IsProduction())
+{
+    // Production without connection string - check environment variables
+    var envConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
+    
+    if (!string.IsNullOrEmpty(envConnectionString))
+    {
+        if (envConnectionString.StartsWith("postgres://"))
         {
-            connectionString = ConvertPostgresUrl(connectionString);
+            envConnectionString = ConvertPostgresUrl(envConnectionString);
         }
         
+        Console.WriteLine("Using PostgreSQL from environment variable");
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(envConnectionString));
     }
     else
     {
-        throw new InvalidOperationException("Database connection string not found for production environment.");
+        throw new InvalidOperationException("No database connection string found for production environment.");
     }
 }
 else
 {
-    // Use SQLite for development
+    // Use SQLite for development (fallback)
+    Console.WriteLine("Using SQLite database for development");
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+        options.UseSqlite(connectionString ?? "Data Source=local_eyd.db"));
 }
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
