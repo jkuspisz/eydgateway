@@ -1,6 +1,6 @@
-@model EYDGateway.Controllers.EYDDashboardViewModel
+@model EYDGateway.Controllers.EYDPortfolioViewModel
 @{
-    ViewData["Title"] = "EYD Dashboard";
+    ViewData["Title"] = "EYD Portfolio";
 }
 
 <div class="container-fluid">
@@ -8,8 +8,9 @@
         <div class="col-md-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h2>EYD Dashboard</h2>
+                    <h2>EYD Portfolio</h2>
                     <p class="text-muted">Welcome, @Model.UserName</p>
+                    <small class="text-muted">Scheme: @Model.AssignedScheme | Area: @Model.AssignedArea</small>
                 </div>
                 <div>
                     <span class="badge bg-info fs-6">EYD User</span>
@@ -26,144 +27,100 @@
         </div>
     }
 
+    <!-- Portfolio Section Groups -->
     <div class="row">
-        <!-- Assignment Information -->
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-user-circle me-2"></i>My Assignment
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <strong>Assigned Area:</strong>
-                        <br>
-                        <span class="badge bg-secondary">@Model.AssignedArea</span>
+        @foreach (var group in Model.PortfolioSectionGroups)
+        {
+            <div class="col-lg-4 col-md-6 mb-3">
+                <div class="card portfolio-group-card h-100">
+                    <div class="card-header bg-primary text-white py-2">
+                        <h6 class="mb-0">
+                            <i class="@group.Icon me-2"></i>@group.Title
+                        </h6>
+                        @if (group.TotalItems > 0)
+                        {
+                            <small class="opacity-75">@group.CompletedItems / @group.TotalItems completed</small>
+                        }
                     </div>
-                    <div>
-                        <strong>Total Schemes:</strong>
-                        <br>
-                        <span class="badge bg-info">@Model.AssignedSchemes.Count schemes</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Certificate Upload -->
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-upload me-2"></i>Upload Certificates
-                    </h5>
-                </div>
-                <div class="card-body">
-                    @if (Model.AssignedSchemes.Any())
-                    {
-                        <form asp-action="UploadCertificate" method="post" enctype="multipart/form-data">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="schemeName" class="form-label">Select Scheme:</label>
-                                        <select id="schemeName" name="schemeName" class="form-select" required>
-                                            <option value="">Choose a scheme...</option>
-                                            @foreach (var scheme in Model.AssignedSchemes)
-                                            {
-                                                <option value="@scheme">@scheme</option>
-                                            }
-                                        </select>
+                    <div class="card-body py-2">
+                        @foreach (var portfolioSection in group.Sections)
+                        {
+                            <div class="portfolio-section-item mb-2" onclick="navigateToSection('@portfolioSection.Action')">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="flex-grow-1">
+                                        <span class="section-title">@portfolioSection.Title</span>
+                                        @if (portfolioSection.CompletedCount.HasValue && portfolioSection.TotalCount.HasValue)
+                                        {
+                                            <small class="text-muted ms-2">(@portfolioSection.CompletedCount/@portfolioSection.TotalCount)</small>
+                                        }
                                     </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="certificateFile" class="form-label">Certificate File:</label>
-                                        <input type="file" id="certificateFile" name="certificateFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png" required>
-                                        <div class="form-text">Accepted formats: PDF, JPG, PNG (Max 5MB)</div>
+                                    <div>
+                                        <i class="fas fa-chevron-right text-muted"></i>
                                     </div>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-upload me-2"></i>Upload Certificate
-                            </button>
-                        </form>
-                    }
-                    else
-                    {
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            No schemes assigned. Please contact your administrator.
-                        </div>
-                    }
+                        }
+                    </div>
                 </div>
             </div>
-        </div>
+        }
     </div>
-
-    <!-- Assigned Schemes List -->
-    <div class="row mt-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-list me-2"></i>My Assigned Schemes
-                    </h5>
-                </div>
-                <div class="card-body">
-                    @if (Model.AssignedSchemes.Any())
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Scheme Name</th>
-                                        <th>Area</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var scheme in Model.AssignedSchemes)
-                                    {
-                                        <tr>
-                                            <td>
-                                                <i class="fas fa-certificate text-primary me-2"></i>
-                                                @scheme
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-secondary">@Model.AssignedArea</span>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-warning">Pending Upload</span>
-                                            </td>
-                                            <td>
-                                                <button class="btn btn-sm btn-outline-success" 
-                                                        onclick="selectScheme('@scheme')">
-                                                    <i class="fas fa-upload me-1"></i>Upload
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-center py-4">
-                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No schemes assigned yet.</p>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
 <script>
-    function selectScheme(schemeName) {
-        document.getElementById('schemeName').value = schemeName;
-        document.getElementById('certificateFile').focus();
+    function navigateToSection(action) {
+        window.location.href = '@Url.Action("", "EYD")'.replace('Dashboard', action);
     }
 </script>
+
+<style>
+    .portfolio-group-card {
+        border: 1px solid #e0e0e0;
+        transition: box-shadow 0.2s ease-in-out;
+        border-radius: 8px;
+    }
+
+    .portfolio-group-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .portfolio-group-card .card-header {
+        border-radius: 8px 8px 0 0;
+        font-size: 0.9rem;
+    }
+
+    .portfolio-section-item {
+        cursor: pointer;
+        padding: 8px 12px;
+        border: 1px solid #f0f0f0;
+        border-radius: 4px;
+        transition: all 0.2s ease-in-out;
+        background-color: #fafafa;
+    }
+
+    .portfolio-section-item:hover {
+        background-color: #e3f2fd;
+        border-color: #2196f3;
+        transform: translateY(-1px);
+    }
+
+    .section-title {
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: #333;
+    }
+
+    .portfolio-section-item:last-child {
+        margin-bottom: 0 !important;
+    }
+
+    .card-body {
+        font-size: 0.85rem;
+    }
+
+    .fas.fa-chevron-right {
+        font-size: 0.75rem;
+        opacity: 0.6;
+    }
+</style>

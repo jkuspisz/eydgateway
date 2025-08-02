@@ -1,0 +1,46 @@
+@model dynamic
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>@Model.Title</h2>
+                    <p class="text-muted">This section is under development</p>
+                </div>
+                <div>
+                    <a asp-action="Dashboard" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Portfolio
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-construction me-2"></i>Coming Soon
+                    </h5>
+                </div>
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-tools fa-4x text-muted mb-4"></i>
+                    <h4 class="text-muted">@Model.Title</h4>
+                    <p class="text-muted">This portfolio section is currently being developed.</p>
+                    <p class="text-muted">You will be able to manage your @Model.Title.ToLower() activities here.</p>
+                    
+                    <div class="mt-4">
+                        <a asp-action="Dashboard" class="btn btn-primary">
+                            <i class="fas fa-home me-2"></i>Return to Portfolio Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
