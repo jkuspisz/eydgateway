@@ -1,0 +1,178 @@
+@model EYDGateway.Models.SystemOverviewViewModel
+
+@{
+    ViewBag.Title = "System Overview";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-chart-bar"></i> System Overview</h2>
+                <a href="@Url.Action("Dashboard")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+
+            <!-- Main Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-2">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-users fa-2x mb-2"></i>
+                            <h3>@Model.TotalUsers</h3>
+                            <p class="mb-0">Total Users</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-map-marked-alt fa-2x mb-2"></i>
+                            <h3>@Model.TotalAreas</h3>
+                            <p class="mb-0">Total Areas</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-sitemap fa-2x mb-2"></i>
+                            <h3>@Model.TotalSchemes</h3>
+                            <p class="mb-0">Total Schemes</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-dark">
+                        <div class="card-body text-center">
+                            <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                            <h3>@Model.UnassignedAdmins</h3>
+                            <p class="mb-0">Unassigned Admins</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-map-marked-alt fa-2x mb-2"></i>
+                            <h3>@Model.AreasWithoutAdmins</h3>
+                            <p class="mb-0">Areas Without Admins</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Users by Role Chart -->
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-pie"></i> Users by Role</h5>
+                        </div>
+                        <div class="card-body">
+                            @if (Model.UsersByRole.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Role</th>
+                                                <th>Count</th>
+                                                <th>Percentage</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var role in Model.UsersByRole.OrderByDescending(r => r.Value))
+                                            {
+                                                var percentage = Model.TotalUsers > 0 ? (role.Value * 100.0 / Model.TotalUsers) : 0;
+                                                <tr>
+                                                    <td>
+                                                        <span class="badge bg-@GetRoleColor(role.Key)">@role.Key</span>
+                                                    </td>
+                                                    <td><strong>@role.Value</strong></td>
+                                                    <td>
+                                                        <div class="progress" style="height: 20px;">
+                                                            <div class="progress-bar bg-@GetRoleColor(role.Key)" 
+                                                                 style="width: @percentage%">
+                                                                @percentage.ToString("F1")%
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted">No users found.</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Users -->
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-clock"></i> Recent Users</h5>
+                        </div>
+                        <div class="card-body">
+                            @if (Model.RecentUsers.Any())
+                            {
+                                <div class="list-group list-group-flush">
+                                    @foreach (var user in Model.RecentUsers)
+                                    {
+                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <strong>@user.DisplayName</strong><br>
+                                                <small class="text-muted">@user.UserName</small>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="badge bg-@GetRoleColor(user.Role ?? "Unassigned")">@(user.Role ?? "Unassigned")</span><br>
+                                                @if (user.Area != null)
+                                                {
+                                                    <small class="text-muted">@user.Area.Name</small>
+                                                }
+                                                else if (user.Scheme != null)
+                                                {
+                                                    <small class="text-muted">@user.Scheme.Name</small>
+                                                }
+                                                else
+                                                {
+                                                    <small class="text-muted">No assignment</small>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted">No users found.</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetRoleColor(string role)
+    {
+        return role switch
+        {
+            "Superuser" => "warning",
+            "Admin" => "primary",
+            "TPD" => "success",
+            "EYD" => "info",
+            "ES" => "secondary",
+            "Dean" => "dark",
+            _ => "light"
+        };
+    }
+}

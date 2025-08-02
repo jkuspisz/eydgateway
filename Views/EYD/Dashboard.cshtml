@@ -1,0 +1,169 @@
+@model EYDGateway.Controllers.EYDDashboardViewModel
+@{
+    ViewData["Title"] = "EYD Dashboard";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>EYD Dashboard</h2>
+                    <p class="text-muted">Welcome, @Model.UserName</p>
+                </div>
+                <div>
+                    <span class="badge bg-info fs-6">EYD User</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Assignment Information -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-circle me-2"></i>My Assignment
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Assigned Area:</strong>
+                        <br>
+                        <span class="badge bg-secondary">@Model.AssignedArea</span>
+                    </div>
+                    <div>
+                        <strong>Total Schemes:</strong>
+                        <br>
+                        <span class="badge bg-info">@Model.AssignedSchemes.Count schemes</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Certificate Upload -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-upload me-2"></i>Upload Certificates
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.AssignedSchemes.Any())
+                    {
+                        <form asp-action="UploadCertificate" method="post" enctype="multipart/form-data">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="schemeName" class="form-label">Select Scheme:</label>
+                                        <select id="schemeName" name="schemeName" class="form-select" required>
+                                            <option value="">Choose a scheme...</option>
+                                            @foreach (var scheme in Model.AssignedSchemes)
+                                            {
+                                                <option value="@scheme">@scheme</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="certificateFile" class="form-label">Certificate File:</label>
+                                        <input type="file" id="certificateFile" name="certificateFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png" required>
+                                        <div class="form-text">Accepted formats: PDF, JPG, PNG (Max 5MB)</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-upload me-2"></i>Upload Certificate
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No schemes assigned. Please contact your administrator.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assigned Schemes List -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>My Assigned Schemes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.AssignedSchemes.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Scheme Name</th>
+                                        <th>Area</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var scheme in Model.AssignedSchemes)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <i class="fas fa-certificate text-primary me-2"></i>
+                                                @scheme
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">@Model.AssignedArea</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-warning">Pending Upload</span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-success" 
+                                                        onclick="selectScheme('@scheme')">
+                                                    <i class="fas fa-upload me-1"></i>Upload
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No schemes assigned yet.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function selectScheme(schemeName) {
+        document.getElementById('schemeName').value = schemeName;
+        document.getElementById('certificateFile').focus();
+    }
+</script>

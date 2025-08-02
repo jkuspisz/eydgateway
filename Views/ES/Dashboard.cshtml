@@ -1,0 +1,113 @@
+@model EYDGateway.Controllers.ESDashboardViewModel
+@{
+    ViewData["Title"] = "Educational Supervisor Dashboard";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>Educational Supervisor Dashboard</h2>
+                    <p class="text-muted">Welcome, @Model.UserName</p>
+                </div>
+                <div>
+                    <span class="badge bg-danger fs-6">Educational Supervisor</span>
+                    <a asp-action="GenerateReport" class="btn btn-outline-primary ms-2">
+                        <i class="fas fa-file-alt me-2"></i>Generate Report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- My Assigned EYD Users -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>My Assigned EYD Users
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.EYDUsers.Any())
+                    {
+                        <div class="row">
+                            @foreach (var eyd in Model.EYDUsers)
+                            {
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="card h-100 border-left-primary">
+                                        <div class="card-body d-flex flex-column">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="me-3">
+                                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                        <i class="fas fa-user-md"></i>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-1 fw-bold">@eyd.DisplayName</h6>
+                                                    <small class="text-muted">@eyd.Email</small>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mt-auto">
+                                                <button type="button" class="btn btn-primary btn-sm w-100" onclick="viewEYDDashboard('@eyd.Id')">
+                                                    <i class="fas fa-eye me-2"></i>View Dashboard
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No EYD Users Assigned</h5>
+                            <p class="text-muted">You don't have any EYD users assigned to supervise at the moment.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function viewEYDDashboard(eydId) {
+    // This will navigate to the EYD's dashboard/profile page
+    // You'll need to implement the actual route based on your EYD dashboard structure
+    window.location.href = '/EYD/Dashboard/' + eydId;
+}
+</script>
+
+<style>
+.border-left-primary {
+    border-left: 4px solid #007bff !important;
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+}
+</style>

@@ -1,0 +1,38 @@
+@{
+    ViewBag.Title = "Create User";
+}
+<h2>Create User</h2>
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-info">@ViewBag.Message</div>
+}
+<form method="post">
+    <div class="mb-3">
+        <label>Username</label>
+        <input name="username" class="form-control" required />
+    </div>
+    <div class="mb-3">
+        <label>Email</label>
+        <input name="email" class="form-control" type="email" required />
+    </div>
+    <div class="mb-3">
+        <label>Password</label>
+        <input name="password" class="form-control" type="password" required />
+    </div>
+    <div class="mb-3">
+        <label>Display Name</label>
+        <input name="displayName" class="form-control" required />
+    </div>
+    <div class="mb-3">
+        <label>Role</label>
+        <select name="role" class="form-control">
+            <option value="EYD">Early Years Dentist</option>
+            <option value="ES">Educational Supervisor</option>
+            <option value="TPD">Training Programme Director</option>
+            <option value="Dean">Dean</option>
+            <option value="Admin">Admin</option>
+            <option value="Superuser">Superuser</option>
+        </select>
+    </div>
+    <button class="btn btn-primary">Create</button>
+</form>

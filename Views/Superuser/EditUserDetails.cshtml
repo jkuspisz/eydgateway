@@ -1,0 +1,140 @@
+@model EditUserDetailsViewModel
+@{
+    ViewData["Title"] = "Edit User Details";
+    bool isAdmin = ViewBag.CurrentUserRole as string == "Admin";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-edit me-2"></i>Edit User Details
+                        @if (isAdmin)
+                        {
+                            <span class="badge bg-warning text-dark ms-2">Admin Access</span>
+                        }
+                    </h4>
+                </div>
+                <div class="card-body">
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger">
+                            @TempData["ErrorMessage"]
+                        </div>
+                    }
+
+                    <form asp-action="EditUserDetails" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="UserId" />
+                        <input type="hidden" asp-for="CurrentRole" />
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="FirstName" class="form-label">First Name</label>
+                                <input asp-for="FirstName" class="form-control" required />
+                                <span asp-validation-for="FirstName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="LastName" class="form-label">Last Name</label>
+                                <input asp-for="LastName" class="form-control" required />
+                                <span asp-validation-for="LastName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label">Email Address</label>
+                            <input asp-for="Email" type="email" class="form-control" required />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="DisplayName" class="form-label">Display Name</label>
+                            <input asp-for="DisplayName" class="form-control" />
+                            <div class="form-text">Leave empty to auto-generate from first and last name</div>
+                            <span asp-validation-for="DisplayName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Current Role</label>
+                            <input type="text" class="form-control" value="@Model.CurrentRole" readonly />
+                            <div class="form-text">Role cannot be changed here. Use the main user management page for role assignments.</div>
+                        </div>
+
+                        <hr />
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input asp-for="ChangePassword" class="form-check-input" type="checkbox" id="changePasswordCheck" />
+                                <label class="form-check-label" for="changePasswordCheck">
+                                    Change Password
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="passwordSection" style="display: none;">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label asp-for="NewPassword" class="form-label">New Password</label>
+                                    <input asp-for="NewPassword" type="password" class="form-control" />
+                                    <span asp-validation-for="NewPassword" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="ConfirmPassword" class="form-label">Confirm New Password</label>
+                                    <input asp-for="ConfirmPassword" type="password" class="form-control" />
+                                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="ManageUsers" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back to User Management
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('changePasswordCheck').addEventListener('change', function () {
+            const passwordSection = document.getElementById('passwordSection');
+            if (this.checked) {
+                passwordSection.style.display = 'block';
+                document.getElementById('NewPassword').required = true;
+                document.getElementById('ConfirmPassword').required = true;
+            } else {
+                passwordSection.style.display = 'none';
+                document.getElementById('NewPassword').required = false;
+                document.getElementById('ConfirmPassword').required = false;
+                document.getElementById('NewPassword').value = '';
+                document.getElementById('ConfirmPassword').value = '';
+            }
+        });
+
+        // Auto-update display name when first/last name changes
+        function updateDisplayName() {
+            const firstName = document.getElementById('FirstName').value;
+            const lastName = document.getElementById('LastName').value;
+            const displayNameField = document.getElementById('DisplayName');
+            
+            if (!displayNameField.value || displayNameField.value === displayNameField.dataset.original) {
+                displayNameField.value = (firstName + ' ' + lastName).trim();
+            }
+        }
+
+        document.getElementById('FirstName').addEventListener('input', updateDisplayName);
+        document.getElementById('LastName').addEventListener('input', updateDisplayName);
+
+        // Store original display name
+        document.getElementById('DisplayName').dataset.original = document.getElementById('DisplayName').value;
+    </script>
+}

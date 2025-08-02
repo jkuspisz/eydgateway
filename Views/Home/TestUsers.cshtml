@@ -1,0 +1,147 @@
+@{
+    ViewData["Title"] = "Test Users";
+}
+
+<h2>Database Status Check</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <h3>Users (@ViewBag.UserCount)</h3>
+        @if (ViewBag.Users != null && ((List<EYDGateway.Models.ApplicationUser>)ViewBag.Users).Any())
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Display Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Area</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in (List<EYDGateway.Models.ApplicationUser>)ViewBag.Users)
+                    {
+                        <tr>
+                            <td>@user.UserName</td>
+                            <td>@user.DisplayName</td>
+                            <td>@user.Email</td>
+                            <td><span class="badge bg-primary">@user.Role</span></td>
+                            <td>@(user.Area?.Name ?? "No Area")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p class="text-muted">No users found in database.</p>
+        }
+    </div>
+
+    <div class="col-md-6">
+        <h3>Areas (@ViewBag.AreaCount)</h3>
+        @if (ViewBag.Areas != null && ((List<EYDGateway.Models.Area>)ViewBag.Areas).Any())
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Area Name</th>
+                        <th>Schemes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var area in (List<EYDGateway.Models.Area>)ViewBag.Areas)
+                    {
+                        <tr>
+                            <td>@area.Name</td>
+                            <td>
+                                @if (area.Schemes != null && area.Schemes.Any())
+                                {
+                                    @foreach (var scheme in area.Schemes)
+                                    {
+                                        <span class="badge bg-info me-1">@scheme.Name</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No schemes</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p class="text-muted">No areas found in database.</p>
+        }
+    </div>
+</div>
+
+<div class="mt-4">
+    <h4>Analysis</h4>
+    <div class="alert alert-info">
+        <h5>Current Database State:</h5>
+        <ul>
+            <li><strong>Total Users:</strong> @ViewBag.UserCount</li>
+            <li><strong>Total Areas:</strong> @ViewBag.AreaCount</li>
+            <li><strong>Database Schema:</strong> 
+                @if (ViewBag.UserCount > 0)
+                {
+                    <span class="text-success">✅ Users table populated</span>
+                }
+                else
+                {
+                    <span class="text-warning">⚠️ Users table empty</span>
+                }
+            </li>
+        </ul>
+    </div>
+
+    @{
+        var userList = (List<EYDGateway.Models.ApplicationUser>)ViewBag.Users;
+        var roleAlignment = new Dictionary<string, string>();
+        
+        if (userList != null && userList.Any())
+        {
+            foreach (var user in userList)
+            {
+                var expectedDashboard = user.Role?.ToLower() switch
+                {
+                    "superuser" => "/Superuser/Dashboard",
+                    "admin" => "/Admin/Dashboard", 
+                    "es" => "/ES/Dashboard",
+                    "tpd" => "/TPD/Dashboard",
+                    "dean" => "/TPD/Dashboard",
+                    "eyd" => "/EYD/Dashboard",
+                    _ => "/Home/Index"
+                };
+                roleAlignment[user.UserName ?? "Unknown"] = expectedDashboard;
+            }
+        }
+    }
+
+    <div class="alert alert-success">
+        <h5>Role-Dashboard Alignment:</h5>
+        @if (roleAlignment.Any())
+        {
+            <ul>
+                @foreach (var kvp in roleAlignment)
+                {
+                    <li><strong>@kvp.Key:</strong> → <code>@kvp.Value</code></li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p>No users to check alignment.</p>
+        }
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="/" class="btn btn-primary">Back to Home</a>
+    <a href="/Account/Login" class="btn btn-success">Test Login</a>
+</div>

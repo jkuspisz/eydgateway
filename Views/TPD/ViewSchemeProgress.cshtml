@@ -1,0 +1,198 @@
+@model EYDGateway.Controllers.SchemeProgressViewModel
+@{
+    ViewData["Title"] = $"Scheme Progress - {Model.Scheme.Name}";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>@Model.Scheme.Name Progress</h2>
+                    <p class="text-muted">Managed by @Model.TPDName</p>
+                </div>
+                <div>
+                    <a asp-action="Dashboard" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Scheme Information -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Scheme Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Scheme Name:</strong>
+                        <br>
+                        <span class="badge bg-primary fs-6">@Model.Scheme.Name</span>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Area:</strong>
+                        <br>
+                        <span class="badge bg-secondary">@Model.Scheme.Area.Name</span>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Total Assigned EYDs:</strong>
+                        <br>
+                        <span class="badge bg-info">@Model.AssignedEYDUsers.Count users</span>
+                    </div>
+                    <div>
+                        <strong>Overall Progress:</strong>
+                        <br>
+                        <div class="progress mt-2" style="height: 25px;">
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                 style="width: 67%" aria-valuenow="67" aria-valuemin="0" aria-valuemax="100">
+                                67%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EYD Users Progress -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>EYD Users Progress
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.AssignedEYDUsers.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>EYD User</th>
+                                        <th>Email</th>
+                                        <th>Status</th>
+                                        <th>Last Activity</th>
+                                        <th>Progress</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var eydUser in Model.AssignedEYDUsers)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <i class="fas fa-user-circle text-primary me-2"></i>
+                                                @eydUser.DisplayName
+                                            </td>
+                                            <td>@eydUser.Email</td>
+                                            <td>
+                                                @{
+                                                    var random = new Random();
+                                                    var statuses = new[] { "Active", "Pending", "Completed" };
+                                                    var status = statuses[random.Next(statuses.Length)];
+                                                    var badgeClass = status switch
+                                                    {
+                                                        "Active" => "bg-success",
+                                                        "Pending" => "bg-warning",
+                                                        "Completed" => "bg-info",
+                                                        _ => "bg-secondary"
+                                                    };
+                                                }
+                                                <span class="badge @badgeClass">@status</span>
+                                            </td>
+                                            <td>
+                                                @{
+                                                    var lastActivity = DateTime.Now.AddDays(-random.Next(1, 7));
+                                                }
+                                                <small class="text-muted">@lastActivity.ToString("MMM dd, yyyy")</small>
+                                            </td>
+                                            <td>
+                                                @{
+                                                    var progress = random.Next(25, 100);
+                                                    var progressClass = progress >= 80 ? "bg-success" : progress >= 50 ? "bg-warning" : "bg-danger";
+                                                }
+                                                <div class="progress" style="height: 20px; width: 100px;">
+                                                    <div class="progress-bar @progressClass" role="progressbar" 
+                                                         style="width: @progress%" aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100">
+                                                        @progress%
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-success">
+                                                        <i class="fas fa-message"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No EYD users assigned to this scheme yet.</p>
+                            <a asp-action="Dashboard" class="btn btn-primary">
+                                <i class="fas fa-user-plus me-2"></i>Assign EYD Users
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Analytics -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Progress Analytics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-success">2</h4>
+                                <p class="text-muted">Completed</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-warning">1</h4>
+                                <p class="text-muted">In Progress</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-danger">0</h4>
+                                <p class="text-muted">Not Started</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-info">@Model.AssignedEYDUsers.Count</h4>
+                                <p class="text-muted">Total Users</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

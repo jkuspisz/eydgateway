@@ -1,0 +1,227 @@
+@model EYDGateway.Models.SuperuserSchemeViewModel
+
+@{
+    ViewBag.Title = "Manage Schemes";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-sitemap"></i> Manage Schemes</h2>
+                <a href="@Url.Action("Dashboard")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <!-- Create New Scheme Section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="fas fa-plus-circle"></i> Create New Scheme</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="@Url.Action("CreateSchemeInArea")">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="areaId" class="form-label">Area</label>
+                                <select name="areaId" id="areaId" class="form-select" required>
+                                    <option value="">Select an Area</option>
+                                    @foreach (var area in Model.Areas)
+                                    {
+                                        <option value="@area.Id">@area.Name</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="schemeName" class="form-label">Scheme Name</label>
+                                <input type="text" name="schemeName" id="schemeName" class="form-control" 
+                                       placeholder="Enter scheme name" required maxlength="100" />
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-plus"></i> Create Scheme
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Schemes by Area -->
+            @foreach (var area in Model.Areas)
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4><i class="fas fa-map-marked-alt"></i> @area.Name</h4>
+                        <small class="text-muted">Area ID: @area.Id</small>
+                    </div>
+                    <div class="card-body">
+                        @{
+                            var areaSchemes = Model.Schemes.Where(s => s.AreaId == area.Id).ToList();
+                        }
+                        
+                        @if (!areaSchemes.Any())
+                        {
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> No schemes in this area.
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="row">
+                                @foreach (var scheme in areaSchemes)
+                                {
+                                    <div class="col-md-6 col-lg-4 mb-3">
+                                        <div class="card border-secondary">
+                                            <div class="card-body">
+                                                <h5 class="card-title">
+                                                    <i class="fas fa-sitemap text-info"></i> @scheme.Name
+                                                </h5>
+                                                <p class="card-text">
+                                                    <small class="text-muted">Scheme ID: @scheme.Id</small>
+                                                </p>
+                                                
+                                                <!-- Assigned Users -->
+                                                @{
+                                                    var assignedUsers = Model.Users.Where(u => u.SchemeId == scheme.Id).ToList();
+                                                }
+                                                
+                                                @if (assignedUsers.Any())
+                                                {
+                                                    <div class="mb-2">
+                                                        <strong>Assigned Users:</strong>
+                                                        @foreach (var user in assignedUsers)
+                                                        {
+                                                            <span class="badge bg-@GetRoleColor(user.Role ?? "Unassigned") me-1">
+                                                                @user.DisplayName (@user.Role)
+                                                            </span>
+                                                        }
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="mb-2">
+                                                        <span class="text-muted">No users assigned</span>
+                                                    </div>
+                                                }
+
+                                                <!-- Actions -->
+                                                <div class="d-flex justify-content-between">
+                                                    @if (!assignedUsers.Any())
+                                                    {
+                                                        <form method="post" action="@Url.Action("DeleteScheme")" class="d-inline">
+                                                            <input type="hidden" name="schemeId" value="@scheme.Id" />
+                                                            <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                                                    onclick="return confirm('Delete scheme \'@scheme.Name\'? This action cannot be undone.')">
+                                                                <i class="fas fa-trash"></i> Delete
+                                                            </button>
+                                                        </form>
+                                                    }
+                                                    else
+                                                    {
+                                                        <small class="text-warning">
+                                                            <i class="fas fa-lock"></i> Cannot delete - has assigned users
+                                                        </small>
+                                                    }
+                                                    
+                                                    <span class="text-muted">
+                                                        @assignedUsers.Count user(s)
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Summary Statistics -->
+            <div class="card bg-light">
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h4 class="text-primary">@Model.Areas.Count()</h4>
+                            <p class="mb-0">Total Areas</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-info">@Model.Schemes.Count()</h4>
+                            <p class="mb-0">Total Schemes</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-success">@Model.Schemes.Count(s => Model.Users.Any(u => u.SchemeId == s.Id))</h4>
+                            <p class="mb-0">Assigned Schemes</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-warning">@Model.Schemes.Count(s => !Model.Users.Any(u => u.SchemeId == s.Id))</h4>
+                            <p class="mb-0">Unassigned Schemes</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetRoleColor(string role)
+    {
+        return role switch
+        {
+            "Superuser" => "warning",
+            "Admin" => "primary",
+            "TPD" => "success",
+            "EYD" => "info",
+            "ES" => "secondary",
+            "Dean" => "dark",
+            _ => "light"
+        };
+    }
+}
+
+@section Scripts {
+    <script>
+        // Auto-dismiss alerts
+        setTimeout(function() {
+            $('.alert').fadeOut('slow');
+        }, 5000);
+
+        // Validate form before submission
+        document.querySelector('form').addEventListener('submit', function(e) {
+            var areaSelect = document.getElementById('areaId');
+            var schemeNameInput = document.getElementById('schemeName');
+            
+            if (!areaSelect.value) {
+                e.preventDefault();
+                alert('Please select an area.');
+                areaSelect.focus();
+                return;
+            }
+            
+            if (!schemeNameInput.value.trim()) {
+                e.preventDefault();
+                alert('Please enter a scheme name.');
+                schemeNameInput.focus();
+                return;
+            }
+        });
+    </script>
+}

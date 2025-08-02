@@ -1,0 +1,296 @@
+@model List<EYDGateway.Controllers.SchemeManagementViewModel>
+@{
+    ViewData["Title"] = "Manage Schemes";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>Manage Schemes</h2>
+                    <p class="text-muted">Scheme management for @ViewBag.AdminArea</p>
+                </div>
+                <div>
+                    <a asp-action="Dashboard" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSchemeModal">
+                        <i class="fas fa-plus me-2"></i>Create Yearly Scheme
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-building me-2"></i>Schemes in @ViewBag.AdminArea
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Scheme Name</th>
+                                        <th>Assigned TPD</th>
+                                        <th>EYD Count</th>
+                                        <th>Assigned EYDs</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var schemeModel in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@schemeModel.Scheme.Name</strong>
+                                                <br>
+                                                <small class="text-muted">ID: @schemeModel.Scheme.Id</small>
+                                            </td>
+                                            <td>
+                                                @if (schemeModel.AssignedTPD != null)
+                                                {
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-user-tie me-1"></i>@schemeModel.AssignedTPD.DisplayName
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning">
+                                                        <i class="fas fa-exclamation-triangle me-1"></i>No TPD Assigned
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">@schemeModel.EYDCount EYDs</span>
+                                            </td>
+                                            <td>
+                                                @if (schemeModel.AssignedEYDs.Any())
+                                                {
+                                                    @foreach (var eyd in schemeModel.AssignedEYDs)
+                                                    {
+                                                        <span class="badge bg-primary me-1">@eyd.DisplayName</span>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No EYDs assigned</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#editSchemeModal" 
+                                                            data-scheme-id="@schemeModel.Scheme.Id" 
+                                                            data-scheme-name="@schemeModel.Scheme.Name">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#archiveSchemeModal" 
+                                                            data-scheme-id="@schemeModel.Scheme.Id" 
+                                                            data-scheme-name="@schemeModel.Scheme.Name">
+                                                        <i class="fas fa-archive"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                            <h5>No schemes found</h5>
+                            <p class="text-muted">Create your first yearly scheme to get started.</p>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSchemeModal">
+                                <i class="fas fa-plus me-2"></i>Create Yearly Scheme
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a asp-action="AssignUsers" class="btn btn-outline-primary">
+                            <i class="fas fa-users me-2"></i>Assign Users to Schemes
+                        </a>
+                        <a asp-action="ManageESAssignments" class="btn btn-outline-info">
+                            <i class="fas fa-link me-2"></i>Manage ES-EYD Assignments
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Scheme Statistics</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col">
+                            <div class="border-end">
+                                <h4 class="text-primary">@Model.Count</h4>
+                                <small class="text-muted">Total Schemes</small>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="border-end">
+                                <h4 class="text-success">@Model.Count(s => s.AssignedTPD != null)</h4>
+                                <small class="text-muted">With TPD</small>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <h4 class="text-info">@Model.Sum(s => s.EYDCount)</h4>
+                            <small class="text-muted">Total EYDs</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Yearly Scheme Modal -->
+<div class="modal fade" id="createSchemeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="CreateYearlyScheme" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Yearly Scheme</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="baseName" class="form-label">Base Name</label>
+                        <input type="text" class="form-control" id="baseName" name="baseName" value="@ViewBag.AdminArea" required>
+                        <div class="form-text">The scheme will be named: Base Name + Year (e.g., "North West England 2024")</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="year" class="form-label">Year</label>
+                        <input type="number" class="form-control" id="year" name="year" value="@DateTime.Now.Year" min="2020" max="2030" required>
+                    </div>
+                    <input type="hidden" name="areaId" value="@ViewBag.AreaId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Scheme</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Scheme Modal -->
+<div class="modal fade" id="editSchemeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="EditScheme" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Scheme</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="newName" class="form-label">Scheme Name</label>
+                        <input type="text" class="form-control" id="newName" name="newName" required>
+                    </div>
+                    <input type="hidden" id="editSchemeId" name="schemeId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Scheme</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Archive Scheme Modal -->
+<div class="modal fade" id="archiveSchemeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="ArchiveScheme" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Archive Scheme</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Warning:</strong> This will archive the scheme and remove all user assignments. This action cannot be undone.
+                    </div>
+                    <p>Are you sure you want to archive scheme: <strong id="archiveSchemeName"></strong>?</p>
+                    <input type="hidden" id="archiveSchemeId" name="schemeId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Archive Scheme</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle Edit Scheme Modal
+    const editSchemeModal = document.getElementById('editSchemeModal');
+    editSchemeModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const schemeId = button.getAttribute('data-scheme-id');
+        const schemeName = button.getAttribute('data-scheme-name');
+        
+        document.getElementById('editSchemeId').value = schemeId;
+        document.getElementById('newName').value = schemeName;
+    });
+
+    // Handle Archive Scheme Modal
+    const archiveSchemeModal = document.getElementById('archiveSchemeModal');
+    archiveSchemeModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const schemeId = button.getAttribute('data-scheme-id');
+        const schemeName = button.getAttribute('data-scheme-name');
+        
+        document.getElementById('archiveSchemeId').value = schemeId;
+        document.getElementById('archiveSchemeName').textContent = schemeName;
+    });
+});
+</script>

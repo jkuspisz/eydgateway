@@ -1,0 +1,307 @@
+@model List<EYDGateway.Models.EYDESAssignment>
+@{
+    ViewData["Title"] = "Manage ES-EYD Assignments";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>Manage ES-EYD Assignments</h2>
+                    <p class="text-muted">Monitor and manage ES trainee assignments to EYD supervisors</p>
+                </div>
+                <div>
+                    <a asp-action="Dashboard" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                    <a asp-action="AssignUsers" class="btn btn-outline-primary">
+                        <i class="fas fa-plus me-2"></i>Create New Assignment
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-link me-2"></i>Active ES-EYD Assignments
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ES Trainee</th>
+                                        <th>EYD Supervisor</th>
+                                        <th>Scheme</th>
+                                        <th>Assignment Date</th>
+                                        <th>Duration</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var assignment in Model.OrderByDescending(a => a.AssignedDate))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-sm bg-secondary rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                        <i class="fas fa-user-graduate text-white"></i>
+                                                    </div>
+                                                    <div>
+                                                        <strong>@assignment.ESUser.DisplayName</strong>
+                                                        <br>
+                                                        <small class="text-muted">@assignment.ESUser.UserName</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                        <i class="fas fa-user-md text-white"></i>
+                                                    </div>
+                                                    <div>
+                                                        <strong>@assignment.EYDUser.DisplayName</strong>
+                                                        <br>
+                                                        <small class="text-muted">@assignment.EYDUser.UserName</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">
+                                                    @assignment.EYDUser.Scheme?.Name
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div>
+                                                    <strong>@assignment.AssignedDate.ToString("MMM dd, yyyy")</strong>
+                                                    <br>
+                                                    <small class="text-muted">@assignment.AssignedDate.ToString("h:mm tt")</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @{
+                                                    var duration = DateTime.UtcNow - assignment.AssignedDate;
+                                                    var durationText = duration.Days > 0 ? $"{duration.Days} days" : 
+                                                                      duration.Hours > 0 ? $"{duration.Hours} hours" : 
+                                                                      "Less than an hour";
+                                                }
+                                                <span class="text-muted">@durationText</span>
+                                            </td>
+                                            <td>
+                                                @if (assignment.IsActive)
+                                                {
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check-circle me-1"></i>Active
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">
+                                                        <i class="fas fa-pause-circle me-1"></i>Inactive
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (assignment.IsActive)
+                                                {
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#removeAssignmentModal" 
+                                                            data-assignment-id="@assignment.Id" 
+                                                            data-es-name="@assignment.ESUser.DisplayName" 
+                                                            data-eyd-name="@assignment.EYDUser.DisplayName">
+                                                        <i class="fas fa-unlink me-1"></i>Remove
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No actions</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-link fa-3x text-muted mb-3"></i>
+                            <h5>No ES-EYD assignments found</h5>
+                            <p class="text-muted">Create assignments to link ES trainees with their EYD supervisors.</p>
+                            <a asp-action="AssignUsers" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Create First Assignment
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Any())
+    {
+        <!-- Statistics Cards -->
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-primary">@Model.Count(a => a.IsActive)</h3>
+                        <p class="text-muted mb-0">Active Assignments</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-secondary">@Model.Count(a => !a.IsActive)</h3>
+                        <p class="text-muted mb-0">Inactive Assignments</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-info">@Model.Select(a => a.ESUserId).Distinct().Count()</h3>
+                        <p class="text-muted mb-0">Unique ES Users</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-success">@Model.Select(a => a.EYDUserId).Distinct().Count()</h3>
+                        <p class="text-muted mb-0">Unique EYDs</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignment by Scheme Breakdown -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>Assignments by Scheme
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Scheme</th>
+                                        <th>Active Assignments</th>
+                                        <th>Total Assignments</th>
+                                        <th>EYDs Involved</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var schemeGroup in Model.GroupBy(a => a.EYDUser.Scheme?.Name).OrderBy(g => g.Key))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@(schemeGroup.Key ?? "Unassigned Scheme")</strong>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success">@schemeGroup.Count(a => a.IsActive)</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary">@schemeGroup.Count()</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">@schemeGroup.Select(a => a.EYDUserId).Distinct().Count()</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Remove Assignment Modal -->
+<div class="modal fade" id="removeAssignmentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="RemoveESAssignment" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Remove ES Assignment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Warning:</strong> This will remove the assignment between the ES trainee and EYD supervisor.
+                    </div>
+                    <p>Are you sure you want to remove the assignment between:</p>
+                    <ul>
+                        <li><strong>ES:</strong> <span id="removeESName"></span></li>
+                        <li><strong>EYD:</strong> <span id="removeEYDName"></span></li>
+                    </ul>
+                    <p class="text-muted">The assignment will be marked as inactive but preserved for historical records.</p>
+                    <input type="hidden" id="removeAssignmentId" name="assignmentId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Remove Assignment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle Remove Assignment Modal
+    const removeAssignmentModal = document.getElementById('removeAssignmentModal');
+    removeAssignmentModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const assignmentId = button.getAttribute('data-assignment-id');
+        const esName = button.getAttribute('data-es-name');
+        const eydName = button.getAttribute('data-eyd-name');
+        
+        document.getElementById('removeAssignmentId').value = assignmentId;
+        document.getElementById('removeESName').textContent = esName;
+        document.getElementById('removeEYDName').textContent = eydName;
+    });
+});
+</script>
+
+<style>
+.avatar-sm {
+    width: 2.5rem;
+    height: 2.5rem;
+}
+</style>

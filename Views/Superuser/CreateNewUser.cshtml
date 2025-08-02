@@ -1,0 +1,343 @@
+@model EYDGateway.Models.SuperuserCreateUserViewModel
+
+@{
+    ViewBag.Title = "Create New User";
+    var currentUserRole = ViewBag.CurrentUserRole as string ?? "Unknown";
+    var isAdmin = currentUserRole == "Admin";
+    var isSuperuser = currentUserRole == "Superuser";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-user-plus"></i> Create New User @(isAdmin ? "(Admin)" : "(Superuser)")</h2>
+                <div>
+                    <a href="@Url.Action("ManageUsers")" class="btn btn-secondary me-2">
+                        <i class="fas fa-users-cog"></i> Manage Users
+                    </a>
+                    @if (isSuperuser)
+                    {
+                        <a href="@Url.Action("Dashboard")" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="@Url.Action("Dashboard", "Admin")" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    }
+                </div>
+            </div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-exclamation-triangle"></i> Please correct the following errors:</h6>
+                    <ul class="mb-0">
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <li>@error.ErrorMessage</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <!-- Create User Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-user-plus"></i> User Information</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="@Url.Action("CreateNewUser")">
+                        <div class="row">
+                            <!-- Basic Information -->
+                            <div class="col-md-6">
+                                <h5 class="mb-3"><i class="fas fa-user"></i> Basic Information</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="FirstName" class="form-label">First Name *</label>
+                                    <input type="text" name="FirstName" id="FirstName" class="form-control" 
+                                           value="@Model.FirstName" required maxlength="50" />
+                                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="LastName" class="form-label">Last Name *</label>
+                                    <input type="text" name="LastName" id="LastName" class="form-control" 
+                                           value="@Model.LastName" required maxlength="50" />
+                                    <span asp-validation-for="LastName" class="text-danger"></span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="Email" class="form-label">Email Address *</label>
+                                    <input type="email" name="Email" id="Email" class="form-control" 
+                                           value="@Model.Email" required maxlength="100" />
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                    <div class="form-text">This will be used as the username.</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="Password" class="form-label">Temporary Password *</label>
+                                    <input type="password" name="Password" id="Password" class="form-control" 
+                                           required minlength="6" />
+                                    <span asp-validation-for="Password" class="text-danger"></span>
+                                    <div class="form-text">User will be required to change on first login.</div>
+                                </div>
+                            </div>
+
+                            <!-- Role and Assignment -->
+                            <div class="col-md-6">
+                                <h5 class="mb-3"><i class="fas fa-user-tag"></i> Role and Assignment</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="Role" class="form-label">Role *</label>
+                                    <select name="Role" id="Role" class="form-select" required>
+                                        <option value="">Select a Role</option>
+                                        @if (isSuperuser)
+                                        {
+                                            <option value="Admin" selected="@(Model.Role == "Admin" ? "selected" : null)">Admin</option>
+                                            <option value="Superuser" selected="@(Model.Role == "Superuser" ? "selected" : null)">Superuser</option>
+                                        }
+                                        <option value="ES" selected="@(Model.Role == "ES" ? "selected" : null)">ES</option>
+                                        <option value="TPD" selected="@(Model.Role == "TPD" ? "selected" : null)">TPD</option>
+                                        <option value="Dean" selected="@(Model.Role == "Dean" ? "selected" : null)">Dean</option>
+                                        <option value="EYD" selected="@(Model.Role == "EYD" ? "selected" : null)">EYD</option>
+                                    </select>
+                                    <span asp-validation-for="Role" class="text-danger"></span>
+                                    @if (isAdmin)
+                                    {
+                                        <div class="form-text">As an Admin, you can only create TPD, Dean, ES, and EYD users.</div>
+                                    }
+                                </div>
+
+                                <div class="mb-3" id="areaSection" style="display: none;">
+                                    <label for="AreaId" class="form-label">Area Assignment</label>
+                                    <select name="AreaId" id="AreaId" class="form-select">
+                                        <option value="">No Area Assignment</option>
+                                        @foreach (var area in Model.Areas)
+                                        {
+                                            <option value="@area.Id" selected="@(Model.AreaId == area.Id ? "selected" : null)">
+                                                @area.Name
+                                            </option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="AreaId" class="text-danger"></span>
+                                    <div class="form-text">Required for Admin and ES roles.</div>
+                                </div>
+
+                                <div class="mb-3" id="schemeSection" style="display: none;">
+                                    <label for="SchemeId" class="form-label">Scheme Assignment</label>
+                                    <select name="SchemeId" id="SchemeId" class="form-select">
+                                        <option value="">No Scheme Assignment</option>
+                                        @foreach (var scheme in Model.Schemes)
+                                        {
+                                            <option value="@scheme.Id" selected="@(Model.SchemeId == scheme.Id ? "selected" : null)">
+                                                @scheme.Name (@scheme.Area.Name)
+                                            </option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="SchemeId" class="text-danger"></span>
+                                    <div class="form-text">Required for TPD and EYD roles.</div>
+                                </div>
+
+                                <!-- Role Information -->
+                                <div class="card bg-light mt-4" id="roleInfo" style="display: none;">
+                                    <div class="card-body">
+                                        <h6><i class="fas fa-info-circle"></i> Role Information</h6>
+                                        <div id="roleDescription"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <small class="text-muted">* Required fields</small>
+                            </div>
+                            <div>
+                                <a href="@Url.Action("ManageUsers")" class="btn btn-secondary me-2">Cancel</a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-user-plus"></i> Create User
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Current Users Reference -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-users"></i> Current User Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>By Role</h6>
+                            <ul class="list-unstyled">
+                                @foreach (var roleGroup in Model.ExistingUsers.GroupBy(u => u.Role ?? "Unassigned"))
+                                {
+                                    <li>
+                                        <span class="badge bg-@GetRoleColor(roleGroup.Key) me-2">@roleGroup.Key</span>
+                                        @roleGroup.Count() users
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Areas with Admins</h6>
+                            <ul class="list-unstyled">
+                                @foreach (var area in Model.Areas)
+                                {
+                                    var adminCount = Model.ExistingUsers.Count(u => u.AreaId == area.Id && u.Role == "Admin");
+                                    <li>
+                                        @area.Name: @adminCount admin(s)
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Unassigned Schemes</h6>
+                            <ul class="list-unstyled">
+                                @{
+                                    var unassignedSchemes = Model.Schemes.Where(s => !Model.ExistingUsers.Any(u => u.SchemeId == s.Id)).ToList();
+                                }
+                                @if (unassignedSchemes.Any())
+                                {
+                                    @foreach (var scheme in unassignedSchemes.Take(5))
+                                    {
+                                        <li><small>@scheme.Name (@scheme.Area.Name)</small></li>
+                                    }
+                                    @if (unassignedSchemes.Count > 5)
+                                    {
+                                        <li><small>... and @(unassignedSchemes.Count - 5) more</small></li>
+                                    }
+                                }
+                                else
+                                {
+                                    <li><small class="text-muted">All schemes assigned</small></li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetRoleColor(string role)
+    {
+        return role switch
+        {
+            "Superuser" => "warning",
+            "Admin" => "primary",
+            "TPD" => "success",
+            "EYD" => "info",
+            "ES" => "secondary",
+            "Dean" => "dark",
+            _ => "light"
+        };
+    }
+}
+
+@section Scripts {
+    <script>
+        // Role information descriptions
+        const roleInfo = {
+            'Admin': 'Manages a specific area and can oversee all schemes within that area.',
+            'ES': 'Early Start coordinator for a specific area, focusing on early childhood education.',
+            'TPD': 'Teacher Professional Development coordinator for a specific scheme.',
+            'Dean': 'Senior academic staff with broader institutional responsibilities.',
+            'EYD': 'Early Years Development specialist for a specific scheme.'
+        };
+
+        // Handle role selection changes
+        document.getElementById('Role').addEventListener('change', function() {
+            const role = this.value;
+            const areaSection = document.getElementById('areaSection');
+            const schemeSection = document.getElementById('schemeSection');
+            const roleInfoCard = document.getElementById('roleInfo');
+            const roleDescription = document.getElementById('roleDescription');
+            
+            // Hide all sections first
+            areaSection.style.display = 'none';
+            schemeSection.style.display = 'none';
+            roleInfoCard.style.display = 'none';
+            
+            // Clear requirements
+            document.getElementById('AreaId').removeAttribute('required');
+            document.getElementById('SchemeId').removeAttribute('required');
+            
+            if (role) {
+                // Show role information
+                roleInfoCard.style.display = 'block';
+                roleDescription.textContent = roleInfo[role] || 'Role-specific information not available.';
+                
+                // Show appropriate assignment section
+                if (role === 'Admin' || role === 'ES') {
+                    areaSection.style.display = 'block';
+                    document.getElementById('AreaId').setAttribute('required', 'required');
+                } else if (role === 'TPD' || role === 'EYD') {
+                    schemeSection.style.display = 'block';
+                    document.getElementById('SchemeId').setAttribute('required', 'required');
+                }
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const roleSelect = document.getElementById('Role');
+            if (roleSelect.value) {
+                roleSelect.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // Auto-dismiss alerts
+        setTimeout(function() {
+            $('.alert').fadeOut('slow');
+        }, 5000);
+
+        // Form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const role = document.getElementById('Role').value;
+            const areaId = document.getElementById('AreaId').value;
+            const schemeId = document.getElementById('SchemeId').value;
+            
+            if ((role === 'Admin' || role === 'ES') && !areaId) {
+                e.preventDefault();
+                alert('Please select an area for ' + role + ' role.');
+                document.getElementById('AreaId').focus();
+                return;
+            }
+            
+            if ((role === 'TPD' || role === 'EYD') && !schemeId) {
+                e.preventDefault();
+                alert('Please select a scheme for ' + role + ' role.');
+                document.getElementById('SchemeId').focus();
+                return;
+            }
+        });
+    </script>
+}
