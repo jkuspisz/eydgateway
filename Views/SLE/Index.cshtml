@@ -1,0 +1,118 @@
+@model EYDGateway.ViewModels.SLEListViewModel
+@{
+    ViewData["Title"] = "Supervised Learning Events";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>@ViewData["Title"]</h2>
+            @if (Model.CanCreateSLE)
+            {
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create New SLE
+                </a>
+            }
+        </div>
+
+        @if (Model.SLEs?.Any() == true)
+        {
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Title</th>
+                                    <th>Assessor</th>
+                                    <th>Scheduled Date</th>
+                                    <th>Status</th>
+                                    <th>EPAs</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var sle in Model.SLEs)
+                                {
+                                    <tr>
+                                        <td>
+                                            <span class="badge badge-info">
+                                                @EYDGateway.Models.SLETypes.GetTypeName(sle.SLEType)
+                                            </span>
+                                        </td>
+                                        <td>@sle.Title</td>
+                                        <td>
+                                            @if (sle.IsInternalAssessor)
+                                            {
+                                                @sle.AssessorName
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">
+                                                    @sle.AssessorName (External)
+                                                </span>
+                                            }
+                                        </td>
+                                        <td>@sle.ScheduledDate.ToString("dd/MM/yyyy")</td>
+                                        <td>
+                                            @switch (sle.Status)
+                                            {
+                                                case "Scheduled":
+                                                    <span class="badge badge-warning">Scheduled</span>
+                                                    break;
+                                                case "In Progress":
+                                                    <span class="badge badge-primary">In Progress</span>
+                                                    break;
+                                                case "Completed":
+                                                    <span class="badge badge-success">Completed</span>
+                                                    break;
+                                                case "Cancelled":
+                                                    <span class="badge badge-danger">Cancelled</span>
+                                                    break;
+                                                default:
+                                                    <span class="badge badge-secondary">@sle.Status</span>
+                                                    break;
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (sle.LinkedEPAs?.Any() == true)
+                                            {
+                                                <span class="badge badge-light">
+                                                    @string.Join(", ", sle.LinkedEPAs)
+                                                </span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <a asp-action="Details" asp-route-id="@sle.Id" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-clipboard-list fa-3x text-muted"></i>
+                    </div>
+                    <h5>No SLEs Found</h5>
+                    <p class="text-muted">You haven't created or been assigned any Supervised Learning Events yet.</p>
+                    @if (Model.CanCreateSLE)
+                    {
+                        <a asp-action="Create" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Create Your First SLE
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

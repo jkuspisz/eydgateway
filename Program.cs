@@ -1,5 +1,6 @@
 using EYDGateway.Data;
 using EYDGateway.Models;
+using EYDGateway.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -70,6 +71,9 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.R
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddControllersWithViews();
+
+// Register custom services
+builder.Services.AddScoped<IEPAService, EPAService>();
 
 // Configure for Railway deployment
 if (builder.Environment.IsProduction())

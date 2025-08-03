@@ -1,0 +1,295 @@
+@model EYDGateway.Models.SLE
+@{
+    ViewData["Title"] = $"SLE Details - {Model.Title}";
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>@Model.Title</h4>
+                <span class="badge badge-@(GetStatusBadgeClass(Model.Status)) badge-lg">
+                    @Model.Status
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>SLE Type:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        <span class="badge badge-info">
+                            @EYDGateway.Models.SLETypes.GetTypeName(Model.SLEType)
+                        </span>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>Student:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        @Model.EYDUser?.DisplayName
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>Assessor:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        @if (!string.IsNullOrEmpty(Model.AssessorUserId))
+                        {
+                            <span>@Model.AssessorUser?.DisplayName</span>
+                        }
+                        else
+                        {
+                            <span>@Model.ExternalAssessorName</span>
+                            <small class="text-muted">(@Model.ExternalAssessorInstitution)</small>
+                            <span class="badge badge-warning ml-2">External</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>Scheduled Date:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        @Model.ScheduledDate.ToString("dddd, dd MMMM yyyy")
+                    </div>
+                </div>
+
+                <!-- Dynamic Location Display -->
+                @switch (Model.SLEType)
+                {
+                    case "CBD":
+                    case "DOPS":
+                    case "DOPSSim":
+                    case "MiniCEX":
+                        if (!string.IsNullOrEmpty(Model.Location))
+                        {
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <strong>Location:</strong>
+                                </div>
+                                <div class="col-md-8">
+                                    @Model.Location
+                                </div>
+                            </div>
+                        }
+                        break;
+                    case "DENTL":
+                        if (!string.IsNullOrEmpty(Model.Setting))
+                        {
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <strong>Setting:</strong>
+                                </div>
+                                <div class="col-md-8">
+                                    @Model.Setting
+                                </div>
+                            </div>
+                        }
+                        break;
+                    case "DCT":
+                        if (!string.IsNullOrEmpty(Model.Audience) || !string.IsNullOrEmpty(Model.AudienceSetting))
+                        {
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <strong>Audience:</strong>
+                                </div>
+                                <div class="col-md-8">
+                                    @Model.Audience
+                                    @if (!string.IsNullOrEmpty(Model.AudienceSetting))
+                                    {
+                                        <small class="text-muted">(@Model.AudienceSetting)</small>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        break;
+                }
+
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Description:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            @Model.Description
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.LearningObjectives))
+                {
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Learning Objectives:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            @Model.LearningObjectives
+                        </div>
+                    </div>
+                }
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>Created:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.Status == "Completed" && !string.IsNullOrEmpty(Model.AssessmentFeedback))
+        {
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6>Assessment Feedback</h6>
+                </div>
+                <div class="card-body">
+                    @Model.AssessmentFeedback
+                    
+                    @if (Model.AssessmentRating.HasValue)
+                    {
+                        <div class="mt-3">
+                            <strong>Grade: </strong>
+                            <span class="badge badge-@(GetGradeBadgeClass(Model.AssessmentRating.Value)) badge-lg">
+                                @GetGradeText(Model.AssessmentRating.Value)
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="col-md-4">
+        <!-- EPA Mappings -->
+        @if (Model.EPAMappings?.Any() == true)
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6>Associated EPAs</h6>
+                </div>
+                <div class="card-body">
+                    @foreach (var mapping in Model.EPAMappings)
+                    {
+                        <div class="mb-2">
+                            <span class="badge badge-primary">@mapping.EPA?.Code</span>
+                            <small class="text-muted d-block">@mapping.EPA?.Title</small>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- External Assessor Info -->
+        @if (!string.IsNullOrEmpty(Model.ExternalAssessorEmail))
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6>External Assessor</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <strong>Name:</strong> @Model.ExternalAssessorName
+                    </div>
+                    <div class="mb-2">
+                        <strong>Email:</strong> @Model.ExternalAssessorEmail
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.ExternalAssessorInstitution))
+                    {
+                        <div class="mb-2">
+                            <strong>Institution:</strong> @Model.ExternalAssessorInstitution
+                        </div>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(Model.ExternalAccessToken))
+                    {
+                        <div class="alert alert-info mt-3">
+                            <small>
+                                <strong>Access Link:</strong><br>
+                                Token available for external assessor access
+                            </small>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h6>Actions</h6>
+            </div>
+            <div class="card-body">
+                @if (Model.Status == "Scheduled")
+                {
+                    <button class="btn btn-primary btn-sm btn-block mb-2">
+                        <i class="fas fa-play"></i> Start Assessment
+                    </button>
+                    <button class="btn btn-warning btn-sm btn-block mb-2">
+                        <i class="fas fa-edit"></i> Edit SLE
+                    </button>
+                    <button class="btn btn-danger btn-sm btn-block mb-2">
+                        <i class="fas fa-times"></i> Cancel SLE
+                    </button>
+                }
+                
+                @if (!string.IsNullOrEmpty(Model.ExternalAssessorEmail) && Model.Status == "Scheduled")
+                {
+                    <button class="btn btn-info btn-sm btn-block mb-2">
+                        <i class="fas fa-envelope"></i> Resend Invitation
+                    </button>
+                }
+
+                <a asp-action="Index" class="btn btn-secondary btn-sm btn-block">
+                    <i class="fas fa-arrow-left"></i> Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Scheduled" => "warning",
+            "In Progress" => "primary",
+            "Completed" => "success",
+            "Cancelled" => "danger",
+            _ => "secondary"
+        };
+    }
+
+    private string GetGradeBadgeClass(int grade)
+    {
+        return grade switch
+        {
+            >= 4 => "success",
+            >= 3 => "warning",
+            _ => "danger"
+        };
+    }
+
+    private string GetGradeText(int grade)
+    {
+        return grade switch
+        {
+            5 => "Excellent (5)",
+            4 => "Good (4)",
+            3 => "Satisfactory (3)",
+            2 => "Needs Improvement (2)",
+            1 => "Unsatisfactory (1)",
+            _ => $"Grade {grade}"
+        };
+    }
+}

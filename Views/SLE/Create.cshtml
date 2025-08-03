@@ -1,0 +1,291 @@
+@model EYDGateway.ViewModels.CreateSLEViewModel
+@{
+    ViewData["Title"] = "Create Supervised Learning Event";
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4>@ViewData["Title"]</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="SLEType">SLE Type</label>
+                                <select asp-for="SLEType" class="form-control" id="sleTypeSelect">
+                                    <option value="">Please select SLE type...</option>
+                                    @foreach (var sleType in Model.AvailableSLETypes)
+                                    {
+                                        <option value="@sleType.Code" selected="@(sleType.Code == Model.SLEType)">
+                                            @sleType.Name
+                                        </option>
+                                    }
+                                </select>
+                                <span asp-validation-for="SLEType" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="ScheduledDate">Scheduled Date</label>
+                                <input asp-for="ScheduledDate" type="date" class="form-control" />
+                                <span asp-validation-for="ScheduledDate" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Title">Title</label>
+                        <input asp-for="Title" class="form-control" placeholder="Enter a descriptive title for this SLE" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Description">Description</label>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="Describe the learning context and objectives"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <!-- Dynamic Location Fields -->
+                    <div class="location-fields">
+                        <!-- Standard Location field for CBD, DOPS, DOPSSim, MiniCEX -->
+                        <div class="form-group location-field" data-types="CBD,DOPS,DOPSSim,MiniCEX">
+                            <label asp-for="Location">Location</label>
+                            <input asp-for="Location" class="form-control" placeholder="Where will this SLE take place?" />
+                            <span asp-validation-for="Location" class="text-danger"></span>
+                        </div>
+
+                        <!-- Setting field for DENTL -->
+                        <div class="form-group setting-field" data-types="DENTL" style="display: none;">
+                            <label asp-for="Setting">Setting</label>
+                            <input asp-for="Setting" class="form-control" placeholder="Learning setting for DENTL" />
+                            <span asp-validation-for="Setting" class="text-danger"></span>
+                        </div>
+
+                        <!-- Audience fields for DCT -->
+                        <div class="audience-fields" data-types="DCT" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label asp-for="Audience">Audience</label>
+                                        <input asp-for="Audience" class="form-control" placeholder="Target audience for DtCT" />
+                                        <span asp-validation-for="Audience" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label asp-for="AudienceSetting">Audience Setting</label>
+                                        <input asp-for="AudienceSetting" class="form-control" placeholder="Setting for the audience" />
+                                        <span asp-validation-for="AudienceSetting" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="LearningObjectives">Learning Objectives</label>
+                        <textarea asp-for="LearningObjectives" class="form-control" rows="3" placeholder="What specific learning outcomes should this SLE achieve?"></textarea>
+                        <span asp-validation-for="LearningObjectives" class="text-danger"></span>
+                    </div>
+
+                    <!-- EPA Selection Section -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6>EPA Selection</h6>
+                            <small class="text-muted epa-requirements">
+                                <span id="epa-requirement-text">Please select SLE type first</span>
+                            </small>
+                        </div>
+                        <div class="card-body">
+                            <div id="epa-selection-area">
+                                <p class="text-muted">Please select an SLE type to see available EPAs.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Assessor Selection -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6>Assessor Assignment</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="radio" asp-for="IsInternalAssessor" value="true" id="internalAssessor" checked />
+                                <label class="form-check-label" for="internalAssessor">
+                                    Internal Assessor
+                                </label>
+                            </div>
+
+                            <div class="internal-assessor-section">
+                                <div class="form-group">
+                                    <label asp-for="AssessorUserId">Select Assessor</label>
+                                    <select asp-for="AssessorUserId" class="form-control">
+                                        <option value="">Please select an assessor...</option>
+                                        @foreach (var assessor in Model.AvailableAssessors)
+                                        {
+                                            <option value="@assessor.Id">@assessor.DisplayName (@assessor.Email)</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="AssessorUserId" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="radio" asp-for="IsInternalAssessor" value="false" id="externalAssessor" />
+                                <label class="form-check-label" for="externalAssessor">
+                                    External Assessor
+                                </label>
+                            </div>
+
+                            <div class="external-assessor-section" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label asp-for="ExternalAssessorName">Name</label>
+                                            <input asp-for="ExternalAssessorName" class="form-control" />
+                                            <span asp-validation-for="ExternalAssessorName" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label asp-for="ExternalAssessorEmail">Email</label>
+                                            <input asp-for="ExternalAssessorEmail" type="email" class="form-control" />
+                                            <span asp-validation-for="ExternalAssessorEmail" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label asp-for="ExternalAssessorInstitution">Institution</label>
+                                    <input asp-for="ExternalAssessorInstitution" class="form-control" />
+                                    <span asp-validation-for="ExternalAssessorInstitution" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Create SLE
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6>SLE Type Information</h6>
+            </div>
+            <div class="card-body">
+                <div id="sle-type-info">
+                    <p class="text-muted">Select an SLE type to see specific information and requirements.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Handle SLE type change
+            $('#sleTypeSelect').change(function() {
+                var selectedType = $(this).val();
+                updateLocationFields(selectedType);
+                updateEPARequirements(selectedType);
+                updateSLETypeInfo(selectedType);
+            });
+
+            // Handle assessor type change
+            $('input[name="IsInternalAssessor"]').change(function() {
+                var isInternal = $(this).val() === 'true';
+                if (isInternal) {
+                    $('.internal-assessor-section').show();
+                    $('.external-assessor-section').hide();
+                } else {
+                    $('.internal-assessor-section').hide();
+                    $('.external-assessor-section').show();
+                }
+            });
+
+            // Initialize on page load
+            var currentType = $('#sleTypeSelect').val();
+            if (currentType) {
+                updateLocationFields(currentType);
+                updateEPARequirements(currentType);
+                updateSLETypeInfo(currentType);
+            }
+        });
+
+        function updateLocationFields(sleType) {
+            // Hide all location fields
+            $('.location-fields .form-group').hide();
+            
+            if (!sleType) return;
+
+            // Show appropriate fields based on SLE type
+            $('.location-fields .form-group').each(function() {
+                var supportedTypes = $(this).data('types');
+                if (supportedTypes && supportedTypes.split(',').includes(sleType)) {
+                    $(this).show();
+                }
+            });
+        }
+
+        function updateEPARequirements(sleType) {
+            var requirementText = 'Please select SLE type first';
+            
+            if (sleType) {
+                var singleEPATypes = ['MiniCEX', 'DOPS', 'DOPSSim'];
+                if (singleEPATypes.includes(sleType)) {
+                    requirementText = 'This SLE type requires exactly 1 EPA selection';
+                } else {
+                    requirementText = 'This SLE type allows 1-2 EPA selections';
+                }
+            }
+            
+            $('#epa-requirement-text').text(requirementText);
+            
+            // TODO: Load available EPAs via AJAX
+            if (sleType) {
+                loadAvailableEPAs(sleType);
+            }
+        }
+
+        function updateSLETypeInfo(sleType) {
+            var info = {
+                'CBD': 'Case-Based Discussion: A structured conversation about a case that allows assessment of clinical reasoning.',
+                'DOPS': 'Direct Observation of Procedural Skills: Direct observation of a student performing a procedure.',
+                'MiniCEX': 'Mini Clinical Evaluation Exercise: A short focused clinical encounter assessment.',
+                'DOPSSim': 'Simulated DOPS: Direct observation of procedural skills in a simulated environment.',
+                'DCT': 'Dental Care Treatment: Assessment of comprehensive dental care delivery.',
+                'DENTL': 'Dental Team Learning: Assessment of collaborative learning within dental teams.'
+            };
+            
+            var infoText = sleType ? (info[sleType] || 'Information not available') : 'Select an SLE type to see specific information and requirements.';
+            $('#sle-type-info').html('<p>' + infoText + '</p>');
+        }
+
+        function loadAvailableEPAs(sleType) {
+            // TODO: Implement AJAX call to load EPAs
+            $('#epa-selection-area').html('<p class="text-muted">Loading available EPAs...</p>');
+            
+            // Placeholder for AJAX implementation
+            setTimeout(function() {
+                $('#epa-selection-area').html(
+                    '<div class="alert alert-info">' +
+                    '<p><strong>EPA Selection Feature:</strong></p>' +
+                    '<p>EPA selection will be implemented to show appropriate EPAs based on the selected SLE type and validation rules.</p>' +
+                    '</div>'
+                );
+            }, 500);
+        }
+    </script>
+}

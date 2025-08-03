@@ -45,7 +45,7 @@
                     <div class="card-body py-2">
                         @foreach (var portfolioSection in group.Sections)
                         {
-                            <div class="portfolio-section-item mb-2" onclick="navigateToSection('@portfolioSection.Action')">
+                            <div class="portfolio-section-item mb-2" onclick="navigateToSection('@portfolioSection.Controller', '@portfolioSection.Action', '@portfolioSection.Parameters')">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div class="flex-grow-1">
                                         <span class="section-title">@portfolioSection.Title</span>
@@ -69,8 +69,12 @@
 </div>
 
 <script>
-    function navigateToSection(action) {
-        window.location.href = '@Url.Action("", "EYD")'.replace('Dashboard', action);
+    function navigateToSection(controller, action, parameters) {
+        var url = '/' + controller + '/' + action;
+        if (parameters && parameters !== '') {
+            url += '?' + parameters;
+        }
+        window.location.href = url;
     }
 </script>
 

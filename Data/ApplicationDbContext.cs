@@ -15,6 +15,9 @@ namespace EYDGateway.Data
         public DbSet<Scheme> Schemes { get; set; }
         public DbSet<EYDESAssignment> EYDESAssignments { get; set; }
         public DbSet<TemporaryAccess> TemporaryAccesses { get; set; }
+        public DbSet<EPA> EPAs { get; set; }
+        public DbSet<EPAMapping> EPAMappings { get; set; }
+        public DbSet<SLE> SLEs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -121,6 +124,160 @@ namespace EYDGateway.Data
                     
                 entity.Property(e => e.ApprovedByUserId)
                     .HasColumnType("text");
+            });
+
+            // Configure EPA
+            modelBuilder.Entity<EPA>(entity =>
+            {
+                entity.Property(e => e.Id)
+                    .HasColumnType("integer");
+                    
+                entity.Property(e => e.Code)
+                    .HasColumnType("varchar(10)")
+                    .IsRequired();
+                    
+                entity.Property(e => e.Title)
+                    .HasColumnType("varchar(200)")
+                    .IsRequired();
+                    
+                entity.Property(e => e.Description)
+                    .HasColumnType("varchar(1000)");
+                    
+                entity.Property(e => e.IsActive)
+                    .HasColumnType("boolean");
+                    
+                entity.Property(e => e.CreatedAt)
+                    .HasColumnType("timestamp with time zone");
+                    
+                entity.HasIndex(e => e.Code)
+                    .IsUnique();
+            });
+
+            // Configure EPAMapping
+            modelBuilder.Entity<EPAMapping>(entity =>
+            {
+                entity.Property(e => e.Id)
+                    .HasColumnType("integer");
+                    
+                entity.Property(e => e.EPAId)
+                    .HasColumnType("integer");
+                    
+                entity.Property(e => e.EntityType)
+                    .HasColumnType("varchar(50)")
+                    .IsRequired();
+                    
+                entity.Property(e => e.EntityId)
+                    .HasColumnType("integer");
+                    
+                entity.Property(e => e.UserId)
+                    .HasColumnType("varchar(450)")
+                    .IsRequired();
+                    
+                entity.Property(e => e.CreatedAt)
+                    .HasColumnType("timestamp with time zone");
+                    
+                entity.HasOne(e => e.EPA)
+                    .WithMany(e => e.EPAMappings)
+                    .HasForeignKey(e => e.EPAId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                    
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                    
+                entity.HasIndex(e => new { e.EntityType, e.EntityId, e.EPAId })
+                    .IsUnique();
+            });
+
+            // Configure SLE
+            modelBuilder.Entity<SLE>(entity =>
+            {
+                entity.Property(e => e.Id)
+                    .HasColumnType("integer");
+                    
+                entity.Property(e => e.SLEType)
+                    .HasColumnType("varchar(50)")
+                    .IsRequired();
+                    
+                entity.Property(e => e.EYDUserId)
+                    .HasColumnType("varchar(450)")
+                    .IsRequired();
+                    
+                entity.Property(e => e.Title)
+                    .HasColumnType("varchar(200)")
+                    .IsRequired();
+                    
+                entity.Property(e => e.Description)
+                    .HasColumnType("varchar(1000)");
+                    
+                entity.Property(e => e.ScheduledDate)
+                    .HasColumnType("timestamp with time zone");
+                    
+                entity.Property(e => e.Location)
+                    .HasColumnType("varchar(200)");
+                    
+                entity.Property(e => e.LearningObjectives)
+                    .HasColumnType("varchar(500)");
+                    
+                entity.Property(e => e.AssessorUserId)
+                    .HasColumnType("varchar(450)");
+                    
+                entity.Property(e => e.ExternalAssessorName)
+                    .HasColumnType("varchar(200)");
+                    
+                entity.Property(e => e.ExternalAssessorEmail)
+                    .HasColumnType("varchar(255)");
+                    
+                entity.Property(e => e.ExternalAssessorInstitution)
+                    .HasColumnType("varchar(100)");
+                    
+                entity.Property(e => e.ExternalAccessToken)
+                    .HasColumnType("varchar(36)");
+                    
+                entity.Property(e => e.InvitationSentAt)
+                    .HasColumnType("timestamp with time zone");
+                    
+                entity.Property(e => e.AssessmentCompletedAt)
+                    .HasColumnType("timestamp with time zone");
+                    
+                entity.Property(e => e.AssessmentFeedback)
+                    .HasColumnType("varchar(2000)");
+                    
+                entity.Property(e => e.ReflectionNotes)
+                    .HasColumnType("varchar(1000)");
+                    
+                entity.Property(e => e.ReflectionCompletedAt)
+                    .HasColumnType("timestamp with time zone");
+                    
+                entity.Property(e => e.Status)
+                    .HasColumnType("varchar(50)")
+                    .HasDefaultValue("Draft");
+                    
+                entity.Property(e => e.CreatedAt)
+                    .HasColumnType("timestamp with time zone");
+                    
+                entity.Property(e => e.UpdatedAt)
+                    .HasColumnType("timestamp with time zone");
+                    
+                // Relationships
+                entity.HasOne(e => e.EYDUser)
+                    .WithMany()
+                    .HasForeignKey(e => e.EYDUserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                    
+                entity.HasOne(e => e.AssessorUser)
+                    .WithMany()
+                    .HasForeignKey(e => e.AssessorUserId)
+                    .OnDelete(DeleteBehavior.SetNull);
+                    
+                // Indexes
+                entity.HasIndex(e => e.EYDUserId);
+                entity.HasIndex(e => e.AssessorUserId);
+                entity.HasIndex(e => e.ExternalAccessToken)
+                    .IsUnique();
+                entity.HasIndex(e => e.SLEType);
+                entity.HasIndex(e => e.Status);
             });
         }
     }

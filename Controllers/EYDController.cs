@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EYDGateway.Data;
 using EYDGateway.Models;
+using EYDGateway.Services;
+using EYDGateway.ViewModels;
 
 namespace EYDGateway.Controllers
 {
@@ -10,10 +12,12 @@ namespace EYDGateway.Controllers
     public class EYDController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IEPAService _epaService;
 
-        public EYDController(ApplicationDbContext context)
+        public EYDController(ApplicationDbContext context, IEPAService epaService)
         {
             _context = context;
+            _epaService = epaService;
         }
 
         public async Task<IActionResult> Dashboard()
@@ -63,7 +67,14 @@ namespace EYDGateway.Controllers
                     Icon = "fas fa-chalkboard-teacher",
                     Sections = new List<PortfolioSection>
                     {
-                        new PortfolioSection { Id = "sle", Title = "All SLE Activities", Action = "SLE" }
+                        new PortfolioSection { Id = "sle-create", Title = "Create SLE", Controller = "SLE", Action = "Create" },
+                        new PortfolioSection { Id = "sle-list", Title = "All SLEs", Controller = "SLE", Action = "Index" },
+                        new PortfolioSection { Id = "sle-cbd", Title = "Case Based Discussions", Controller = "SLE", Action = "Index", Parameters = "type=CBD" },
+                        new PortfolioSection { Id = "sle-dops", Title = "Direct Observation of Procedural Skills", Controller = "SLE", Action = "Index", Parameters = "type=DOPS" },
+                        new PortfolioSection { Id = "sle-mini-cex", Title = "Mini-Clinical Evaluation Exercise", Controller = "SLE", Action = "Index", Parameters = "type=MiniCEX" },
+                        new PortfolioSection { Id = "sle-dops-sim", Title = "DOPS Under Simulated Conditions", Controller = "SLE", Action = "Index", Parameters = "type=DOPSSim" },
+                        new PortfolioSection { Id = "sle-dct", Title = "Developing the Clinical Teacher", Controller = "SLE", Action = "Index", Parameters = "type=DCT" },
+                        new PortfolioSection { Id = "sle-dentl", Title = "Direct Evaluation of Non-Technical Learning", Controller = "SLE", Action = "Index", Parameters = "type=DENTL" }
                     }
                 },
                 new PortfolioSectionGroup 
@@ -98,7 +109,7 @@ namespace EYDGateway.Controllers
                     Sections = new List<PortfolioSection>
                     {
                         new PortfolioSection { Id = "clinical-log", Title = "Clinical Experience Log", Action = "ClinicalLog" },
-                        new PortfolioSection { Id = "epa", Title = "Entrustable Professional Activity L", Action = "EPA" },
+                        new PortfolioSection { Id = "epa", Title = "Entrustable Activity Log", Action = "EPA" },
                         new PortfolioSection { Id = "significant-events", Title = "Significant Event Log", Action = "SignificantEvents" }
                     }
                 },
@@ -166,7 +177,144 @@ namespace EYDGateway.Controllers
         public IActionResult ESUploads() => View("PlaceholderPage", new { Title = "ES Uploads" });
         public IActionResult TPDUploads() => View("PlaceholderPage", new { Title = "TPD Uploads" });
         public IActionResult ClinicalLog() => View("PlaceholderPage", new { Title = "Clinical Experience Log" });
-        public IActionResult EPA() => View("PlaceholderPage", new { Title = "Entrustable Professional Activity L" });
+        public async Task<IActionResult> EPA() 
+        {
+            try
+            {
+                // Get current user
+                var currentUser = await _context.Users
+                    .FirstOrDefaultAsync(u => u.UserName == User.Identity.Name);
+                
+                if (currentUser == null)
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                // Get all active EPAs
+                var epas = await _epaService.GetAllActiveEPAsAsync();
+                
+                // Get standard activity columns
+                var activityColumns = ActivityTypes.GetStandardColumns();
+                
+                // Create the matrix
+                var matrix = new EPAActivityMatrix();
+                
+                // Get user's actual EPA mappings from database
+                var userEPAMappings = await _context.EPAMappings
+                    .Include(m => m.EPA)
+                    .Where(m => m.UserId == currentUser.Id)
+                    .GroupBy(m => new { m.EPAId, m.EntityType })
+                    .Select(g => new
+                    {
+                        EPAId = g.Key.EPAId,
+                        EntityType = g.Key.EntityType,
+                        Count = g.Count(),
+                        LatestDate = g.Max(m => m.CreatedAt)
+                    })
+                    .ToListAsync();
+
+                // Populate matrix with real user data
+                foreach (var epa in epas)
+                {
+                    foreach (var column in activityColumns)
+                    {
+                        // Get actual user data for this EPA and activity type
+                        var userMapping = userEPAMappings
+                            .FirstOrDefault(m => m.EPAId == epa.Id && m.EntityType == column.EntityType);
+
+                        var count = userMapping?.Count ?? 0;
+                        var activities = new List<ActivitySummary>();
+                        
+                        // Create activity summaries based on actual data
+                        if (count > 0)
+                        {
+                            activities.Add(new ActivitySummary
+                            {
+                                EntityId = epa.Id,
+                                Title = $"{column.DisplayName} for {epa.Title}",
+                                CreatedDate = userMapping?.LatestDate ?? DateTime.Now,
+                                ActionUrl = "#", // You can link to specific activity details here
+                                EntityType = column.EntityType
+                            });
+                        }
+
+                        var cell = new EPAActivityCell
+                        {
+                            Count = count,
+                            Activities = activities,
+                            LatestDate = userMapping?.LatestDate,
+                            IntensityClass = GetIntensityClass(count)
+                        };
+
+                        matrix.SetCell(epa.Id, column.EntityType, cell);
+                        column.TotalCount += count; // Update column totals
+                    }
+                }
+
+                // Create summary based on real user data
+                var totalActivities = userEPAMappings.Sum(m => m.Count);
+                var epasWithActivity = userEPAMappings.Select(m => m.EPAId).Distinct().Count();
+                
+                var summary = new EPAProgressSummary
+                {
+                    TotalActivities = totalActivities,
+                    TotalEPAMappings = userEPAMappings.Count,
+                    EPAsWithActivity = epasWithActivity,
+                    EPAsNotStarted = epas.Count - epasWithActivity,
+                    ActivityTypeTotals = activityColumns.ToDictionary(c => c.DisplayName, c => c.TotalCount)
+                };
+
+                // Set most/least active EPAs based on real data
+                if (epas.Any() && userEPAMappings.Any())
+                {
+                    var epaActivityCounts = epas.Select(epa => new
+                    {
+                        EPA = epa,
+                        TotalCount = userEPAMappings.Where(m => m.EPAId == epa.Id).Sum(m => m.Count)
+                    }).Where(x => x.TotalCount > 0).ToList();
+
+                    if (epaActivityCounts.Any())
+                    {
+                        var mostActive = epaActivityCounts.OrderByDescending(x => x.TotalCount).FirstOrDefault();
+                        var leastActive = epaActivityCounts.OrderBy(x => x.TotalCount).FirstOrDefault();
+
+                        summary.MostActiveEPA = mostActive?.EPA.Title ?? "";
+                        summary.LeastActiveEPA = leastActive?.EPA.Title ?? "";
+                    }
+                }
+
+                var viewModel = new EPALogViewModel
+                {
+                    EPAs = epas,
+                    ActivityColumns = activityColumns,
+                    Matrix = matrix,
+                    UserName = currentUser.DisplayName ?? currentUser.UserName ?? "Unknown User",
+                    LastActivity = userEPAMappings.Any() ? userEPAMappings.Max(m => m.LatestDate) : null,
+                    Summary = summary
+                };
+
+                return View("EPAMatrix", viewModel);
+            }
+            catch (Exception)
+            {
+                // Log error and show placeholder for now
+                return View("PlaceholderPage", new { Title = "EPA Activity Matrix - Error Loading Data" });
+            }
+        }
+
+        private string GetIntensityClass(int count)
+        {
+            return count switch
+            {
+                0 => "intensity-0",
+                1 => "intensity-1", 
+                2 or 3 => "intensity-2",
+                4 or 5 => "intensity-3",
+                6 or 7 => "intensity-4",
+                _ => "intensity-5"
+            };
+        }
+        
         public IActionResult SignificantEvents() => View("PlaceholderPage", new { Title = "Significant Event Log" });
         public IActionResult PatientSatisfaction() => View("PlaceholderPage", new { Title = "Patient Satisfaction Questionnaire" });
         public IActionResult MultiSourceFeedback() => View("PlaceholderPage", new { Title = "Multi Source Feedback Questionnaire" });
@@ -197,7 +345,9 @@ namespace EYDGateway.Controllers
     {
         public string Id { get; set; } = "";
         public string Title { get; set; } = "";
+        public string Controller { get; set; } = "EYD"; // Default controller
         public string Action { get; set; } = "";
+        public string? Parameters { get; set; } // For passing URL parameters like "type=CBD"
         public int? CompletedCount { get; set; }
         public int? TotalCount { get; set; }
         public string Status { get; set; } = "not-started"; // not-started, in-progress, complete
