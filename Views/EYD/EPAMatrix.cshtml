@@ -1,0 +1,356 @@
+@using EYDGateway.ViewModels
+@model EPALogViewModel
+@{
+    ViewData["Title"] = "EPA Activity Matrix";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="fas fa-chart-line text-primary"></i> EPA Activity Matrix</h2>
+            <p class="text-muted">Cross-reference view showing EPA competencies mapped to portfolio activities for <strong>@Model.UserName</strong></p>
+        </div>
+        <div class="col-auto">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary" onclick="exportMatrix()">
+                    <i class="fas fa-download"></i> Export
+                </button>
+                <button type="button" class="btn btn-outline-info" onclick="toggleTooltips()">
+                    <i class="fas fa-info-circle"></i> Toggle Details
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">@Model.Summary.TotalActivities</h5>
+                    <p class="card-text small">Total Activities</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-success">@Model.Summary.EPAsWithActivity</h5>
+                    <p class="card-text small">EPAs Started</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">@Model.Summary.EPAsNotStarted</h5>
+                    <p class="card-text small">EPAs Not Started</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Activity Distribution</h6>
+                    <div class="row">
+                        @foreach (var activityType in Model.Summary.ActivityTypeTotals)
+                        {
+                            <div class="col">
+                                <small class="text-muted">@activityType.Key</small><br>
+                                <strong>@activityType.Value</strong>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EPA Activity Matrix Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">EPA vs Activity Matrix</h5>
+            <small class="text-muted">Hover over cells to see activity details. Click cells to view activities.</small>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover epa-matrix-table mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="epa-column sticky-column">EPA</th>
+                            @foreach (var column in Model.ActivityColumns)
+                            {
+                                <th class="text-center activity-column" data-bs-toggle="tooltip" title="@column.DisplayName">
+                                    <div class="activity-header">
+                                        <span class="badge @column.CssClass text-white">@column.ShortName</span>
+                                        <br><small class="text-muted">(@column.TotalCount)</small>
+                                    </div>
+                                </th>
+                            }
+                            <th class="text-center totals-column">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var epa in Model.EPAs)
+                        {
+                            var rowTotal = Model.ActivityColumns.Sum(col => Model.Matrix.GetCell(epa.Id, col.EntityType).Count);
+                            
+                            <tr class="@(rowTotal == 0 ? "table-warning" : "")">
+                                <td class="epa-column sticky-column">
+                                    <strong>@epa.Code</strong>
+                                    <br><small class="text-muted">@epa.Title</small>
+                                </td>
+                                
+                                @foreach (var column in Model.ActivityColumns)
+                                {
+                                    var cell = Model.Matrix.GetCell(epa.Id, column.EntityType);
+                                    var intensityClass = GetIntensityClass(cell.Count);
+                                    
+                                    <td class="text-center matrix-cell @intensityClass" 
+                                        data-epa-id="@epa.Id" 
+                                        data-entity-type="@column.EntityType"
+                                        data-count="@cell.Count"
+                                        data-bs-toggle="@(cell.Count > 0 ? "popover" : "")"
+                                        data-bs-trigger="hover"
+                                        data-bs-placement="top"
+                                        data-bs-html="true"
+                                        data-bs-content="@GetPopoverContent(cell)"
+                                        @(cell.Count > 0 ? "style=cursor:pointer;" : "")
+                                        onclick="@(cell.Count > 0 ? $"showActivities({epa.Id}, '{column.EntityType}')" : "")">
+                                        
+                                        @if (cell.Count > 0)
+                                        {
+                                            <span class="cell-count">@cell.Count</span>
+                                            @if (cell.LatestDate.HasValue)
+                                            {
+                                                <br><small class="text-muted">@cell.LatestDate.Value.ToString("MMM dd")</small>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                }
+                                
+                                <td class="text-center totals-column">
+                                    <strong class="@(rowTotal == 0 ? "text-warning" : rowTotal > 10 ? "text-success" : "text-primary")">
+                                        @rowTotal
+                                    </strong>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="table-secondary">
+                        <tr>
+                            <td class="sticky-column"><strong>Column Totals</strong></td>
+                            @foreach (var column in Model.ActivityColumns)
+                            {
+                                <td class="text-center">
+                                    <strong>@column.TotalCount</strong>
+                                </td>
+                            }
+                            <td class="text-center">
+                                <strong class="text-primary">@Model.Summary.TotalEPAMappings</strong>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Legend -->
+    <div class="row mt-3">
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <h6>Legend</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small>
+                                <span class="badge bg-light text-dark">0</span> No activities
+                                <span class="badge bg-primary">1-2</span> Beginning
+                                <span class="badge bg-info">3-5</span> Developing
+                                <span class="badge bg-success">6+</span> Advanced
+                            </small>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">
+                                Click cells with activities to view details. Hover for quick preview.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Activity Details Modal -->
+<div class="modal fade" id="activityModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="activityModalTitle">EPA Activities</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="activityModalBody">
+                <!-- Activity list will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.epa-matrix-table {
+    font-size: 0.9rem;
+}
+
+.sticky-column {
+    position: sticky;
+    left: 0;
+    background-color: #f8f9fa;
+    z-index: 10;
+    min-width: 200px;
+    max-width: 200px;
+}
+
+.activity-column {
+    min-width: 80px;
+    max-width: 80px;
+}
+
+.totals-column {
+    min-width: 60px;
+    background-color: #f8f9fa;
+}
+
+.matrix-cell {
+    transition: all 0.2s ease;
+    vertical-align: middle;
+}
+
+.matrix-cell:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.cell-count {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.activity-header {
+    text-align: center;
+}
+
+/* Intensity color coding */
+.intensity-0 { background-color: #f8f9fa; }
+.intensity-1 { background-color: #e3f2fd; }
+.intensity-2 { background-color: #bbdefb; }
+.intensity-3 { background-color: #90caf9; }
+.intensity-4 { background-color: #64b5f6; }
+.intensity-5 { background-color: #42a5f5; }
+
+@@media (max-width: 768px) {
+    .epa-matrix-table {
+        font-size: 0.8rem;
+    }
+    
+    .sticky-column {
+        min-width: 150px;
+        max-width: 150px;
+    }
+    
+    .activity-column {
+        min-width: 60px;
+        max-width: 60px;
+    }
+}
+</style>
+
+<script>
+// Initialize tooltips and popovers
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl);
+    });
+});
+
+function showActivities(epaId, entityType) {
+    // Load activity details via AJAX
+    fetch(`/EYD/GetEPAActivities?epaId=${epaId}&entityType=${entityType}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('activityModalTitle').textContent = `${data.epaCode}: ${data.entityType} Activities`;
+            document.getElementById('activityModalBody').innerHTML = generateActivityList(data.activities);
+            new bootstrap.Modal(document.getElementById('activityModal')).show();
+        })
+        .catch(error => {
+            console.error('Error loading activities:', error);
+        });
+}
+
+function generateActivityList(activities) {
+    if (!activities || activities.length === 0) {
+        return '<p class="text-muted">No activities found.</p>';
+    }
+    
+    let html = '<div class="list-group">';
+    activities.forEach(activity => {
+        html += `
+            <a href="${activity.actionUrl}" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">${activity.title}</h6>
+                    <small>${new Date(activity.createdDate).toLocaleDateString()}</small>
+                </div>
+                <small class="text-muted">${activity.entityType}</small>
+            </a>
+        `;
+    });
+    html += '</div>';
+    return html;
+}
+
+function exportMatrix() {
+    // Export functionality - could export to Excel, PDF, etc.
+    alert('Export functionality would be implemented here');
+}
+
+function toggleTooltips() {
+    // Toggle detailed tooltips on/off
+    alert('Toggle tooltip details functionality would be implemented here');
+}
+</script>
+
+@functions {
+    private string GetIntensityClass(int count)
+    {
+        if (count == 0) return "intensity-0";
+        if (count <= 2) return "intensity-1";
+        if (count <= 5) return "intensity-2";
+        if (count <= 9) return "intensity-3";
+        if (count <= 15) return "intensity-4";
+        return "intensity-5";
+    }
+    
+    private string GetPopoverContent(EPAActivityCell cell)
+    {
+        if (cell.Count == 0) return "";
+        
+        var content = $"<strong>{cell.Count} activities</strong><br>";
+        if (cell.LatestDate.HasValue)
+        {
+            content += $"<small>Latest: {cell.LatestDate.Value.ToString("MMM dd, yyyy")}</small><br>";
+        }
+        content += "<small class='text-muted'>Click to view details</small>";
+        return content;
+    }
+}

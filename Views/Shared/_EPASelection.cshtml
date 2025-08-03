@@ -1,0 +1,84 @@
+@model IEnumerable<EYDGateway.Models.EPA>
+
+<div class="epa-selection-container">
+    <div class="form-group">
+        <label class="form-label fw-bold">EPA Selection <span class="text-danger">*</span></label>
+        <p class="text-muted small mb-3">Select 1-2 EPAs that relate to this activity</p>
+        
+        <div class="epa-checkboxes" id="epaSelection">
+            @foreach (var epa in Model)
+            {
+                <div class="form-check epa-checkbox-item">
+                    <input class="form-check-input epa-checkbox" 
+                           type="checkbox" 
+                           name="SelectedEPAIds" 
+                           value="@epa.Id" 
+                           id="epa_@epa.Id">
+                    <label class="form-check-label" for="epa_@epa.Id">
+                        <strong>@epa.Code:</strong> @epa.Title
+                    </label>
+                </div>
+            }
+        </div>
+        
+        <div class="invalid-feedback d-none" id="epaValidationError">
+            Please select 1-2 EPAs for this activity.
+        </div>
+        
+        <div class="form-text">
+            <small id="epaSelectionCount" class="text-muted">0 EPAs selected</small>
+        </div>
+    </div>
+</div>
+
+<style>
+.epa-selection-container {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.epa-checkbox-item {
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s;
+}
+
+.epa-checkbox-item:hover {
+    background-color: #e9ecef;
+}
+
+.epa-checkbox-item input:checked + label {
+    color: #0d6efd;
+    font-weight: 500;
+}
+
+.epa-selection-container .form-label {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.epa-checkboxes {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+    background-color: white;
+}
+
+#epaSelectionCount {
+    font-weight: 500;
+}
+
+.epa-validation-error {
+    border-color: #dc3545;
+}
+
+.epa-validation-success {
+    border-color: #28a745;
+}
+</style>
