@@ -1,0 +1,110 @@
+@model EYDGateway.Models.ClinicalLog
+
+@{
+    ViewData["Title"] = "Delete Clinical Log - " + Model.Month + " " + Model.Year;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-trash"></i> Delete Clinical Log
+                    </h4>
+                    <small>Are you sure you want to delete this clinical log?</small>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Warning!</strong> This action cannot be undone. All data for this clinical log will be permanently deleted.
+                    </div>
+
+                    <dl class="row">
+                        <dt class="col-sm-2">Month:</dt>
+                        <dd class="col-sm-10">@Model.Month</dd>
+                        
+                        <dt class="col-sm-2">Year:</dt>
+                        <dd class="col-sm-10">@Model.Year</dd>
+                        
+                        <dt class="col-sm-2">Status:</dt>
+                        <dd class="col-sm-10">
+                            @if (Model.IsCompleted)
+                            {
+                                <span class="badge bg-success">Completed</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning">In Progress</span>
+                            }
+                        </dd>
+                        
+                        <dt class="col-sm-2">Created:</dt>
+                        <dd class="col-sm-10">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+                        
+                        <dt class="col-sm-2">Last Updated:</dt>
+                        <dd class="col-sm-10">@Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+                    </dl>
+
+                    <!-- Show a summary of total procedures -->
+                    <div class="card mt-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Clinical Activities Summary</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-cog"></i> General Activities</h6>
+                                    <ul class="list-unstyled">
+                                        <li>DNA numbers: <span class="badge bg-secondary">@Model.DNANumbers</span></li>
+                                        <li>Unbooked clinical hours: <span class="badge bg-secondary">@Model.NumberOfUnbookedClinicalHours</span></li>
+                                        <li>Holidays: <span class="badge bg-secondary">@Model.Holidays</span></li>
+                                        <li>Sick Days: <span class="badge bg-secondary">@Model.SickDays</span></li>
+                                        <li>UDAs: <span class="badge bg-secondary">@Model.UDAsEvidencedOnPracticeSoftware</span></li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-stethoscope"></i> Clinical Assessment</h6>
+                                    <ul class="list-unstyled">
+                                        <li>Adult Examinations: <span class="badge bg-info">@Model.AdultExaminations</span></li>
+                                        <li>Paediatric Examinations: <span class="badge bg-info">@Model.PaediatricExaminations</span></li>
+                                        <li>Adult Radiographs: <span class="badge bg-info">@Model.AdultRadiographs</span></li>
+                                        <li>Paediatric Radiographs: <span class="badge bg-info">@Model.PaediatricRadiographs</span></li>
+                                        <li>Complex Medical Histories: <span class="badge bg-info">@Model.PatientsWithComplexMedicalHistories</span></li>
+                                        <li>6 point periodontal chart: <span class="badge bg-info">@Model.SixPointPeriodontalChart</span></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-12">
+                                    <h6><i class="fas fa-hammer"></i> Key Restoration Procedures</h6>
+                                    <ul class="list-inline">
+                                        <li class="list-inline-item">Amalgam: <span class="badge bg-primary">@Model.AmalgamRestorations</span></li>
+                                        <li class="list-inline-item">Composite: <span class="badge bg-primary">@(Model.AnteriorCompositeRestorations + Model.PosteriorCompositeRestorations)</span></li>
+                                        <li class="list-inline-item">RCT: <span class="badge bg-primary">@(Model.RCTIncisorCanine + Model.RCTPremolar + Model.RCTMolar)</span></li>
+                                        <li class="list-inline-item">Extractions: <span class="badge bg-primary">@(Model.ExtractionOfPermanentTeeth + Model.ExtractionOfDeciduousTeeth)</span></li>
+                                        <li class="list-inline-item">Crowns: <span class="badge bg-primary">@Model.CrownsConventional</span></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form asp-action="Delete" method="post" class="mt-4">
+                        @Html.AntiForgeryToken()
+                        <div class="d-flex justify-content-between">
+                            <a class="btn btn-secondary" asp-action="Index">
+                                <i class="fas fa-arrow-left"></i> Back to Clinical Logs
+                            </a>
+                            <button type="submit" class="btn btn-danger" 
+                                    onclick="return confirm('Are you absolutely sure you want to delete this clinical log? This action cannot be undone.')">
+                                <i class="fas fa-trash"></i> Delete Clinical Log
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

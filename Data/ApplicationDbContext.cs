@@ -27,6 +27,7 @@ namespace EYDGateway.Data
         public DbSet<ProtectedLearningTime> ProtectedLearningTimes { get; set; }
         public DbSet<LearningNeed> LearningNeeds { get; set; }
         public DbSet<ESInduction> ESInductions { get; set; }
+        public DbSet<ClinicalLog> ClinicalLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

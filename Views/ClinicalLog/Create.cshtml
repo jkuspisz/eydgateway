@@ -1,0 +1,359 @@
+@model EYDGateway.ViewModels.CreateClinicalLogViewModel
+
+@{
+    ViewData["Title"] = "Create Monthly Clinical Log";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-clipboard-list"></i> Create Monthly Clinical Log
+                    </h4>
+                    <small>EYD User: @(Model?.EYDUserName ?? "Unknown")</small>
+                </div>
+                <div class="card-body">
+                    <form asp-controller="ClinicalLog" asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="EYDUserId" />
+                        
+                        <!-- Month and Year Selection -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Month" class="form-label">
+                                        <i class="fas fa-calendar"></i> Month
+                                    </label>
+                                    <select asp-for="Month" class="form-control" required>
+                                        <option value="">Select Month</option>
+                                        <option value="September">September</option>
+                                        <option value="October">October</option>
+                                        <option value="November">November</option>
+                                        <option value="December">December</option>
+                                        <option value="January">January</option>
+                                        <option value="February">February</option>
+                                        <option value="March">March</option>
+                                        <option value="April">April</option>
+                                        <option value="May">May</option>
+                                        <option value="June">June</option>
+                                        <option value="July">July</option>
+                                        <option value="August">August</option>
+                                    </select>
+                                    <span asp-validation-for="Month" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Year" class="form-label">
+                                        <i class="fas fa-calendar-alt"></i> Year
+                                    </label>
+                                    <input asp-for="Year" type="number" class="form-control" min="2020" max="2030" required />
+                                    <span asp-validation-for="Year" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Clinical Procedures Table -->
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th style="width: 20%;">Type</th>
+                                        <th style="width: 60%;">Procedure</th>
+                                        <th style="width: 20%;">Number</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- General -->
+                                    <tr class="table-secondary">
+                                        <td colspan="3"><strong><i class="fas fa-cog"></i> General</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>General</td>
+                                        <td>DNA numbers</td>
+                                        <td><input asp-for="DNANumbers" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>General</td>
+                                        <td>Number of unbooked clinical hours</td>
+                                        <td><input asp-for="NumberOfUnbookedClinicalHours" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>General</td>
+                                        <td>Holidays</td>
+                                        <td><input asp-for="Holidays" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>General</td>
+                                        <td>Sick Days</td>
+                                        <td><input asp-for="SickDays" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>General</td>
+                                        <td>UDAs evidenced on practice software for this specific month</td>
+                                        <td><input asp-for="UDAsEvidencedOnPracticeSoftware" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+
+                                    <!-- Clinical Assessment -->
+                                    <tr class="table-info">
+                                        <td colspan="3"><strong><i class="fas fa-stethoscope"></i> Clinical Assessment</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Clinical Assessment</td>
+                                        <td>Adult Examinations</td>
+                                        <td><input asp-for="AdultExaminations" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Clinical Assessment</td>
+                                        <td>Paediatric Examinations (under 16 years of age)</td>
+                                        <td><input asp-for="PaediatricExaminations" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Clinical Assessment</td>
+                                        <td>Adult Radiographs</td>
+                                        <td><input asp-for="AdultRadiographs" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Clinical Assessment</td>
+                                        <td>Paediatric Radiographs (under 16 years of age)</td>
+                                        <td><input asp-for="PaediatricRadiographs" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Clinical Assessment</td>
+                                        <td>Patients with complex Medical Histories</td>
+                                        <td><input asp-for="PatientsWithComplexMedicalHistories" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Clinical Assessment</td>
+                                        <td>6 point periodontal chart</td>
+                                        <td><input asp-for="SixPointPeriodontalChart" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+
+                                    <!-- Oral Health Promotion -->
+                                    <tr class="table-success">
+                                        <td colspan="3"><strong><i class="fas fa-tooth"></i> Oral Health Promotion</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Oral Health Promotion</td>
+                                        <td>Diet analysis</td>
+                                        <td><input asp-for="DietAnalysis" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Oral Health Promotion</td>
+                                        <td>Fluoride varnish</td>
+                                        <td><input asp-for="FluorideVarnish" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+
+                                    <!-- Medical and dental emergencies -->
+                                    <tr class="table-danger">
+                                        <td colspan="3"><strong><i class="fas fa-exclamation-triangle"></i> Medical and dental emergencies</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Medical/Dental Emergencies</td>
+                                        <td>Management of medical emergency incident</td>
+                                        <td><input asp-for="ManagementOfMedicalEmergencyIncident" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Medical/Dental Emergencies</td>
+                                        <td>Dental trauma</td>
+                                        <td><input asp-for="DentalTrauma" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Medical/Dental Emergencies</td>
+                                        <td>Pulp extripation</td>
+                                        <td><input asp-for="PulpExtripation" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+
+                                    <!-- Prescribing and therapeutics -->
+                                    <tr class="table-warning">
+                                        <td colspan="3"><strong><i class="fas fa-pills"></i> Prescribing and therapeutics</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Prescribing/Therapeutics</td>
+                                        <td>Prescribing (antimicrobials)</td>
+                                        <td><input asp-for="PrescribingAntimicrobials" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Prescribing/Therapeutics</td>
+                                        <td>IV sedation</td>
+                                        <td><input asp-for="IVSedation" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Prescribing/Therapeutics</td>
+                                        <td>Inhalational sedation</td>
+                                        <td><input asp-for="InhalationalSedation" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Prescribing/Therapeutics</td>
+                                        <td>General Anaesthesia – Planning and Consent</td>
+                                        <td><input asp-for="GeneralAnaesthesiaPlanningAndConsent" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Prescribing/Therapeutics</td>
+                                        <td>General Anaesthesia - Treatment undertaken</td>
+                                        <td><input asp-for="GeneralAnaesthesiaTreatmentUndertaken" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+
+                                    <!-- Periodontal Disease -->
+                                    <tr class="table-dark text-white">
+                                        <td colspan="3"><strong><i class="fas fa-teeth"></i> Periodontal Disease</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Periodontal Disease</td>
+                                        <td>Non-surgical therapy</td>
+                                        <td><input asp-for="NonSurgicalTherapy" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+
+                                    <!-- Removal of teeth -->
+                                    <tr class="table-secondary">
+                                        <td colspan="3"><strong><i class="fas fa-tools"></i> Removal of teeth</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Removal of teeth</td>
+                                        <td>Extraction of permanent teeth</td>
+                                        <td><input asp-for="ExtractionOfPermanentTeeth" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Removal of teeth</td>
+                                        <td>Complex extraction involving sectioning</td>
+                                        <td><input asp-for="ComplexExtractionInvolvingSectioning" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Removal of teeth</td>
+                                        <td>Suturing</td>
+                                        <td><input asp-for="Suturing" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+
+                                    <!-- Management of developing dentition -->
+                                    <tr class="table-info">
+                                        <td colspan="3"><strong><i class="fas fa-child"></i> Management of developing dentition</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Developing Dentition</td>
+                                        <td>SS crowns on deciduous teeth</td>
+                                        <td><input asp-for="SSCrownsOnDeciduousTeeth" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Developing Dentition</td>
+                                        <td>Extraction of deciduous teeth</td>
+                                        <td><input asp-for="ExtractionOfDeciduousTeeth" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Developing Dentition</td>
+                                        <td>Orthodontic Assessment</td>
+                                        <td><input asp-for="OrthodonticAssessment" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+
+                                    <!-- Restoration of teeth -->
+                                    <tr class="table-primary">
+                                        <td colspan="3"><strong><i class="fas fa-hammer"></i> Restoration of teeth</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Restoration of teeth</td>
+                                        <td>Rubber dam placement</td>
+                                        <td><input asp-for="RubberDamPlacement" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Restoration of teeth</td>
+                                        <td>Amalgam restorations</td>
+                                        <td><input asp-for="AmalgamRestorations" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Restoration of teeth</td>
+                                        <td>Anterior composite restorations</td>
+                                        <td><input asp-for="AnteriorCompositeRestorations" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Restoration of teeth</td>
+                                        <td>Posterior composite restorations</td>
+                                        <td><input asp-for="PosteriorCompositeRestorations" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Restoration of teeth</td>
+                                        <td>GIC</td>
+                                        <td><input asp-for="GIC" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Restoration of teeth</td>
+                                        <td>RCT incisor / canine</td>
+                                        <td><input asp-for="RCTIncisorCanine" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Restoration of teeth</td>
+                                        <td>RCT premolar</td>
+                                        <td><input asp-for="RCTPremolar" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Restoration of teeth</td>
+                                        <td>RCT molar</td>
+                                        <td><input asp-for="RCTMolar" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Restoration of teeth</td>
+                                        <td>Crowns - conventional</td>
+                                        <td><input asp-for="CrownsConventional" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Restoration of teeth</td>
+                                        <td>Onlays</td>
+                                        <td><input asp-for="Onlays" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Restoration of teeth</td>
+                                        <td>Posts</td>
+                                        <td><input asp-for="Posts" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Restoration of teeth</td>
+                                        <td>Bridge - resin retained</td>
+                                        <td><input asp-for="BridgeResinRetained" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Restoration of teeth</td>
+                                        <td>Bridge - conventional</td>
+                                        <td><input asp-for="BridgeConventional" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+
+                                    <!-- Replacement of teeth -->
+                                    <tr class="table-success">
+                                        <td colspan="3"><strong><i class="fas fa-teeth-open"></i> Replacement of teeth</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Replacement of teeth</td>
+                                        <td>Acrylic complete dentures</td>
+                                        <td><input asp-for="AcrylicCompleteDentures" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Replacement of teeth</td>
+                                        <td>Acrylic partial dentures</td>
+                                        <td><input asp-for="AcrylicPartialDentures" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Replacement of teeth</td>
+                                        <td>Cobalt-chrome partial dentures</td>
+                                        <td><input asp-for="CobaltChromePartialDentures" type="number" class="form-control form-control-sm" min="0" /></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a class="btn btn-secondary" asp-action="Index">
+                                <i class="fas fa-arrow-left"></i> Back to Clinical Logs
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Save Clinical Log
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,106 @@
+@model IEnumerable<EYDGateway.Models.ClinicalLog>
+
+@{
+    ViewData["Title"] = "Clinical Logs";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-clipboard-list"></i> Monthly Clinical Logs
+                    </h4>
+                    <small>Track your clinical activities month by month</small>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <a class="btn btn-success" asp-action="Create">
+                            <i class="fas fa-plus"></i> Create New Monthly Log
+                        </a>
+                        <a class="btn btn-info ms-2" asp-action="TotalNumbers">
+                            <i class="fas fa-chart-bar"></i> View Total Numbers
+                        </a>
+                    </div>
+
+                    @if (Model?.Any() == true)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Month</th>
+                                        <th>Year</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Last Updated</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@item.Month</strong>
+                                            </td>
+                                            <td>@item.Year</td>
+                                            <td>
+                                                @if (item.IsCompleted)
+                                                {
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check"></i> Completed
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning">
+                                                        <i class="fas fa-clock"></i> In Progress
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td>@item.CreatedAt.ToString("dd/MM/yyyy")</td>
+                                            <td>@item.UpdatedAt.ToString("dd/MM/yyyy")</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@item.Id">
+                                                        <i class="fas fa-eye"></i> View
+                                                    </a>
+                                                    @if (!item.IsCompleted)
+                                                    {
+                                                        <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@item.Id">
+                                                            <i class="fas fa-edit"></i> Edit
+                                                        </a>
+                                                        <form asp-action="Complete" asp-route-id="@item.Id" method="post" style="display: inline;">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="submit" class="btn btn-sm btn-outline-success" 
+                                                                    onclick="return confirm('Are you sure you want to complete this month? You will not be able to edit it afterwards.')">
+                                                                <i class="fas fa-check-circle"></i> Complete
+                                                            </button>
+                                                        </form>
+                                                    }
+                                                    <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@item.Id">
+                                                        <i class="fas fa-trash"></i> Delete
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>No clinical logs found.</strong> 
+                            Start by creating your first monthly clinical log.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

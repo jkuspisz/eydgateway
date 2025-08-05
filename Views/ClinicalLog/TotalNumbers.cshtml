@@ -1,0 +1,340 @@
+@model EYDGateway.ViewModels.ClinicalLogTotalsViewModel
+
+@{
+    ViewData["Title"] = "Total Numbers Summary";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-chart-bar"></i> Cumulative Clinical Totals
+                    </h4>
+                    <small>EYD User: @Model.EYDUserName</small>
+                </div>
+                <div class="card-body">
+                    <!-- Summary Stats -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h3>@Model.TotalLogs</h3>
+                                    <p class="mb-0">Total Months Logged</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h3>@Model.CompletedLogs</h3>
+                                    <p class="mb-0">Completed Months</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h3>@(Model.TotalLogs - Model.CompletedLogs)</h3>
+                                    <p class="mb-0">In Progress</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation -->
+                    <div class="mb-3">
+                        <a class="btn btn-primary" asp-action="Index">
+                            <i class="fas fa-arrow-left"></i> Back to Clinical Logs
+                        </a>
+                    </div>
+
+                    <!-- Totals Table -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th style="width: 20%;">Type</th>
+                                    <th style="width: 60%;">Procedure</th>
+                                    <th style="width: 20%;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- General -->
+                                <tr class="table-secondary">
+                                    <td colspan="3"><strong><i class="fas fa-cog"></i> General</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>General</td>
+                                    <td>DNA numbers</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.DNANumbers</span></td>
+                                </tr>
+                                <tr>
+                                    <td>General</td>
+                                    <td>Number of unbooked clinical hours</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.NumberOfUnbookedClinicalHours</span></td>
+                                </tr>
+                                <tr>
+                                    <td>General</td>
+                                    <td>Holidays</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.Holidays</span></td>
+                                </tr>
+                                <tr>
+                                    <td>General</td>
+                                    <td>Sick Days</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.SickDays</span></td>
+                                </tr>
+                                <tr>
+                                    <td>General</td>
+                                    <td>UDAs evidenced on practice software for this specific month</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.UDAsEvidencedOnPracticeSoftware</span></td>
+                                </tr>
+
+                                <!-- Clinical Assessment -->
+                                <tr class="table-info">
+                                    <td colspan="3"><strong><i class="fas fa-stethoscope"></i> Clinical Assessment</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Clinical Assessment</td>
+                                    <td>Adult Examinations</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.AdultExaminations</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Clinical Assessment</td>
+                                    <td>Paediatric Examinations (under 16 years of age)</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.PaediatricExaminations</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Clinical Assessment</td>
+                                    <td>Adult Radiographs</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.AdultRadiographs</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Clinical Assessment</td>
+                                    <td>Paediatric Radiographs (under 16 years of age)</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.PaediatricRadiographs</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Clinical Assessment</td>
+                                    <td>Patients with complex Medical Histories</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.PatientsWithComplexMedicalHistories</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Clinical Assessment</td>
+                                    <td>6 point periodontal chart</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.SixPointPeriodontalChart</span></td>
+                                </tr>
+
+                                <!-- Oral Health Promotion -->
+                                <tr class="table-success">
+                                    <td colspan="3"><strong><i class="fas fa-tooth"></i> Oral Health Promotion</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Oral Health Promotion</td>
+                                    <td>Diet analysis</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.DietAnalysis</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Oral Health Promotion</td>
+                                    <td>Fluoride varnish</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.FluorideVarnish</span></td>
+                                </tr>
+
+                                <!-- Medical and dental emergencies -->
+                                <tr class="table-danger">
+                                    <td colspan="3"><strong><i class="fas fa-exclamation-triangle"></i> Medical and dental emergencies</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Medical/Dental Emergencies</td>
+                                    <td>Management of medical emergency incident</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.ManagementOfMedicalEmergencyIncident</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Medical/Dental Emergencies</td>
+                                    <td>Dental trauma</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.DentalTrauma</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Medical/Dental Emergencies</td>
+                                    <td>Pulp extripation</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.PulpExtripation</span></td>
+                                </tr>
+
+                                <!-- Prescribing and therapeutics -->
+                                <tr class="table-warning">
+                                    <td colspan="3"><strong><i class="fas fa-pills"></i> Prescribing and therapeutics</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Prescribing/Therapeutics</td>
+                                    <td>Prescribing (antimicrobials)</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.PrescribingAntimicrobials</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Prescribing/Therapeutics</td>
+                                    <td>IV sedation</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.IVSedation</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Prescribing/Therapeutics</td>
+                                    <td>Inhalational sedation</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.InhalationalSedation</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Prescribing/Therapeutics</td>
+                                    <td>General Anaesthesia – Planning and Consent</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.GeneralAnaesthesiaPlanningAndConsent</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Prescribing/Therapeutics</td>
+                                    <td>General Anaesthesia - Treatment undertaken</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.GeneralAnaesthesiaTreatmentUndertaken</span></td>
+                                </tr>
+
+                                <!-- Periodontal Disease -->
+                                <tr class="table-dark text-white">
+                                    <td colspan="3"><strong><i class="fas fa-teeth"></i> Periodontal Disease</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Periodontal Disease</td>
+                                    <td>Non-surgical therapy</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.NonSurgicalTherapy</span></td>
+                                </tr>
+
+                                <!-- Removal of teeth -->
+                                <tr class="table-secondary">
+                                    <td colspan="3"><strong><i class="fas fa-tools"></i> Removal of teeth</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Removal of teeth</td>
+                                    <td>Extraction of permanent teeth</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.ExtractionOfPermanentTeeth</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Removal of teeth</td>
+                                    <td>Complex extraction involving sectioning</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.ComplexExtractionInvolvingSectioning</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Removal of teeth</td>
+                                    <td>Suturing</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.Suturing</span></td>
+                                </tr>
+
+                                <!-- Management of developing dentition -->
+                                <tr class="table-info">
+                                    <td colspan="3"><strong><i class="fas fa-child"></i> Management of developing dentition</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Developing Dentition</td>
+                                    <td>SS crowns on deciduous teeth</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.SSCrownsOnDeciduousTeeth</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Developing Dentition</td>
+                                    <td>Extraction of deciduous teeth</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.ExtractionOfDeciduousTeeth</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Developing Dentition</td>
+                                    <td>Orthodontic Assessment</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.OrthodonticAssessment</span></td>
+                                </tr>
+
+                                <!-- Restoration of teeth -->
+                                <tr class="table-primary">
+                                    <td colspan="3"><strong><i class="fas fa-hammer"></i> Restoration of teeth</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Restoration of teeth</td>
+                                    <td>Rubber dam placement</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.RubberDamPlacement</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Restoration of teeth</td>
+                                    <td>Amalgam restorations</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.AmalgamRestorations</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Restoration of teeth</td>
+                                    <td>Anterior composite restorations</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.AnteriorCompositeRestorations</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Restoration of teeth</td>
+                                    <td>Posterior composite restorations</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.PosteriorCompositeRestorations</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Restoration of teeth</td>
+                                    <td>GIC</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.GIC</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Restoration of teeth</td>
+                                    <td>RCT incisor / canine</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.RCTIncisorCanine</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Restoration of teeth</td>
+                                    <td>RCT premolar</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.RCTPremolar</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Restoration of teeth</td>
+                                    <td>RCT molar</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.RCTMolar</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Restoration of teeth</td>
+                                    <td>Crowns - conventional</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.CrownsConventional</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Restoration of teeth</td>
+                                    <td>Onlays</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.Onlays</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Restoration of teeth</td>
+                                    <td>Posts</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.Posts</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Restoration of teeth</td>
+                                    <td>Bridge - resin retained</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.BridgeResinRetained</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Restoration of teeth</td>
+                                    <td>Bridge - conventional</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.BridgeConventional</span></td>
+                                </tr>
+
+                                <!-- Replacement of teeth -->
+                                <tr class="table-success">
+                                    <td colspan="3"><strong><i class="fas fa-teeth-open"></i> Replacement of teeth</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Replacement of teeth</td>
+                                    <td>Acrylic complete dentures</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.AcrylicCompleteDentures</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Replacement of teeth</td>
+                                    <td>Acrylic partial dentures</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.AcrylicPartialDentures</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Replacement of teeth</td>
+                                    <td>Cobalt-chrome partial dentures</td>
+                                    <td><span class="badge bg-primary fs-6">@Model.CobaltChromePartialDentures</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

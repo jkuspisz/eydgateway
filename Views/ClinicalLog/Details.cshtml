@@ -1,0 +1,442 @@
+@model EYDGateway.Models.ClinicalLog
+
+@{
+    ViewData["Title"] = "Clinical Log Details - " + Model.Month + " " + Model.Year;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-clipboard-list"></i> Clinical Log Details
+                    </h4>
+                    <small>@Model.Month @Model.Year - 
+                        @if (Model.IsCompleted)
+                        {
+                            <span class="badge bg-success">Completed</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning">In Progress</span>
+                        }
+                    </small>
+                </div>
+                <div class="card-body">
+                    <!-- General -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0"><i class="fas fa-cog"></i> General</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">DNA numbers:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-primary">@Model.DNANumbers</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Number of unbooked clinical hours:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-primary">@Model.NumberOfUnbookedClinicalHours</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Holidays:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-primary">@Model.Holidays</span></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Sick Days:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-primary">@Model.SickDays</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-6">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">UDAs evidenced on practice software:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-primary">@Model.UDAsEvidencedOnPracticeSoftware</span></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Clinical Assessment -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="fas fa-stethoscope"></i> Clinical Assessment</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Adult Examinations:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-info">@Model.AdultExaminations</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Paediatric Examinations:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-info">@Model.PaediatricExaminations</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Adult Radiographs:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-info">@Model.AdultRadiographs</span></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Paediatric Radiographs:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-info">@Model.PaediatricRadiographs</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Complex Medical Histories:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-info">@Model.PatientsWithComplexMedicalHistories</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">6 point periodontal chart:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-info">@Model.SixPointPeriodontalChart</span></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Oral Health Promotion -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-tooth"></i> Oral Health Promotion</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Diet analysis:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-success">@Model.DietAnalysis</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-6">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Fluoride varnish:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-success">@Model.FluorideVarnish</span></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Medical and dental emergencies -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Medical and dental emergencies</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Medical emergency incidents:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-danger">@Model.ManagementOfMedicalEmergencyIncident</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Dental trauma:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-danger">@Model.DentalTrauma</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Pulp extripation:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-danger">@Model.PulpExtripation</span></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Prescribing and therapeutics -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0"><i class="fas fa-pills"></i> Prescribing and therapeutics</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Prescribing (antimicrobials):</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-warning text-dark">@Model.PrescribingAntimicrobials</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">IV sedation:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-warning text-dark">@Model.IVSedation</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Inhalational sedation:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-warning text-dark">@Model.InhalationalSedation</span></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">GA Planning & Consent:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-warning text-dark">@Model.GeneralAnaesthesiaPlanningAndConsent</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-6">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">GA Treatment:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-warning text-dark">@Model.GeneralAnaesthesiaTreatmentUndertaken</span></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Periodontal Disease -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-dark text-white">
+                            <h5 class="mb-0"><i class="fas fa-teeth"></i> Periodontal Disease</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Non-surgical therapy:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-dark">@Model.NonSurgicalTherapy</span></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Removal of teeth -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0"><i class="fas fa-tools"></i> Removal of teeth</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Extraction of permanent teeth:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-secondary">@Model.ExtractionOfPermanentTeeth</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Complex extraction with sectioning:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-secondary">@Model.ComplexExtractionInvolvingSectioning</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Suturing:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-secondary">@Model.Suturing</span></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Management of developing dentition -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="fas fa-child"></i> Management of developing dentition</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">SS crowns on deciduous teeth:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-info">@Model.SSCrownsOnDeciduousTeeth</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Extraction of deciduous teeth:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-info">@Model.ExtractionOfDeciduousTeeth</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Orthodontic Assessment:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-info">@Model.OrthodonticAssessment</span></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Restoration of teeth -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-hammer"></i> Restoration of teeth</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Rubber dam placement:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-primary">@Model.RubberDamPlacement</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Amalgam restorations:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-primary">@Model.AmalgamRestorations</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Anterior composite:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-primary">@Model.AnteriorCompositeRestorations</span></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Posterior composite:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-primary">@Model.PosteriorCompositeRestorations</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">GIC:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-primary">@Model.GIC</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">RCT incisor/canine:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-primary">@Model.RCTIncisorCanine</span></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">RCT premolar:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-primary">@Model.RCTPremolar</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">RCT molar:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-primary">@Model.RCTMolar</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Crowns - conventional:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-primary">@Model.CrownsConventional</span></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Onlays:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-primary">@Model.Onlays</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Posts:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-primary">@Model.Posts</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Bridge - resin retained:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-primary">@Model.BridgeResinRetained</span></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Bridge - conventional:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-primary">@Model.BridgeConventional</span></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Replacement of teeth -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-teeth-open"></i> Replacement of teeth</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Acrylic complete dentures:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-success">@Model.AcrylicCompleteDentures</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Acrylic partial dentures:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-success">@Model.AcrylicPartialDentures</span></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-4">
+                                    <dl class="row">
+                                        <dt class="col-sm-8">Cobalt-chrome partial dentures:</dt>
+                                        <dd class="col-sm-4"><span class="badge bg-success">@Model.CobaltChromePartialDentures</span></dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a class="btn btn-secondary" asp-action="Index">
+                            <i class="fas fa-arrow-left"></i> Back to Clinical Logs
+                        </a>
+                        <div>
+                            @if (!Model.IsCompleted)
+                            {
+                                <a class="btn btn-outline-primary" asp-action="Edit" asp-route-id="@Model.Id">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <form asp-action="Complete" asp-route-id="@Model.Id" method="post" style="display: inline;">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-success" 
+                                            onclick="return confirm('Are you sure you want to complete this month? You will not be able to edit it afterwards.')">
+                                        <i class="fas fa-check-circle"></i> Complete Month
+                                    </button>
+                                </form>
+                            }
+                            <a class="btn btn-outline-danger" asp-action="Delete" asp-route-id="@Model.Id">
+                                <i class="fas fa-trash"></i> Delete
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

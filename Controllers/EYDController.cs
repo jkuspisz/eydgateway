@@ -159,6 +159,10 @@ namespace EYDGateway.Controllers
             var pltTotal = await _context.ProtectedLearningTimes.CountAsync(plt => plt.UserId == id);
             var pltComplete = await _context.ProtectedLearningTimes.CountAsync(plt => plt.UserId == id && !plt.IsLocked);
             
+            // Clinical Log counters - count entries and completed entries
+            var clinicalLogTotal = await _context.ClinicalLogs.CountAsync(cl => cl.EYDUserId == id);
+            var clinicalLogComplete = await _context.ClinicalLogs.CountAsync(cl => cl.EYDUserId == id && cl.IsCompleted);
+            
             // Learning Needs counters - count entries and completed status
             var learningNeedTotal = await _context.LearningNeeds.CountAsync(ln => ln.UserId == id);
             var learningNeedComplete = await _context.LearningNeeds.CountAsync(ln => ln.UserId == id && ln.Status == LearningNeedStatus.Completed);
@@ -224,7 +228,7 @@ namespace EYDGateway.Controllers
                     Icon = "fas fa-clipboard-list",
                     Sections = new List<PortfolioSection>
                     {
-                        new PortfolioSection { Id = "clinical-log", Title = "Clinical Experience Log", Action = "ClinicalLog" },
+                        new PortfolioSection { Id = "clinical-log", Title = "Monthly Clinical Log", Controller = "ClinicalLog", Action = "Index", TotalCount = clinicalLogTotal, CompletedCount = clinicalLogComplete },
                         new PortfolioSection { Id = "epa", Title = "Entrustable Activity Log", Action = "EPA" },
                         new PortfolioSection { Id = "significant-events", Title = "Significant Event Log", Action = "SignificantEvents" }
                     }

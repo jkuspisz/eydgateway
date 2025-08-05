@@ -1,0 +1,450 @@
+@model EYDGateway.ViewModels.EditClinicalLogViewModel
+
+@{
+    ViewData["Title"] = "Edit Clinical Log - " + Model.Month + " " + Model.Year;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit"></i> Edit Clinical Log
+                    </h4>
+                    <small>@Model.Month @Model.Year - EYD User: @(Model?.EYDUserName ?? "Unknown")</small>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="EYDUserId" />
+                        <input type="hidden" asp-for="Month" />
+                        <input type="hidden" asp-for="Year" />
+                        
+                        <!-- Month and Year Display (Read-only) -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-calendar"></i> Month
+                                    </label>
+                                    <input type="text" class="form-control" value="@Model.Month" readonly />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-calendar-alt"></i> Year
+                                    </label>
+                                    <input type="text" class="form-control" value="@Model.Year" readonly />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- General -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0"><i class="fas fa-cog"></i> General</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="DNANumbers" class="form-label">DNA numbers</label>
+                                            <input asp-for="DNANumbers" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="NumberOfUnbookedClinicalHours" class="form-label">Number of unbooked clinical hours</label>
+                                            <input asp-for="NumberOfUnbookedClinicalHours" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="Holidays" class="form-label">Holidays</label>
+                                            <input asp-for="Holidays" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="SickDays" class="form-label">Sick Days</label>
+                                            <input asp-for="SickDays" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="UDAsEvidencedOnPracticeSoftware" class="form-label">UDAs evidenced on practice software for this specific month</label>
+                                            <input asp-for="UDAsEvidencedOnPracticeSoftware" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Clinical Assessment -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0"><i class="fas fa-stethoscope"></i> Clinical Assessment</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="AdultExaminations" class="form-label">Adult Examinations</label>
+                                            <input asp-for="AdultExaminations" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="PaediatricExaminations" class="form-label">Paediatric Examinations (under 16 years of age)</label>
+                                            <input asp-for="PaediatricExaminations" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="AdultRadiographs" class="form-label">Adult Radiographs</label>
+                                            <input asp-for="AdultRadiographs" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="PaediatricRadiographs" class="form-label">Paediatric Radiographs (under 16 years of age)</label>
+                                            <input asp-for="PaediatricRadiographs" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="PatientsWithComplexMedicalHistories" class="form-label">Patients with complex Medical Histories</label>
+                                            <input asp-for="PatientsWithComplexMedicalHistories" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="SixPointPeriodontalChart" class="form-label">6 point periodontal chart</label>
+                                            <input asp-for="SixPointPeriodontalChart" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Oral Health Promotion -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0"><i class="fas fa-tooth"></i> Oral Health Promotion</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="DietAnalysis" class="form-label">Diet analysis</label>
+                                            <input asp-for="DietAnalysis" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="FluorideVarnish" class="form-label">Fluoride varnish</label>
+                                            <input asp-for="FluorideVarnish" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Medical and dental emergencies -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Medical and dental emergencies</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="ManagementOfMedicalEmergencyIncident" class="form-label">Management of medical emergency incident</label>
+                                            <input asp-for="ManagementOfMedicalEmergencyIncident" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="DentalTrauma" class="form-label">Dental trauma</label>
+                                            <input asp-for="DentalTrauma" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="PulpExtripation" class="form-label">Pulp extripation</label>
+                                            <input asp-for="PulpExtripation" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prescribing and therapeutics -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0"><i class="fas fa-pills"></i> Prescribing and therapeutics</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="PrescribingAntimicrobials" class="form-label">Prescribing (antimicrobials)</label>
+                                            <input asp-for="PrescribingAntimicrobials" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="IVSedation" class="form-label">IV sedation</label>
+                                            <input asp-for="IVSedation" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="InhalationalSedation" class="form-label">Inhalational sedation</label>
+                                            <input asp-for="InhalationalSedation" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="GeneralAnaesthesiaPlanningAndConsent" class="form-label">General Anaesthesia – Planning and Consent</label>
+                                            <input asp-for="GeneralAnaesthesiaPlanningAndConsent" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="GeneralAnaesthesiaTreatmentUndertaken" class="form-label">General Anaesthesia - Treatment undertaken</label>
+                                            <input asp-for="GeneralAnaesthesiaTreatmentUndertaken" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Periodontal Disease -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-dark text-white">
+                                <h5 class="mb-0"><i class="fas fa-teeth"></i> Periodontal Disease</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="NonSurgicalTherapy" class="form-label">Non-surgical therapy</label>
+                                            <input asp-for="NonSurgicalTherapy" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Removal of teeth -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0"><i class="fas fa-tools"></i> Removal of teeth</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="ExtractionOfPermanentTeeth" class="form-label">Extraction of permanent teeth</label>
+                                            <input asp-for="ExtractionOfPermanentTeeth" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="ComplexExtractionInvolvingSectioning" class="form-label">Complex extraction involving sectioning</label>
+                                            <input asp-for="ComplexExtractionInvolvingSectioning" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="Suturing" class="form-label">Suturing</label>
+                                            <input asp-for="Suturing" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Management of developing dentition -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0"><i class="fas fa-child"></i> Management of developing dentition</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="SSCrownsOnDeciduousTeeth" class="form-label">SS crowns on deciduous teeth</label>
+                                            <input asp-for="SSCrownsOnDeciduousTeeth" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="ExtractionOfDeciduousTeeth" class="form-label">Extraction of deciduous teeth</label>
+                                            <input asp-for="ExtractionOfDeciduousTeeth" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="OrthodonticAssessment" class="form-label">Orthodontic Assessment</label>
+                                            <input asp-for="OrthodonticAssessment" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Restoration of teeth -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0"><i class="fas fa-hammer"></i> Restoration of teeth</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="RubberDamPlacement" class="form-label">Rubber dam placement</label>
+                                            <input asp-for="RubberDamPlacement" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="AmalgamRestorations" class="form-label">Amalgam restorations</label>
+                                            <input asp-for="AmalgamRestorations" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="AnteriorCompositeRestorations" class="form-label">Anterior composite restorations</label>
+                                            <input asp-for="AnteriorCompositeRestorations" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="PosteriorCompositeRestorations" class="form-label">Posterior composite restorations</label>
+                                            <input asp-for="PosteriorCompositeRestorations" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="GIC" class="form-label">GIC</label>
+                                            <input asp-for="GIC" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="RCTIncisorCanine" class="form-label">RCT incisor / canine</label>
+                                            <input asp-for="RCTIncisorCanine" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="RCTPremolar" class="form-label">RCT premolar</label>
+                                            <input asp-for="RCTPremolar" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="RCTMolar" class="form-label">RCT molar</label>
+                                            <input asp-for="RCTMolar" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="CrownsConventional" class="form-label">Crowns - conventional</label>
+                                            <input asp-for="CrownsConventional" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="Onlays" class="form-label">Onlays</label>
+                                            <input asp-for="Onlays" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="Posts" class="form-label">Posts</label>
+                                            <input asp-for="Posts" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="BridgeResinRetained" class="form-label">Bridge - resin retained</label>
+                                            <input asp-for="BridgeResinRetained" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="BridgeConventional" class="form-label">Bridge - conventional</label>
+                                            <input asp-for="BridgeConventional" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Replacement of teeth -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0"><i class="fas fa-teeth-open"></i> Replacement of teeth</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="AcrylicCompleteDentures" class="form-label">Acrylic complete dentures</label>
+                                            <input asp-for="AcrylicCompleteDentures" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="AcrylicPartialDentures" class="form-label">Acrylic partial dentures</label>
+                                            <input asp-for="AcrylicPartialDentures" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label asp-for="CobaltChromePartialDentures" class="form-label">Cobalt-chrome partial dentures</label>
+                                            <input asp-for="CobaltChromePartialDentures" type="number" class="form-control" min="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a class="btn btn-secondary" asp-action="Index">
+                                <i class="fas fa-arrow-left"></i> Back to Clinical Logs
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Update Clinical Log
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
