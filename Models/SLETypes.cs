@@ -6,7 +6,7 @@ namespace EYDGateway.Models
         public const string DOPS = "DOPS";
         public const string MiniCEX = "MiniCEX";
         public const string DOPSSim = "DOPSSim";
-        public const string DCT = "DCT";
+        public const string DtCT = "DtCT";
         public const string DENTL = "DENTL";
 
         public static readonly Dictionary<string, string> TypeNames = new()
@@ -15,8 +15,8 @@ namespace EYDGateway.Models
             { DOPS, "Direct Observation of Procedural Skills (DOPS)" },
             { MiniCEX, "Mini Clinical Evaluation Exercise (Mini-CEX)" },
             { DOPSSim, "Simulated Direct Observation of Procedural Skills (Simulated DOPS)" },
-            { DCT, "Dental Care Treatment (DtCT)" },
-            { DENTL, "Dental Team Learning (DENTL)" }
+            { DtCT, "Developing the Clinical Teacher (DtCT)" },
+            { DENTL, "Direct Evaluation of Non-Technical Learning (DENTL)" }
         };
 
         public static string GetTypeName(string typeCode)

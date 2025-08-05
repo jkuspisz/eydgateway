@@ -1,0 +1,96 @@
+@model EYDGateway.ViewModels.CreateLearningNeedViewModel
+
+@{
+    ViewData["Title"] = "Create Learning Need";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4>@ViewData["Title"]</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label">Learning / Development Needs Name</label>
+                            <input asp-for="Name" class="form-control" required />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="DateIdentified" class="form-label">Date identified</label>
+                            <input asp-for="DateIdentified" class="form-control" type="date" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                            <span asp-validation-for="DateIdentified" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="LearningObjectives" class="form-label">Learning objective(s) identified</label>
+                            <textarea asp-for="LearningObjectives" class="form-control" rows="4" placeholder="Describe the specific learning objectives or skills to be developed..." required></textarea>
+                            <span asp-validation-for="LearningObjectives" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="HowToAddress" class="form-label">How will the learning objective be addressed?</label>
+                            <textarea asp-for="HowToAddress" class="form-control" rows="4" placeholder="Describe the methods, activities, or resources that will be used to achieve the learning objectives..." required></textarea>
+                            <span asp-validation-for="HowToAddress" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="WhenToMeet" class="form-label">When will the learning objective be met?</label>
+                                    <input asp-for="WhenToMeet" class="form-control" type="date" />
+                                    <span asp-validation-for="WhenToMeet" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Priority" class="form-label">What priority is this?</label>
+                                    <select asp-for="Priority" class="form-select" asp-items="Html.GetEnumSelectList<EYDGateway.Models.LearningNeedPriority>()">
+                                        <option value="">Select Priority</option>
+                                    </select>
+                                    <span asp-validation-for="Priority" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        <h5 class="text-muted">Achievement Details <small class="text-muted">(can be completed now or left for later)</small></h5>
+                        
+                        <div class="mb-3">
+                            <label asp-for="AchievedBy" class="form-label">The Development/Learning Need was achieved by: (DATE)</label>
+                            <textarea asp-for="AchievedBy" class="form-control" rows="3" placeholder="Describe how the learning need was achieved (can be left empty if not yet completed)..."></textarea>
+                            <span asp-validation-for="AchievedBy" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="ReflectionOnMeeting" class="form-label">Reflection on meeting the development / learning need</label>
+                            <textarea asp-for="ReflectionOnMeeting" class="form-control" rows="4" placeholder="Reflect on how well the learning objectives were met and what was learned (can be left empty if not yet completed)..."></textarea>
+                            <span asp-validation-for="ReflectionOnMeeting" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="DateOfAchievement" class="form-label">Date of Achievement</label>
+                            <input asp-for="DateOfAchievement" class="form-control" type="date" />
+                            <span asp-validation-for="DateOfAchievement" class="text-danger"></span>
+                            <div class="form-text">Leave empty if not yet achieved</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Create Learning Need</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

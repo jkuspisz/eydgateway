@@ -1,0 +1,124 @@
+@model IEnumerable<EYDGateway.Models.ProtectedLearningTime>
+
+@{
+    ViewData["Title"] = "Protected Learning Time";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>@ViewData["Title"]</h2>
+                    @if (ViewBag.TargetUserName != null && ViewBag.TargetUserName != User.Identity.Name)
+                    {
+                        <p class="text-muted mb-0">Viewing Protected Learning Time for: <strong>@ViewBag.TargetUserName</strong></p>
+                    }
+                </div>
+                @if (ViewBag.CanEdit == true)
+                {
+                    <a asp-action="Create" asp-route-id="@ViewBag.TargetUserId" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add PLT Entry
+                    </a>
+                }
+                else
+                {
+                    <span class="badge bg-info fs-6">
+                        <i class="fas fa-eye me-2"></i>View Only
+                    </span>
+                }
+            </div>
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger">
+                    @TempData["Error"]
+                </div>
+            }
+
+            @if (Model.Any())
+            {
+                <div class="row">
+                    @foreach (var item in Model)
+                    {
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-start">
+                                    <h6 class="card-title mb-0">@Html.DisplayFor(modelItem => item.Title)</h6>
+                                    @if (item.IsLocked)
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-lock me-1"></i>Completed
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-edit me-1"></i>Draft
+                                        </span>
+                                    }
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        <strong>Format:</strong> @Html.DisplayFor(modelItem => item.Format)
+                                    </p>
+                                    <p class="card-text">
+                                        <strong>Length:</strong> @Html.DisplayFor(modelItem => item.LengthOfPLT)
+                                    </p>
+                                    <p class="card-text">
+                                        <strong>When & Who Led:</strong> @Html.DisplayFor(modelItem => item.WhenAndWhoLed)
+                                    </p>
+                                    <p class="card-text">
+                                        <strong>EPA Mappings:</strong> 
+                                        @if (item.EPAMappings != null && item.EPAMappings.Any())
+                                        {
+                                            <span class="badge bg-info">@item.EPAMappings.Count() EPAs</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">No EPAs assigned</span>
+                                        }
+                                    </p>
+                                    <p class="text-muted small">
+                                        <strong>Created:</strong> @item.CreatedAt.ToString("MMM dd, yyyy")
+                                    </p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="btn-group w-100" role="group">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm">View</a>
+                                        @if (ViewBag.CanEdit == true && !item.IsLocked)
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-secondary btn-sm">Edit</a>
+                                        }
+                                        @if (ViewBag.CanEdit == true)
+                                        {
+                                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger btn-sm">Delete</a>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center mt-5">
+                    <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Protected Learning Time Recorded</h4>
+                    @if (ViewBag.CanEdit == true)
+                    {
+                        <p class="text-muted">Start recording your protected learning activities and sessions.</p>
+                        <a asp-action="Create" asp-route-id="@ViewBag.TargetUserId" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add Your First PLT Entry
+                        </a>
+                    }
+                    else
+                    {
+                        <p class="text-muted">This user hasn't recorded any Protected Learning Time entries yet.</p>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,152 @@
+@model EYDGateway.Controllers.EYDPortfolioViewModel
+@{
+    ViewData["Title"] = $"Portfolio - {Model.UserName}";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>Personal Portfolio</h2>
+                    <p class="text-muted">Welcome, @Model.UserName</p>
+                    <small class="text-muted">Scheme: @Model.AssignedScheme | Area: @Model.AssignedArea</small>
+                    <div class="mt-2">
+                        <span class="badge bg-success">Portfolio ID: @Model.UserId.Substring(0, 8)...</span>
+                    </div>
+                </div>
+                <div>
+                    <span class="badge bg-info fs-6">EYD User</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Portfolio Section Groups -->
+    <div class="row">
+        @foreach (var group in Model.PortfolioSectionGroups)
+        {
+            <div class="col-lg-4 col-md-6 mb-3">
+                <div class="card portfolio-group-card h-100">
+                    <div class="card-header bg-primary text-white py-2">
+                        <h6 class="mb-0">
+                            <i class="@group.Icon me-2"></i>@group.Title
+                        </h6>
+                        @if (group.TotalItems > 0)
+                        {
+                            <small class="opacity-75">@group.CompletedItems / @group.TotalItems completed</small>
+                        }
+                    </div>
+                    <div class="card-body py-2">
+                        @foreach (var portfolioSection in group.Sections)
+                        {
+                            <div class="portfolio-section-item mb-2" onclick="navigateToSection('@portfolioSection.Controller', '@portfolioSection.Action', '@portfolioSection.Parameters', '@Model.UserId')">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h6 class="portfolio-section-title mb-1">@portfolioSection.Title</h6>
+                                        @if (portfolioSection.CompletedCount.HasValue && portfolioSection.TotalCount.HasValue)
+                                        {
+                                            <small class="text-muted">@portfolioSection.CompletedCount / @portfolioSection.TotalCount items</small>
+                                        }
+                                    </div>
+                                    <div class="portfolio-section-icon">
+                                        @{
+                                            var statusIcon = portfolioSection.Status switch
+                                            {
+                                                "complete" => "fas fa-check-circle text-success",
+                                                "in-progress" => "fas fa-clock text-warning",
+                                                _ => "fas fa-play-circle text-muted"
+                                            };
+                                        }
+                                        <i class="@statusIcon"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Recent Activity Summary -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock me-2"></i>Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Your recent portfolio activities will appear here.</p>
+                    <!-- This would be populated with user-specific data -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.portfolio-group-card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.portfolio-group-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.portfolio-section-item {
+    padding: 8px 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.portfolio-section-item:hover {
+    background-color: #f8f9fa;
+    border-color: #007bff;
+}
+
+.portfolio-section-title {
+    font-size: 0.9rem;
+    margin-bottom: 2px;
+}
+
+.portfolio-section-icon {
+    opacity: 0.7;
+}
+</style>
+
+<script>
+function navigateToSection(controller, action, parameters, userId) {
+    // Default to EYD controller if no controller specified
+    if (!controller || controller === '') {
+        controller = 'EYD';
+    }
+    
+    var url = '/' + controller + '/' + action;
+    
+    // Add userId as route parameter (for ASP.NET Core default routing)
+    if (userId && userId !== '') {
+        url += '/' + userId;
+    }
+    
+    // Add any additional parameters as query parameters
+    if (parameters && parameters !== '') {
+        url += '?' + parameters;
+    }
+    
+    console.log('DEBUG: navigateToSection - Controller:', controller, 'Action:', action, 'Parameters:', parameters, 'UserId:', userId);
+    console.log('DEBUG: navigateToSection - Final URL:', url);
+    window.location.href = url;
+}
+</script>

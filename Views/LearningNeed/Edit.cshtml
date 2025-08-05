@@ -1,0 +1,109 @@
+@model EYDGateway.ViewModels.EditLearningNeedViewModel
+
+@{
+    ViewData["Title"] = "Edit Learning Need";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4>@ViewData["Title"]</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="Id" />
+                        
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label">Learning / Development Needs Name</label>
+                            <input asp-for="Name" class="form-control" required />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="DateIdentified" class="form-label">Date identified</label>
+                            <input asp-for="DateIdentified" class="form-control" type="date" required />
+                            <span asp-validation-for="DateIdentified" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="LearningObjectives" class="form-label">Learning objective(s) identified</label>
+                            <textarea asp-for="LearningObjectives" class="form-control" rows="4" placeholder="Describe the specific learning objectives or skills to be developed..." required></textarea>
+                            <span asp-validation-for="LearningObjectives" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="HowToAddress" class="form-label">How will the learning objective be addressed?</label>
+                            <textarea asp-for="HowToAddress" class="form-control" rows="4" placeholder="Describe the methods, activities, or resources that will be used to achieve the learning objectives..." required></textarea>
+                            <span asp-validation-for="HowToAddress" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="WhenToMeet" class="form-label">When will the learning objective be met?</label>
+                                    <input asp-for="WhenToMeet" class="form-control" type="date" />
+                                    <span asp-validation-for="WhenToMeet" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Priority" class="form-label">What priority is this?</label>
+                                    <select asp-for="Priority" class="form-select" asp-items="Html.GetEnumSelectList<EYDGateway.Models.LearningNeedPriority>()">
+                                        <option value="">Select Priority</option>
+                                    </select>
+                                    <span asp-validation-for="Priority" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="Status" class="form-label">Status</label>
+                            <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<EYDGateway.Models.LearningNeedStatus>()">
+                            </select>
+                            <span asp-validation-for="Status" class="text-danger"></span>
+                        </div>
+                        
+                        <hr class="my-4">
+                        <h5 class="text-muted">Achievement Section <small class="text-muted">(ES/TPD Completion)</small></h5>
+                        
+                        <div class="mb-3">
+                            <label asp-for="AchievedBy" class="form-label">Achievement Method</label>
+                            <textarea asp-for="AchievedBy" class="form-control" rows="3" placeholder="How was this learning need achieved?"></textarea>
+                            <span asp-validation-for="AchievedBy" class="text-danger"></span>
+                            <div class="form-text">Describe how the learning objective was achieved.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="ReflectionOnMeeting" class="form-label">Reflection on Achievement</label>
+                            <textarea asp-for="ReflectionOnMeeting" class="form-control" rows="4" placeholder="Reflection on meeting the development/learning need..."></textarea>
+                            <span asp-validation-for="ReflectionOnMeeting" class="text-danger"></span>
+                            <div class="form-text">Reflect on how well the learning objective was met and what was learned.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="DateOfAchievement" class="form-label">Date of Achievement</label>
+                            <input asp-for="DateOfAchievement" class="form-control" type="date" />
+                            <span asp-validation-for="DateOfAchievement" class="text-danger"></span>
+                            <div class="form-text">Date when the learning need was completed.</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                            <div>
+                                <a asp-action="Details" asp-route-id="@Model?.Id" class="btn btn-info me-2">Details</a>
+                                <button type="submit" class="btn btn-primary">Update Learning Need</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

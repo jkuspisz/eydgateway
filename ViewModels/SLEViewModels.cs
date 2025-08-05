@@ -15,8 +15,6 @@ namespace EYDGateway.ViewModels
         public string Audience { get; set; } = string.Empty; // For DtCT
         public string AudienceSetting { get; set; } = string.Empty; // For DtCT combined
         
-        public string LearningObjectives { get; set; } = string.Empty;
-        
         // EPA Selection - validation depends on SLE type
         public List<int> SelectedEPAIds { get; set; } = new List<int>();
         
@@ -29,7 +27,8 @@ namespace EYDGateway.ViewModels
         
         // Available options for dropdowns
         public List<(string Code, string Name)> AvailableSLETypes { get; set; } = new List<(string Code, string Name)>();
-        public List<ApplicationUser> AvailableAssessors { get; set; } = new List<ApplicationUser>();
+        public List<ApplicationUser> AvailableAssessors { get; set; } = new List<ApplicationUser>(); // ES and TPD users in area
+        public ApplicationUser? AssignedES { get; set; } // The EYD's assigned ES for quick selection
         
         // Helper method to get EPA validation requirements
         public int GetMaxEPASelection()
@@ -91,7 +90,9 @@ namespace EYDGateway.ViewModels
         public string Description { get; set; } = string.Empty;
         
         // Assessment Form
-        public string AssessmentFeedback { get; set; } = string.Empty;
+        public string BehaviourFeedback { get; set; } = string.Empty;
+        public string AgreedAction { get; set; } = string.Empty;
+        public string AssessorPosition { get; set; } = string.Empty;
         public int AssessmentRating { get; set; } = 3;
         
         // For external assessors - limited view
@@ -122,7 +123,9 @@ namespace EYDGateway.ViewModels
     {
         public int SLEId { get; set; }
         public string SLETitle { get; set; } = string.Empty;
-        public string AssessmentFeedback { get; set; } = string.Empty;
+        public string BehaviourFeedback { get; set; } = string.Empty;
+        public string AgreedAction { get; set; } = string.Empty;
+        public string AssessorPosition { get; set; } = string.Empty;
         public int AssessmentRating { get; set; }
         public string AssessorName { get; set; } = string.Empty;
         public DateTime AssessmentCompletedAt { get; set; }

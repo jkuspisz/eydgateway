@@ -1,0 +1,66 @@
+@model EYDGateway.Models.LearningNeed
+
+@{
+    ViewData["Title"] = "Delete Learning Need";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4>@ViewData["Title"]</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Warning!</strong> Are you sure you want to delete this learning need? This action cannot be undone.
+                    </div>
+                    
+                    <dl class="row">
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Name)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.Name)</dd>
+                        
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.DateIdentified)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.DateIdentified)</dd>
+                        
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.LearningObjectives)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.LearningObjectives)</dd>
+                        
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Priority)</dt>
+                        <dd class="col-sm-9">
+                            <span class="badge bg-@(Model.Priority switch {
+                                EYDGateway.Models.LearningNeedPriority.Critical => "danger",
+                                EYDGateway.Models.LearningNeedPriority.High => "warning",
+                                EYDGateway.Models.LearningNeedPriority.Medium => "info",
+                                EYDGateway.Models.LearningNeedPriority.Low => "secondary",
+                                _ => "secondary"
+                            })">@Html.DisplayFor(model => model.Priority)</span>
+                        </dd>
+                        
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Status)</dt>
+                        <dd class="col-sm-9">
+                            <span class="badge bg-@(Model.Status switch {
+                                EYDGateway.Models.LearningNeedStatus.Completed => "success",
+                                EYDGateway.Models.LearningNeedStatus.Submitted => "primary",
+                                EYDGateway.Models.LearningNeedStatus.Draft => "info",
+                                EYDGateway.Models.LearningNeedStatus.Deferred => "secondary",
+                                _ => "secondary"
+                            })">@Html.DisplayFor(model => model.Status)</span>
+                        </dd>
+                    </dl>
+                    
+                    <form asp-action="Delete">
+                        <input type="hidden" asp-for="Id" />
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>Delete Learning Need
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

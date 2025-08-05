@@ -1,0 +1,95 @@
+@model IEnumerable<EYDGateway.Models.LearningNeed>
+
+@{
+    ViewData["Title"] = "Learning/Development Needs";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>@ViewData["Title"]</h2>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Add Learning Need
+                </a>
+            </div>
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger">
+                    @TempData["Error"]
+                </div>
+            }
+
+            @if (Model.Any())
+            {
+                <div class="row">
+                    @foreach (var item in Model)
+                    {
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-start">
+                                    <h6 class="card-title mb-0">@Html.DisplayFor(modelItem => item.Name)</h6>
+                                    <span class="badge @(item.Status == EYDGateway.Models.LearningNeedStatus.Completed ? "bg-success" : 
+                                          item.Status == EYDGateway.Models.LearningNeedStatus.Submitted ? "bg-warning" : 
+                                          item.Status == EYDGateway.Models.LearningNeedStatus.Deferred ? "bg-secondary" : "bg-info")">
+                                        @Html.DisplayFor(modelItem => item.Status)
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text"><strong>Learning Objectives:</strong></p>
+                                    <p class="card-text small">@Html.DisplayFor(modelItem => item.LearningObjectives)</p>
+                                    
+                                    <p class="text-muted small">
+                                        <strong>Priority:</strong> 
+                                        <span class="badge @(item.Priority == EYDGateway.Models.LearningNeedPriority.Critical ? "bg-danger" :
+                                              item.Priority == EYDGateway.Models.LearningNeedPriority.High ? "bg-warning" : 
+                                              item.Priority == EYDGateway.Models.LearningNeedPriority.Medium ? "bg-info" : "bg-secondary")">
+                                            @Html.DisplayFor(modelItem => item.Priority)
+                                        </span>
+                                    </p>
+                                    
+                                    @if (item.WhenToMeet != DateTime.MinValue)
+                                    {
+                                        <p class="text-muted small">
+                                            <strong>Target:</strong> @item.WhenToMeet.ToString("MMM dd, yyyy")
+                                        </p>
+                                    }
+                                    
+                                    <p class="text-muted small">
+                                        <strong>Identified:</strong> @item.DateIdentified.ToString("MMM dd, yyyy")
+                                    </p>
+                                    
+                                    @if (item.Status == EYDGateway.Models.LearningNeedStatus.Completed && item.DateOfAchievement != DateTime.MinValue)
+                                    {
+                                        <p class="text-success small">
+                                            <strong>Achieved:</strong> @item.DateOfAchievement.ToString("MMM dd, yyyy")
+                                        </p>
+                                    }
+                                </div>
+                                <div class="card-footer">
+                                    <div class="btn-group w-100" role="group">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm">View</a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-secondary btn-sm">Edit</a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger btn-sm">Delete</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center mt-5">
+                    <i class="fas fa-graduation-cap fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Learning Needs Recorded</h4>
+                    <p class="text-muted">Start by identifying and recording your learning and development needs.</p>
+                    <a asp-action="Create" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add Your First Learning Need
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>

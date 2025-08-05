@@ -94,9 +94,16 @@
 
 <script>
 function viewEYDDashboard(eydId) {
-    // This will navigate to the EYD's dashboard/profile page
-    // You'll need to implement the actual route based on your EYD dashboard structure
-    window.location.href = '/EYD/Dashboard/' + eydId;
+    // Navigate to the EYD's portfolio page which now allows ES access
+    // Using query parameter instead of route parameter for testing
+    console.log('DEBUG: viewEYDDashboard called with eydId:', eydId);
+    console.log('DEBUG: typeof eydId:', typeof eydId);
+    console.log('DEBUG: eydId length:', eydId ? eydId.length : 'null/undefined');
+    
+    var url = '/EYD/Portfolio/' + eydId;
+    console.log('DEBUG: Navigating to:', url);
+    
+    window.location.href = url;
 }
 </script>
 

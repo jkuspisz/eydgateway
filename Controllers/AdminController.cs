@@ -145,6 +145,9 @@ namespace EYDGateway.Controllers
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
+                    // Add user to the selected Identity role
+                    await _userManager.AddToRoleAsync(user, model.Role);
+                    
                     TempData["SuccessMessage"] = $"User '{model.DisplayName}' created successfully.";
                     return RedirectToAction("Dashboard");
                 }

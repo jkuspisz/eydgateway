@@ -1,0 +1,215 @@
+@model EYDGateway.ViewModels.EditReflectionViewModel
+@{
+    ViewData["Title"] = "Edit Reflection";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>Edit Reflection
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="CreatedAt" />
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Title" class="form-label">Focus/Title of Reflection</label>
+                                    <input asp-for="Title" class="form-control" placeholder="What is the focus or title of this reflection?" required />
+                                    <span asp-validation-for="Title" class="text-danger"></span>
+                                    <div class="form-text">Provide a clear, descriptive title for your reflection.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="WhenDidItHappen" class="form-label">When did it happen?</label>
+                                    <input asp-for="WhenDidItHappen" class="form-control" placeholder="e.g., During my surgery rotation in March 2024" required />
+                                    <span asp-validation-for="WhenDidItHappen" class="text-danger"></span>
+                                    <div class="form-text">Describe when this experience occurred (text field, not a date).</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="ReasonsForWriting" class="form-label">Reasons for writing the reflection</label>
+                            <textarea asp-for="ReasonsForWriting" class="form-control" rows="4" placeholder="Why are you writing this reflection? What prompted you to reflect on this experience?" required></textarea>
+                            <span asp-validation-for="ReasonsForWriting" class="text-danger"></span>
+                            <div class="form-text">Explain what motivated you to reflect on this particular experience.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="NextSteps" class="form-label">Next Steps</label>
+                            <textarea asp-for="NextSteps" class="form-control" rows="4" placeholder="What are your next steps based on this reflection?" required></textarea>
+                            <span asp-validation-for="NextSteps" class="text-danger"></span>
+                            <div class="form-text">Outline any actions, goals, or changes you plan to make as a result of this reflection.</div>
+                        </div>
+                        
+                        <!-- EPA Selection Section -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6>EPA Selection (Select 2 or more)</h6>
+                                <small class="text-muted">
+                                    <span id="epa-requirement-text">Please select at least 2 EPAs that this reflection relates to</span>
+                                </small>
+                            </div>
+                            <div class="card-body">
+                                <div id="epa-selection-area">
+                                    <div class="text-center">
+                                        <i class="fas fa-spinner fa-spin"></i> Loading available EPAs...
+                                    </div>
+                                </div>
+                                <span asp-validation-for="SelectedEPAIds" class="text-danger"></span>
+                                <div id="selected-epas-summary" style="display: none;">
+                                    <h6>Selected EPAs:</h6>
+                                    <div id="selected-epas-list"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input asp-for="IsLocked" class="form-check-input" />
+                                <label asp-for="IsLocked" class="form-check-label">
+                                    Lock this reflection (prevents further editing)
+                                </label>
+                            </div>
+                            <div class="form-text">Once locked, this reflection cannot be edited unless unlocked by an administrator.</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                            <div>
+                                <a asp-action="Details" asp-route-id="@Model?.Id" class="btn btn-info me-2">Details</a>
+                                <button type="submit" class="btn btn-warning">Update Reflection</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        // Store currently selected EPA IDs from the model
+        var currentlySelectedEPAIds = @Html.Raw(Json.Serialize(Model?.SelectedEPAIds ?? new List<int>()));
+        
+        $(document).ready(function() {
+            // Load EPAs immediately for reflections
+            loadAvailableEPAs();
+        });
+
+        function loadAvailableEPAs() {
+            console.log('Loading EPAs for reflection edit');
+            $('#epa-selection-area').html('<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading available EPAs...</div>');
+            
+            $.ajax({
+                url: '@Url.Action("GetAvailableEPAs", "Reflection")',
+                type: 'GET',
+                success: function(response) {
+                    console.log('EPA AJAX response:', response);
+                    if (response.success) {
+                        renderEPASelection(response.epas, response.minSelections);
+                        updateEPARequirements(response.minSelections);
+                    } else {
+                        console.error('EPA loading failed:', response.message);
+                        $('#epa-selection-area').html('<div class="alert alert-danger">Error loading EPAs: ' + response.message + '</div>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('EPA AJAX error:', status, error, xhr.responseText);
+                    $('#epa-selection-area').html('<div class="alert alert-danger">Failed to load EPAs. Please try again. Error: ' + error + '</div>');
+                }
+            });
+        }
+
+        function renderEPASelection(epas, minSelections) {
+            console.log('Rendering EPAs:', epas, 'minSelections:', minSelections);
+            var html = '<div class="row">';
+            
+            epas.forEach(function(epa, index) {
+                if (index % 2 === 0 && index > 0) {
+                    html += '</div><div class="row">';
+                }
+                
+                html += '<div class="col-md-6">';
+                html += '<div class="form-check mb-2">';
+                html += '<input class="form-check-input epa-checkbox" type="checkbox" value="' + epa.id + '" id="epa_' + epa.id + '" name="SelectedEPAIds">';
+                html += '<label class="form-check-label" for="epa_' + epa.id + '">';
+                html += '<strong>' + epa.code + '</strong> - ' + epa.title;
+                if (epa.description) {
+                    html += '<br><small class="text-muted">' + epa.description + '</small>';
+                }
+                html += '</label>';
+                html += '</div>';
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            
+            if (epas.length === 0) {
+                html = '<div class="alert alert-info">No EPAs are currently available.</div>';
+            }
+            
+            $('#epa-selection-area').html(html);
+            
+            // Restore currently selected EPAs from the model
+            if (currentlySelectedEPAIds && currentlySelectedEPAIds.length > 0) {
+                currentlySelectedEPAIds.forEach(function(epaId) {
+                    $('#epa_' + epaId).prop('checked', true);
+                });
+                updateSelectedEPAsSummary();
+            }
+            
+            // Add change event handlers
+            $('.epa-checkbox').change(function() {
+                validateEPASelection(minSelections);
+                updateSelectedEPAsSummary();
+            });
+        }
+
+        function updateEPARequirements(minSelections) {
+            $('#epa-requirement-text').text('Please select at least ' + minSelections + ' EPAs that this reflection relates to');
+        }
+
+        function validateEPASelection(minSelections) {
+            var selectedCount = $('.epa-checkbox:checked').length;
+            
+            // Update UI feedback based on selection count
+            if (selectedCount >= minSelections) {
+                $('.epa-checkbox').removeClass('is-invalid');
+                $('#epa-selection-area').removeClass('border-danger');
+            } else {
+                $('#epa-selection-area').addClass('border-danger');
+            }
+        }
+
+        function updateSelectedEPAsSummary() {
+            var selectedEPAs = $('.epa-checkbox:checked');
+            
+            if (selectedEPAs.length > 0) {
+                var summaryHtml = '<div class="d-flex flex-wrap gap-1">';
+                selectedEPAs.each(function() {
+                    var label = $('label[for="' + $(this).attr('id') + '"]').clone();
+                    label.find('br, small').remove(); // Remove description
+                    summaryHtml += '<span class="badge bg-warning">' + label.text().trim() + '</span>';
+                });
+                summaryHtml += '</div>';
+                
+                $('#selected-epas-list').html(summaryHtml);
+                $('#selected-epas-summary').show();
+            } else {
+                $('#selected-epas-summary').hide();
+            }
+        }
+    </script>
+}

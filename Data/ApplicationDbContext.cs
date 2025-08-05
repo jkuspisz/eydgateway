@@ -18,6 +18,14 @@ namespace EYDGateway.Data
         public DbSet<EPA> EPAs { get; set; }
         public DbSet<EPAMapping> EPAMappings { get; set; }
         public DbSet<SLE> SLEs { get; set; }
+        
+        // User-scoped portfolio data models
+        public DbSet<PortfolioReflection> Reflections { get; set; }
+        public DbSet<DocumentUpload> DocumentUploads { get; set; }
+        public DbSet<LearningLog> LearningLogs { get; set; }
+        public DbSet<ClinicalExperienceLog> ClinicalExperienceLogs { get; set; }
+        public DbSet<ProtectedLearningTime> ProtectedLearningTimes { get; set; }
+        public DbSet<LearningNeed> LearningNeeds { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -217,9 +225,6 @@ namespace EYDGateway.Data
                 entity.Property(e => e.Location)
                     .HasColumnType("varchar(200)");
                     
-                entity.Property(e => e.LearningObjectives)
-                    .HasColumnType("varchar(500)");
-                    
                 entity.Property(e => e.AssessorUserId)
                     .HasColumnType("varchar(450)");
                     
@@ -241,8 +246,14 @@ namespace EYDGateway.Data
                 entity.Property(e => e.AssessmentCompletedAt)
                     .HasColumnType("timestamp with time zone");
                     
-                entity.Property(e => e.AssessmentFeedback)
+                entity.Property(e => e.BehaviourFeedback)
                     .HasColumnType("varchar(2000)");
+                    
+                entity.Property(e => e.AgreedAction)
+                    .HasColumnType("varchar(1000)");
+                    
+                entity.Property(e => e.AssessorPosition)
+                    .HasColumnType("varchar(200)");
                     
                 entity.Property(e => e.ReflectionNotes)
                     .HasColumnType("varchar(1000)");
@@ -279,6 +290,9 @@ namespace EYDGateway.Data
                 entity.HasIndex(e => e.SLEType);
                 entity.HasIndex(e => e.Status);
             });
+
+            // TODO: Add configurations for new user-scoped models after migration
+            // PortfolioReflection, DocumentUpload, LearningLog, ClinicalExperienceLog
         }
     }
 }

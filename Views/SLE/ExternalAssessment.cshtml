@@ -1,0 +1,226 @@
+@model EYDGateway.ViewModels.SLEDetailViewModel
+@{
+    ViewData["Title"] = "External Assessment - " + Model.SLE.Title;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h4><i class="fas fa-clipboard-check"></i> External Assessment</h4>
+                <p class="mb-0">You have been invited to assess this Supervised Learning Event (SLE). Please complete the assessment form below.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>SLE Details</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">EYD:</dt>
+                        <dd class="col-sm-9">@Model.SLE.EYDUser.DisplayName</dd>
+                        
+                        <dt class="col-sm-3">SLE Type:</dt>
+                        <dd class="col-sm-9">@Model.SLE.SLEType</dd>
+                        
+                        <dt class="col-sm-3">Title:</dt>
+                        <dd class="col-sm-9">@Model.SLE.Title</dd>
+                        
+                        <dt class="col-sm-3">Description:</dt>
+                        <dd class="col-sm-9">@Model.SLE.Description</dd>
+                        
+                        <dt class="col-sm-3">Scheduled Date:</dt>
+                        <dd class="col-sm-9">@Model.SLE.ScheduledDate.ToString("dddd, MMMM dd, yyyy")</dd>
+                        
+                        @if (!string.IsNullOrEmpty(Model.SLE.Location))
+                        {
+                            <dt class="col-sm-3">Location:</dt>
+                            <dd class="col-sm-9">@Model.SLE.Location</dd>
+                        }
+                        
+                        @if (!string.IsNullOrEmpty(Model.SLE.Setting))
+                        {
+                            <dt class="col-sm-3">Setting:</dt>
+                            <dd class="col-sm-9">@Model.SLE.Setting</dd>
+                        }
+                        
+                        @if (!string.IsNullOrEmpty(Model.SLE.Audience))
+                        {
+                            <dt class="col-sm-3">Audience:</dt>
+                            <dd class="col-sm-9">@Model.SLE.Audience</dd>
+                        }
+                        
+                        @if (!string.IsNullOrEmpty(Model.SLE.AudienceSetting))
+                        {
+                            <dt class="col-sm-3">Audience Setting:</dt>
+                            <dd class="col-sm-9">@Model.SLE.AudienceSetting</dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+            
+            @if (Model.LinkedEPAs.Any())
+            {
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6>Associated EPAs</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach (var epa in Model.LinkedEPAs)
+                            {
+                                <div class="col-md-6 mb-2">
+                                    <div class="border rounded p-2">
+                                        <strong>@epa.Code</strong>
+                                        <br />
+                                        <small class="text-muted">@epa.Title</small>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            
+            <!-- Assessment Form -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5>Assessment Form</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="SubmitExternalAssessment" asp-route-token="@Model.SLE.ExternalAccessToken" method="post">
+                        <div class="alert alert-info">
+                            <strong>Assessment Instructions:</strong> Please complete the following three assessment components.
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <label for="behaviourFeedback"><strong>1. Feedback based on the behaviours observed</strong></label>
+                            <textarea class="form-control" name="BehaviourFeedback" id="behaviourFeedback" rows="6" 
+                                     placeholder="Describe the specific behaviours you observed during this SLE..." required></textarea>
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <label for="agreedAction"><strong>2. Agreed action</strong></label>
+                            <textarea class="form-control" name="AgreedAction" id="agreedAction" rows="4" 
+                                     placeholder="What actions have been agreed for the EYD's development..." required></textarea>
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <label for="assessorPosition"><strong>3. Assessor's Position and Name (if external invite)</strong></label>
+                            <input type="text" class="form-control" name="AssessorPosition" id="assessorPosition" 
+                                   placeholder="Your professional position/title and name..." required />
+                        </div>
+                        
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check"></i> Submit Assessment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6>Assessment Guidelines</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">
+                        <strong>For @Model.SLE.SLEType Assessment:</strong>
+                    </p>
+                    
+                    @switch (Model.SLE.SLEType)
+                    {
+                        case "CBD":
+                            <ul class="small">
+                                <li>Focus on case-based discussion and clinical reasoning</li>
+                                <li>Assess knowledge application and decision-making</li>
+                                <li>Evaluate communication and professional behavior</li>
+                            </ul>
+                            break;
+                        case "DOPS":
+                            <ul class="small">
+                                <li>Observe direct patient care procedures</li>
+                                <li>Assess technical skills and safety measures</li>
+                                <li>Evaluate patient interaction and professionalism</li>
+                            </ul>
+                            break;
+                        case "DOPSSim":
+                            <ul class="small">
+                                <li>Assess simulated procedure performance</li>
+                                <li>Focus on technical competency and safety</li>
+                                <li>Evaluate decision-making under pressure</li>
+                            </ul>
+                            break;
+                        case "MiniCEX":
+                            <ul class="small">
+                                <li>Observe patient encounter and examination</li>
+                                <li>Assess clinical skills and patient communication</li>
+                                <li>Evaluate professionalism and ethics</li>
+                            </ul>
+                            break;
+                        case "DENTL":
+                            <ul class="small">
+                                <li>Focus on dental teaching and learning activities</li>
+                                <li>Assess educational delivery and student engagement</li>
+                                <li>Evaluate teaching methods and effectiveness</li>
+                            </ul>
+                            break;
+                        case "DtCT":
+                            <ul class="small">
+                                <li>Assess dental teaching or clinical training</li>
+                                <li>Focus on educational objectives achievement</li>
+                                <li>Evaluate interaction with learners</li>
+                            </ul>
+                            break;
+                    }
+                    
+                    <hr class="my-3">
+                    <p class="small text-muted">
+                        <strong>Remember to consider:</strong>
+                    </p>
+                    <ul class="small text-muted">
+                        <li>Professional standards and competencies</li>
+                        <li>Patient safety and care quality</li>
+                        <li>Communication effectiveness</li>
+                        <li>Learning objectives achievement</li>
+                        <li>Areas for future development</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Form validation
+            $('form').on('submit', function(e) {
+                var rating = $('select[name="OverallRating"]').val();
+                var feedback = $('textarea[name="FeedbackComments"]').val().trim();
+                
+                if (!rating) {
+                    alert('Please select an overall performance rating.');
+                    e.preventDefault();
+                    return false;
+                }
+                
+                if (feedback.length < 10) {
+                    alert('Please provide meaningful feedback (at least 10 characters).');
+                    e.preventDefault();
+                    return false;
+                }
+                
+                return confirm('Are you sure you want to submit this assessment? This action cannot be undone.');
+            });
+        });
+    </script>
+}

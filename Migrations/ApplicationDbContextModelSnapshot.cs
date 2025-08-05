@@ -121,6 +121,156 @@ namespace EYDGateway.Migrations
                     b.ToTable("Areas");
                 });
 
+            modelBuilder.Entity("EYDGateway.Models.ClinicalExperienceLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ChallengesFaced")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ClinicalActivities")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ClinicalSetting")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Department")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("DurationHours")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("ExperienceDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LearningPoints")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("PatientsSeenDetails")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ProceduresPerformed")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("SupervisorFeedback")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("SupervisorName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<DateTime?>("VerifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("VerifiedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("VerifiedByUserId");
+
+                    b.ToTable("ClinicalExperienceLogs");
+                });
+
+            modelBuilder.Entity("EYDGateway.Models.DocumentUpload", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("DocumentType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<long>("FileSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("RelatedReflectionId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RelatedSLEId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UploadCategory")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RelatedReflectionId");
+
+                    b.HasIndex("RelatedSLEId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("DocumentUploads");
+                });
+
             modelBuilder.Entity("EYDGateway.Models.EPA", b =>
                 {
                     b.Property<int>("Id")
@@ -165,8 +315,14 @@ namespace EYDGateway.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("ClinicalExperienceLogId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DocumentUploadId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("EPAId")
                         .HasColumnType("integer");
@@ -179,6 +335,15 @@ namespace EYDGateway.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
+                    b.Property<int?>("LearningLogId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("PortfolioReflectionId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ProtectedLearningTimeId")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("SLEId")
                         .HasColumnType("integer");
 
@@ -189,7 +354,17 @@ namespace EYDGateway.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ClinicalExperienceLogId");
+
+                    b.HasIndex("DocumentUploadId");
+
                     b.HasIndex("EPAId");
+
+                    b.HasIndex("LearningLogId");
+
+                    b.HasIndex("PortfolioReflectionId");
+
+                    b.HasIndex("ProtectedLearningTimeId");
 
                     b.HasIndex("SLEId");
 
@@ -232,6 +407,251 @@ namespace EYDGateway.Migrations
                     b.ToTable("EYDESAssignments");
                 });
 
+            modelBuilder.Entity("EYDGateway.Models.LearningLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("DurationHours")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("LearningObjectives")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("LogDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LogType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Outcomes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ReflectionNotes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("RelatedSLEId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Supervisor")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RelatedSLEId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("LearningLogs");
+                });
+
+            modelBuilder.Entity("EYDGateway.Models.LearningNeed", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AchievedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CompletedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DateIdentified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DateOfAchievement")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("HowToAddress")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("LearningObjectives")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ReflectionOnMeeting")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<DateTime>("WhenToMeet")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompletedByUserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("LearningNeeds");
+                });
+
+            modelBuilder.Entity("EYDGateway.Models.PortfolioReflection", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsLocked")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("NextSteps")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReasonsForWriting")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<string>("WhenDidItHappen")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Reflections");
+                });
+
+            modelBuilder.Entity("EYDGateway.Models.ProtectedLearningTime", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BriefOutlineOfLearning")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Format")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsLocked")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LengthOfPLT")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<string>("WhenAndWhoLed")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ProtectedLearningTimes");
+                });
+
             modelBuilder.Entity("EYDGateway.Models.SLE", b =>
                 {
                     b.Property<int>("Id")
@@ -240,15 +660,19 @@ namespace EYDGateway.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AgreedAction")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
                     b.Property<DateTime?>("AssessmentCompletedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("AssessmentFeedback")
-                        .HasMaxLength(2000)
-                        .HasColumnType("varchar(2000)");
-
                     b.Property<int?>("AssessmentRating")
                         .HasColumnType("integer");
+
+                    b.Property<string>("AssessorPosition")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
 
                     b.Property<string>("AssessorUserId")
                         .HasMaxLength(450)
@@ -263,6 +687,10 @@ namespace EYDGateway.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<string>("BehaviourFeedback")
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -301,11 +729,6 @@ namespace EYDGateway.Migrations
 
                     b.Property<bool>("IsInternalAssessor")
                         .HasColumnType("boolean");
-
-                    b.Property<string>("LearningObjectives")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
 
                     b.Property<string>("Location")
                         .IsRequired()
@@ -584,13 +1007,73 @@ namespace EYDGateway.Migrations
                     b.Navigation("Scheme");
                 });
 
+            modelBuilder.Entity("EYDGateway.Models.ClinicalExperienceLog", b =>
+                {
+                    b.HasOne("EYDGateway.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EYDGateway.Models.ApplicationUser", "VerifiedByUser")
+                        .WithMany()
+                        .HasForeignKey("VerifiedByUserId");
+
+                    b.Navigation("User");
+
+                    b.Navigation("VerifiedByUser");
+                });
+
+            modelBuilder.Entity("EYDGateway.Models.DocumentUpload", b =>
+                {
+                    b.HasOne("EYDGateway.Models.PortfolioReflection", "RelatedReflection")
+                        .WithMany()
+                        .HasForeignKey("RelatedReflectionId");
+
+                    b.HasOne("EYDGateway.Models.SLE", "RelatedSLE")
+                        .WithMany()
+                        .HasForeignKey("RelatedSLEId");
+
+                    b.HasOne("EYDGateway.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RelatedReflection");
+
+                    b.Navigation("RelatedSLE");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("EYDGateway.Models.EPAMapping", b =>
                 {
+                    b.HasOne("EYDGateway.Models.ClinicalExperienceLog", null)
+                        .WithMany("EPAMappings")
+                        .HasForeignKey("ClinicalExperienceLogId");
+
+                    b.HasOne("EYDGateway.Models.DocumentUpload", null)
+                        .WithMany("EPAMappings")
+                        .HasForeignKey("DocumentUploadId");
+
                     b.HasOne("EYDGateway.Models.EPA", "EPA")
                         .WithMany("EPAMappings")
                         .HasForeignKey("EPAId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("EYDGateway.Models.LearningLog", null)
+                        .WithMany("EPAMappings")
+                        .HasForeignKey("LearningLogId");
+
+                    b.HasOne("EYDGateway.Models.PortfolioReflection", null)
+                        .WithMany("EPAMappings")
+                        .HasForeignKey("PortfolioReflectionId");
+
+                    b.HasOne("EYDGateway.Models.ProtectedLearningTime", null)
+                        .WithMany("EPAMappings")
+                        .HasForeignKey("ProtectedLearningTimeId");
 
                     b.HasOne("EYDGateway.Models.SLE", null)
                         .WithMany("EPAMappings")
@@ -624,6 +1107,62 @@ namespace EYDGateway.Migrations
                     b.Navigation("ESUser");
 
                     b.Navigation("EYDUser");
+                });
+
+            modelBuilder.Entity("EYDGateway.Models.LearningLog", b =>
+                {
+                    b.HasOne("EYDGateway.Models.SLE", "RelatedSLE")
+                        .WithMany()
+                        .HasForeignKey("RelatedSLEId");
+
+                    b.HasOne("EYDGateway.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RelatedSLE");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("EYDGateway.Models.LearningNeed", b =>
+                {
+                    b.HasOne("EYDGateway.Models.ApplicationUser", "CompletedByUser")
+                        .WithMany()
+                        .HasForeignKey("CompletedByUserId");
+
+                    b.HasOne("EYDGateway.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CompletedByUser");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("EYDGateway.Models.PortfolioReflection", b =>
+                {
+                    b.HasOne("EYDGateway.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("EYDGateway.Models.ProtectedLearningTime", b =>
+                {
+                    b.HasOne("EYDGateway.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("EYDGateway.Models.SLE", b =>
@@ -736,7 +1275,32 @@ namespace EYDGateway.Migrations
                     b.Navigation("Schemes");
                 });
 
+            modelBuilder.Entity("EYDGateway.Models.ClinicalExperienceLog", b =>
+                {
+                    b.Navigation("EPAMappings");
+                });
+
+            modelBuilder.Entity("EYDGateway.Models.DocumentUpload", b =>
+                {
+                    b.Navigation("EPAMappings");
+                });
+
             modelBuilder.Entity("EYDGateway.Models.EPA", b =>
+                {
+                    b.Navigation("EPAMappings");
+                });
+
+            modelBuilder.Entity("EYDGateway.Models.LearningLog", b =>
+                {
+                    b.Navigation("EPAMappings");
+                });
+
+            modelBuilder.Entity("EYDGateway.Models.PortfolioReflection", b =>
+                {
+                    b.Navigation("EPAMappings");
+                });
+
+            modelBuilder.Entity("EYDGateway.Models.ProtectedLearningTime", b =>
                 {
                     b.Navigation("EPAMappings");
                 });

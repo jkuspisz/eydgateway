@@ -18,14 +18,40 @@ namespace EYDGateway.Controllers
 
         public async Task<IActionResult> Dashboard()
         {
+            // Redirect to user-specific dashboard
             var currentUser = await _context.Users
-                .Include(u => u.Area)
-                    .ThenInclude(a => a.Schemes)
-                .FirstOrDefaultAsync(u => u.UserName == User.Identity.Name);
+                .FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
 
             if (currentUser?.Role != "ES")
             {
                 return Unauthorized();
+            }
+
+            return RedirectToAction("UserDashboard", new { userId = currentUser.Id });
+        }
+
+        public async Task<IActionResult> UserDashboard(string? userId = null)
+        {
+            var currentUser = await _context.Users
+                .Include(u => u.Area)
+                    .ThenInclude(a => a!.Schemes)
+                .FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
+
+            if (currentUser?.Role != "ES")
+            {
+                return Unauthorized();
+            }
+
+            // If no userId provided, use current user's ID
+            if (string.IsNullOrEmpty(userId))
+            {
+                userId = currentUser.Id;
+            }
+
+            // Security check: users can only access their own dashboard
+            if (userId != currentUser.Id)
+            {
+                return Forbid("You can only access your own dashboard.");
             }
 
             // Get EYD users assigned to this ES through EYDESAssignment table
@@ -33,18 +59,37 @@ namespace EYDGateway.Controllers
                 .Where(assignment => assignment.ESUserId == currentUser.Id && assignment.IsActive)
                 .Include(assignment => assignment.EYDUser)
                     .ThenInclude(eyd => eyd.Scheme)
-                        .ThenInclude(scheme => scheme.Area)
+                        .ThenInclude(scheme => scheme!.Area)
                 .Select(assignment => assignment.EYDUser)
+                .ToListAsync();
+
+            // Get pending assessment invitations for this ES user
+            var pendingInvitations = await _context.SLEs
+                .Where(sle => sle.AssessorUserId == currentUser.Id && 
+                             sle.Status == "Invited" && 
+                             !sle.IsAssessmentCompleted)
+                .Include(sle => sle.EYDUser)
+                .Include(sle => sle.EPAMappings)
+                    .ThenInclude(em => em.EPA)
                 .ToListAsync();
 
             var viewModel = new ESDashboardViewModel
             {
-                UserName = currentUser.DisplayName ?? currentUser.UserName,
+                UserId = currentUser.Id,
+                UserName = currentUser.DisplayName ?? currentUser.UserName ?? "Unknown User",
                 AssignedArea = currentUser.Area?.Name ?? "No Area Assigned",
                 ManagedSchemes = currentUser.Area?.Schemes?.ToList() ?? new List<Scheme>(),
                 TPDUsers = new List<ApplicationUser>(), // ES doesn't need to see TPD users anymore
-                EYDUsers = assignedEYDUsers
+                EYDUsers = assignedEYDUsers,
+                PendingInvitations = pendingInvitations // Individual assessment tasks for this ES
             };
+
+            // DEBUG: Log the EYD users being passed to the view
+            Console.WriteLine($"DEBUG ES Dashboard: Found {assignedEYDUsers.Count} assigned EYD users for {currentUser.UserName}");
+            foreach (var eyd in assignedEYDUsers)
+            {
+                Console.WriteLine($"DEBUG ES Dashboard: EYD User - ID: '{eyd.Id}', Name: '{eyd.DisplayName}', Email: '{eyd.Email}'");
+            }
 
             return View(viewModel);
         }
@@ -138,11 +183,13 @@ namespace EYDGateway.Controllers
 
     public class ESDashboardViewModel
     {
-        public string UserName { get; set; }
-        public string AssignedArea { get; set; }
+        public string UserId { get; set; } = "";
+        public string UserName { get; set; } = "";
+        public string AssignedArea { get; set; } = "";
         public List<Scheme> ManagedSchemes { get; set; } = new List<Scheme>();
         public List<ApplicationUser> TPDUsers { get; set; } = new List<ApplicationUser>();
         public List<ApplicationUser> EYDUsers { get; set; } = new List<ApplicationUser>();
+        public List<SLE> PendingInvitations { get; set; } = new List<SLE>(); // Assessment invitations for this ES
     }
 
     public class AreaProgressViewModel

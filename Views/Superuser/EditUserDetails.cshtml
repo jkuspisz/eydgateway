@@ -28,7 +28,6 @@
                     <form asp-action="EditUserDetails" method="post">
                         @Html.AntiForgeryToken()
                         <input type="hidden" asp-for="UserId" />
-                        <input type="hidden" asp-for="CurrentRole" />
 
                         <div class="row mb-3">
                             <div class="col-md-6">
@@ -57,9 +56,18 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Current Role</label>
-                            <input type="text" class="form-control" value="@Model.CurrentRole" readonly />
-                            <div class="form-text">Role cannot be changed here. Use the main user management page for role assignments.</div>
+                            <label asp-for="CurrentRole" class="form-label">Role</label>
+                            <select asp-for="CurrentRole" class="form-select">
+                                @{
+                                    var availableRoles = ViewBag.AvailableRoles as string[] ?? new string[0];
+                                }
+                                @foreach (var role in availableRoles)
+                                {
+                                    <option value="@role" selected="@(role == Model.CurrentRole)">@role</option>
+                                }
+                            </select>
+                            <div class="form-text">Select the user's role to control their access permissions.</div>
+                            <span asp-validation-for="CurrentRole" class="text-danger"></span>
                         </div>
 
                         <hr />

@@ -1,0 +1,134 @@
+@model EYDGateway.Models.ProtectedLearningTime
+
+@{
+    ViewData["Title"] = "Protected Learning Time Details";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4>@ViewData["Title"]</h4>
+                        @if (ViewBag.TargetUserId != null && ViewBag.TargetUserId != User.FindFirst("Id")?.Value)
+                        {
+                            <small class="text-muted">
+                                <i class="fas fa-user me-1"></i>Created by: @ViewBag.TargetUserName
+                            </small>
+                        }
+                    </div>
+                    <div class="d-flex gap-2">
+                        @if (ViewBag.CanEdit == false)
+                        {
+                            <span class="badge bg-info">
+                                <i class="fas fa-eye me-1"></i>View Only
+                            </span>
+                        }
+                        @if (Model.IsLocked)
+                        {
+                            <span class="badge bg-success">
+                                <i class="fas fa-lock me-1"></i>Completed
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning">
+                                <i class="fas fa-edit me-1"></i>Draft
+                            </span>
+                        }
+                    </div>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Title)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.Title)</dd>
+                        
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Format)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.Format)</dd>
+                        
+                        <dt class="col-sm-3">Length of PLT</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.LengthOfPLT)</dd>
+                        
+                        <dt class="col-sm-3">When & Who Led</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.WhenAndWhoLed)</dd>
+                        
+                        <dt class="col-sm-3">Learning Outline</dt>
+                        <dd class="col-sm-9">
+                            <div class="border p-3 bg-light rounded">
+                                @Html.Raw(Html.DisplayFor(model => model.BriefOutlineOfLearning).ToString().Replace("\n", "<br/>"))
+                            </div>
+                        </dd>
+                    </dl>
+                    
+                    <hr class="my-4">
+                    <h5 class="text-muted">EPA Mappings</h5>
+                    @if (Model.EPAMappings != null && Model.EPAMappings.Any())
+                    {
+                        <div class="row">
+                            @foreach (var mapping in Model.EPAMappings)
+                            {
+                                <div class="col-md-6 mb-2">
+                                    <div class="card border-primary">
+                                        <div class="card-body p-2">
+                                            <h6 class="card-title mb-1">
+                                                <span class="badge bg-primary me-2">@mapping.EPA.Code</span>
+                                                @mapping.EPA.Title
+                                            </h6>
+                                            @if (!string.IsNullOrEmpty(mapping.EPA.Description))
+                                            {
+                                                <p class="card-text small text-muted mb-0">@mapping.EPA.Description</p>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            No EPA mappings have been assigned to this Protected Learning Time entry yet.
+                        </div>
+                    }
+                    
+                    <hr class="my-4">
+                    <dl class="row">
+                        <dt class="col-sm-3">Created</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.CreatedAt)</dd>
+                        
+                        <dt class="col-sm-3">Last Updated</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.UpdatedAt)</dd>
+                        
+                        <dt class="col-sm-3">Status</dt>
+                        <dd class="col-sm-9">
+                            @if (Model.IsLocked)
+                            {
+                                <span class="text-success"><i class="fas fa-check-circle me-1"></i>Completed and Locked</span>
+                            }
+                            else
+                            {
+                                <span class="text-warning"><i class="fas fa-edit me-1"></i>Draft - Can be edited</span>
+                            }
+                        </dd>
+                    </dl>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" asp-route-id="@ViewBag.TargetUserId" class="btn btn-secondary">Back to List</a>
+                        @if (ViewBag.CanEdit == true)
+                        {
+                            <div>
+                                @if (!Model.IsLocked)
+                                {
+                                    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary me-2">Edit</a>
+                                    <a asp-action="Delete" asp-route-id="@Model?.Id" class="btn btn-danger">Delete</a>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

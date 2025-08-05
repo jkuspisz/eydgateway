@@ -8,7 +8,7 @@ namespace EYDGateway.Models
         
         [Required]
         [MaxLength(50)]
-        public string SLEType { get; set; } = string.Empty; // CBD, DOPS, MiniCEX, DOPSSim, DCT, DENTL
+        public string SLEType { get; set; } = string.Empty; // CBD, DOPS, MiniCEX, DOPSSim, DtCT, DENTL
         
         [Required]
         [MaxLength(450)]
@@ -35,9 +35,6 @@ namespace EYDGateway.Models
         
         [MaxLength(200)]
         public string AudienceSetting { get; set; } = string.Empty; // For DtCT combined field
-        
-        [MaxLength(500)]
-        public string LearningObjectives { get; set; } = string.Empty;
         
         // Assessor Information
         [MaxLength(450)]
@@ -66,9 +63,15 @@ namespace EYDGateway.Models
         
         // Assessment Content
         [MaxLength(2000)]
-        public string? AssessmentFeedback { get; set; }
+        public string? BehaviourFeedback { get; set; } // Feedback based on the behaviours observed
         
-        public int? AssessmentRating { get; set; } // 1-5 scale or similar
+        [MaxLength(1000)]
+        public string? AgreedAction { get; set; } // Agreed action
+        
+        [MaxLength(200)]
+        public string? AssessorPosition { get; set; } // Assessor's Position
+        
+        public int? AssessmentRating { get; set; } // 1-5 scale or similar (if still needed)
         
         [MaxLength(1000)]
         public string? ReflectionNotes { get; set; } // EYD's reflection after assessment
@@ -76,7 +79,7 @@ namespace EYDGateway.Models
         public DateTime? ReflectionCompletedAt { get; set; }
         
         // Status Management
-        public string Status { get; set; } = "Draft"; // Draft, Invited, InProgress, Completed, Cancelled
+        public string Status { get; set; } = "Draft"; // Draft, Sent, AssessmentCompleted, ReflectionCompleted, Cancelled
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         

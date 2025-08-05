@@ -65,29 +65,47 @@ namespace EYDGateway.Services
 
         public async Task<bool> ValidateSLEEPASelectionAsync(string sleType, List<int> epaIds)
         {
+            Console.WriteLine($"DEBUG EPAService: Validating SLE type '{sleType}' with EPA IDs: [{string.Join(", ", epaIds ?? new List<int>())}]");
+            
             if (epaIds == null || epaIds.Count < 1)
+            {
+                Console.WriteLine("DEBUG EPAService: Validation failed - no EPAs selected");
                 return false;
+            }
 
             // SLE types that require exactly 1 EPA
             var singleEPATypes = new[] { SLETypes.MiniCEX, SLETypes.DOPS, SLETypes.DOPSSim };
+            Console.WriteLine($"DEBUG EPAService: Single EPA types: [{string.Join(", ", singleEPATypes)}]");
             
             if (singleEPATypes.Contains(sleType))
             {
+                Console.WriteLine($"DEBUG EPAService: {sleType} requires exactly 1 EPA, received {epaIds.Count}");
                 if (epaIds.Count != 1)
+                {
+                    Console.WriteLine("DEBUG EPAService: Validation failed - wrong EPA count for single EPA type");
                     return false;
+                }
             }
             else
             {
-                // CBD, DENTL, DCT require 1-2 EPAs
+                Console.WriteLine($"DEBUG EPAService: {sleType} allows 1-2 EPAs, received {epaIds.Count}");
+                // CBD, DENTL, DtCT require 1-2 EPAs
                 if (epaIds.Count > 2)
+                {
+                    Console.WriteLine("DEBUG EPAService: Validation failed - too many EPAs for multi EPA type");
                     return false;
+                }
             }
 
             // Check if all provided EPA IDs exist and are active
             var existingEPACount = await _context.EPAs
                 .CountAsync(e => epaIds.Contains(e.Id) && e.IsActive);
+            
+            Console.WriteLine($"DEBUG EPAService: Found {existingEPACount} active EPAs out of {epaIds.Count} requested");
+            var isValid = existingEPACount == epaIds.Count;
+            Console.WriteLine($"DEBUG EPAService: Final validation result: {isValid}");
 
-            return existingEPACount == epaIds.Count;
+            return isValid;
         }
 
         public async Task SaveEPAMappingAsync(string entityType, int entityId, List<int> epaIds, string userId)

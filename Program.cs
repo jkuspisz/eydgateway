@@ -66,9 +66,19 @@ else
         options.UseSqlite(connectionString ?? "Data Source=local_eyd.db"));
 }
 
-builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
+    options.SignIn.RequireConfirmedAccount = false;
+})
+.AddRoles<IdentityRole>()
+.AddEntityFrameworkStores<ApplicationDbContext>();
+
+// Configure authentication paths to use custom Account controller
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+});
 
 builder.Services.AddControllersWithViews();
 
@@ -122,14 +132,29 @@ app.MapControllerRoute(
     pattern: "{controller=Superuser}/{action=Dashboard}/{id?}");
 
 app.MapControllerRoute(
+    name: "eyd_portfolio",
+    pattern: "EYD/Portfolio/{userId?}",
+    defaults: new { controller = "EYD", action = "Portfolio" });
+
+app.MapControllerRoute(
     name: "eyd",
     pattern: "EYD/{action=Dashboard}/{id?}",
     defaults: new { controller = "EYD" });
 
 app.MapControllerRoute(
+    name: "tpd_dashboard",
+    pattern: "TPD/Dashboard/{userId?}",
+    defaults: new { controller = "TPD", action = "UserDashboard" });
+
+app.MapControllerRoute(
     name: "tpd",
     pattern: "TPD/{action=Dashboard}/{id?}",
     defaults: new { controller = "TPD" });
+
+app.MapControllerRoute(
+    name: "es_dashboard", 
+    pattern: "ES/Dashboard/{userId?}",
+    defaults: new { controller = "ES", action = "UserDashboard" });
 
 app.MapControllerRoute(
     name: "es",
@@ -143,6 +168,181 @@ app.MapControllerRoute(
 
 // Add a simple test endpoint
 app.MapGet("/test", () => "Hello! The server is working!");
+
+// Add role debug endpoint
+app.MapGet("/debug-roles", async (HttpContext httpContext, IServiceProvider serviceProvider) =>
+{
+    using var scope = serviceProvider.CreateScope();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    
+    var currentUser = await userManager.GetUserAsync(httpContext.User);
+    if (currentUser == null)
+    {
+        return Results.Json(new { Error = "No user logged in" });
+    }
+    
+    var userRoles = await userManager.GetRolesAsync(currentUser);
+    var isInEYDRole = await userManager.IsInRoleAsync(currentUser, "EYD");
+    var isInSuperuserRole = await userManager.IsInRoleAsync(currentUser, "Superuser");
+    
+    return Results.Json(new {
+        Username = currentUser.UserName,
+        DisplayName = currentUser.DisplayName,
+        RoleFieldValue = currentUser.Role, // This is just a string field
+        AssignedRoles = userRoles.ToList(), // These are the actual role assignments
+        IsInEYDRole = isInEYDRole,
+        IsInSuperuserRole = isInSuperuserRole,
+        CanCreateSLE = isInEYDRole || isInSuperuserRole
+    });
+});
+
+// Add role assignment endpoint to fix user roles (supports both GET and POST)
+app.MapMethods("/assign-role", new[] { "GET", "POST" }, async (HttpContext httpContext, IServiceProvider serviceProvider) =>
+{
+    using var scope = serviceProvider.CreateScope();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    
+    var currentUser = await userManager.GetUserAsync(httpContext.User);
+    if (currentUser == null)
+    {
+        return Results.Json(new { Error = "No user logged in" });
+    }
+    
+    // Assign the user to the role that matches their Role field
+    var roleToAssign = currentUser.Role;
+    if (!string.IsNullOrEmpty(roleToAssign))
+    {
+        // First, ensure the role exists in the system
+        if (!await roleManager.RoleExistsAsync(roleToAssign))
+        {
+            var createRoleResult = await roleManager.CreateAsync(new IdentityRole(roleToAssign));
+            if (!createRoleResult.Succeeded)
+            {
+                return Results.Json(new { 
+                    Success = false, 
+                    Message = $"Failed to create role {roleToAssign}", 
+                    Errors = createRoleResult.Errors.Select(e => e.Description).ToList()
+                });
+            }
+        }
+        
+        // Check if user is already in the role
+        if (await userManager.IsInRoleAsync(currentUser, roleToAssign))
+        {
+            return Results.Json(new { 
+                Success = true, 
+                Message = $"User {currentUser.UserName} is already assigned to role {roleToAssign}",
+                UserName = currentUser.UserName,
+                AssignedRole = roleToAssign,
+                AlreadyAssigned = true
+            });
+        }
+        
+        // Assign the user to the role
+        var result = await userManager.AddToRoleAsync(currentUser, roleToAssign);
+        if (result.Succeeded)
+        {
+            return Results.Json(new { 
+                Success = true, 
+                Message = $"Successfully assigned user {currentUser.UserName} to role {roleToAssign}",
+                UserName = currentUser.UserName,
+                AssignedRole = roleToAssign,
+                AlreadyAssigned = false
+            });
+        }
+        else
+        {
+            return Results.Json(new { 
+                Success = false, 
+                Message = "Failed to assign role", 
+                Errors = result.Errors.Select(e => e.Description).ToList()
+            });
+        }
+    }
+    else
+    {
+        return Results.Json(new { 
+            Success = false, 
+            Message = "User has no role field value to assign" 
+        });
+    }
+});
+
+// Add bulk role assignment endpoint to fix all users at once
+app.MapGet("/fix-all-roles", async (HttpContext httpContext, IServiceProvider serviceProvider) =>
+{
+    using var scope = serviceProvider.CreateScope();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    
+    var results = new List<object>();
+    
+    // First, ensure all required roles exist
+    var requiredRoles = new[] { "Admin", "EYD", "TPD", "ES", "Dean", "Superuser" };
+    foreach (var roleName in requiredRoles)
+    {
+        if (!await roleManager.RoleExistsAsync(roleName))
+        {
+            var createResult = await roleManager.CreateAsync(new IdentityRole(roleName));
+            results.Add(new { Action = "CreateRole", Role = roleName, Success = createResult.Succeeded });
+        }
+    }
+    
+    // Get all users from database
+    var allUsers = await context.Users.ToListAsync();
+    var fixedCount = 0;
+    var alreadyAssignedCount = 0;
+    var errorCount = 0;
+    
+    foreach (var user in allUsers)
+    {
+        if (!string.IsNullOrEmpty(user.Role))
+        {
+            // Check if user is already in the role
+            if (await userManager.IsInRoleAsync(user, user.Role))
+            {
+                alreadyAssignedCount++;
+                continue;
+            }
+            
+            // Assign the user to their role
+            var result = await userManager.AddToRoleAsync(user, user.Role);
+            if (result.Succeeded)
+            {
+                fixedCount++;
+                results.Add(new { 
+                    Action = "AssignRole", 
+                    User = user.UserName, 
+                    Role = user.Role, 
+                    Success = true 
+                });
+            }
+            else
+            {
+                errorCount++;
+                results.Add(new { 
+                    Action = "AssignRole", 
+                    User = user.UserName, 
+                    Role = user.Role, 
+                    Success = false,
+                    Errors = result.Errors.Select(e => e.Description).ToList()
+                });
+            }
+        }
+    }
+    
+    return Results.Json(new {
+        Summary = new {
+            TotalUsers = allUsers.Count,
+            FixedUsers = fixedCount,
+            AlreadyAssigned = alreadyAssignedCount,
+            Errors = errorCount
+        },
+        Details = results
+    });
+});
 
 // Add database test endpoint
 app.MapGet("/test-db", async (ApplicationDbContext context) =>

@@ -3,8 +3,19 @@
     ViewData["Title"] = $"SLE Details - {Model.Title}";
 }
 
+<!-- VISIBLE DEBUGGING - Remove these after testing -->
+<div class="alert alert-warning">
+    <h6>DEBUG INFO:</h6>
+    <p><strong>Model.SLEType:</strong> '@Model.SLEType'</p>
+    <p><strong>Model.Title:</strong> '@Model.Title'</p>
+    <p><strong>EPAMappings Count:</strong> @(Model.EPAMappings?.Count ?? 0)</p>
+    <p><strong>EPAMappings Details:</strong> @(string.Join(", ", Model.EPAMappings?.Select(m => $"EPA:{m.EPAId},Entity:{m.EntityType}:{m.EntityId}") ?? new string[0]))</p>
+    <p><strong>SLETypes.GetTypeName Result:</strong> '@EYDGateway.Models.SLETypes.GetTypeName(Model.SLEType)'</p>
+</div>
+
+<!-- Main SLE Details Card - Full Width -->
 <div class="row">
-    <div class="col-md-8">
+    <div class="col-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>@Model.Title</h4>
@@ -26,7 +37,7 @@
 
                 <div class="row mb-3">
                     <div class="col-md-4">
-                        <strong>Student:</strong>
+                        <strong>EYD:</strong>
                     </div>
                     <div class="col-md-8">
                         @Model.EYDUser?.DisplayName
@@ -92,7 +103,7 @@
                             </div>
                         }
                         break;
-                    case "DCT":
+                    case "DtCT":
                         if (!string.IsNullOrEmpty(Model.Audience) || !string.IsNullOrEmpty(Model.AudienceSetting))
                         {
                             <div class="row mb-3">
@@ -123,18 +134,6 @@
                     </div>
                 }
 
-                @if (!string.IsNullOrEmpty(Model.LearningObjectives))
-                {
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <strong>Learning Objectives:</strong>
-                        </div>
-                        <div class="col-md-8">
-                            @Model.LearningObjectives
-                        </div>
-                    </div>
-                }
-
                 <div class="row mb-3">
                     <div class="col-md-4">
                         <strong>Created:</strong>
@@ -143,21 +142,89 @@
                         @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
                     </div>
                 </div>
+
+                <!-- Associated EPAs - Display prominently in main form -->
+                <div class="alert alert-info">
+                    <strong>EPA DEBUG:</strong> 
+                    Count = @(Model.EPAMappings?.Count ?? 0), 
+                    Is Null = @(Model.EPAMappings == null), 
+                    Has Any = @(Model.EPAMappings?.Any() == true)
+                </div>
+                @if (Model.EPAMappings?.Any() == true)
+                {
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Associated EPAs:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var mapping in Model.EPAMappings)
+                                {
+                                    <div class="border rounded p-2 mr-2 mb-2" style="background-color: #f8f9fa;">
+                                        <span class="badge badge-primary mb-1">@(mapping.EPA?.Code ?? "N/A")</span>
+                                        <div><small class="text-muted">@(mapping.EPA?.Title ?? "Title not available")</small></div>
+                                        <!-- Debug: EPA Mapping ID @mapping.Id, EPA ID @mapping.EPAId -->
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Associated EPAs:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            <span class="text-muted">No EPAs associated with this SLE</span>
+                            <div class="alert alert-warning mt-2">
+                                <strong>EPA DEBUG:</strong> EPAMappings is @(Model.EPAMappings == null ? "NULL" : "empty collection")
+                                @if (Model.EPAMappings != null && !Model.EPAMappings.Any())
+                                {
+                                    <br/><strong>Collection exists but is empty</strong>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
             </div>
         </div>
 
-        @if (Model.Status == "Completed" && !string.IsNullOrEmpty(Model.AssessmentFeedback))
+        @if (Model.Status == "Completed" && (!string.IsNullOrEmpty(Model.BehaviourFeedback) || !string.IsNullOrEmpty(Model.AgreedAction) || !string.IsNullOrEmpty(Model.AssessorPosition)))
         {
             <div class="card mt-4">
                 <div class="card-header">
                     <h6>Assessment Feedback</h6>
                 </div>
                 <div class="card-body">
-                    @Model.AssessmentFeedback
+                    @if (!string.IsNullOrEmpty(Model.BehaviourFeedback))
+                    {
+                        <div class="mb-3">
+                            <strong>Feedback based on behaviours observed:</strong>
+                            <p class="mt-1">@Model.BehaviourFeedback</p>
+                        </div>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(Model.AgreedAction))
+                    {
+                        <div class="mb-3">
+                            <strong>Agreed action:</strong>
+                            <p class="mt-1">@Model.AgreedAction</p>
+                        </div>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(Model.AssessorPosition))
+                    {
+                        <div class="mb-3">
+                            <strong>Assessor's Position:</strong>
+                            <p class="mt-1">@Model.AssessorPosition</p>
+                        </div>
+                    }
                     
                     @if (Model.AssessmentRating.HasValue)
                     {
-                        <div class="mt-3">
+                        <div class="mb-0">
                             <strong>Grade: </strong>
                             <span class="badge badge-@(GetGradeBadgeClass(Model.AssessmentRating.Value)) badge-lg">
                                 @GetGradeText(Model.AssessmentRating.Value)
@@ -168,33 +235,16 @@
             </div>
         }
     </div>
+</div>
 
-    <div class="col-md-4">
-        <!-- EPA Mappings -->
-        @if (Model.EPAMappings?.Any() == true)
-        {
-            <div class="card mb-4">
+<!-- External Assessor Info Card - Full Width -->
+@if (!string.IsNullOrEmpty(Model.ExternalAssessorEmail))
+{
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
                 <div class="card-header">
-                    <h6>Associated EPAs</h6>
-                </div>
-                <div class="card-body">
-                    @foreach (var mapping in Model.EPAMappings)
-                    {
-                        <div class="mb-2">
-                            <span class="badge badge-primary">@mapping.EPA?.Code</span>
-                            <small class="text-muted d-block">@mapping.EPA?.Title</small>
-                        </div>
-                    }
-                </div>
-            </div>
-        }
-
-        <!-- External Assessor Info -->
-        @if (!string.IsNullOrEmpty(Model.ExternalAssessorEmail))
-        {
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h6>External Assessor</h6>
+                    <h6>External Assessor Information</h6>
                 </div>
                 <div class="card-body">
                     <div class="mb-2">
@@ -210,30 +260,213 @@
                         </div>
                     }
                     
-                    @if (!string.IsNullOrEmpty(Model.ExternalAccessToken))
+                    @if (!string.IsNullOrEmpty(Model.ExternalAccessToken) && !Model.IsAssessmentCompleted)
                     {
                         <div class="alert alert-info mt-3">
-                            <small>
-                                <strong>Access Link:</strong><br>
-                                Token available for external assessor access
+                            <h6><i class="fas fa-link"></i> External Assessment Link</h6>
+                            <p class="mb-2">Share this link with your external assessor:</p>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="assessmentLink" 
+                                       value="@Url.Action("ExternalAssessment", "SLE", new { token = Model.ExternalAccessToken }, Context.Request.Scheme)" readonly>
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="button" id="copyLinkBtn" title="Copy link">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <small class="text-muted mt-1 d-block">
+                                <i class="fas fa-info-circle"></i> 
+                                This link allows anonymous access for assessment completion.
+                                @if (Model.InvitationSentAt.HasValue)
+                                {
+                                    <span>Invitation sent: @Model.InvitationSentAt.Value.ToString("MMM dd, yyyy 'at' h:mm tt")</span>
+                                }
                             </small>
                         </div>
                     }
                 </div>
             </div>
-        }
+        </div>
+    </div>
+}
 
-        <!-- Actions -->
+<!-- ES Assessment Form - Full Width -->
+@if (User.Identity?.IsAuthenticated == true && 
+     !string.IsNullOrEmpty(Model.AssessorUserId) && 
+     Model.AssessorUserId == ViewContext.HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value &&
+     !Model.IsAssessmentCompleted && 
+     (Model.Status == "Scheduled" || Model.Status == "Invited"))
+{
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-clipboard-check"></i> Complete Assessment</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>Assessment Instructions:</strong> Please complete the following assessment components for this SLE.
+                    </div>
+                    
+                    <form asp-action="SubmitInternalAssessment" asp-route-id="@Model.Id" method="post">
+                        <div class="form-group mb-4">
+                            <label for="behaviourFeedback"><strong>1. Feedback based on the behaviours observed</strong></label>
+                            <textarea class="form-control" name="BehaviourFeedback" id="behaviourFeedback" rows="6" 
+                                     placeholder="Describe the specific behaviours you observed during this SLE..." 
+                                     value="@Model.BehaviourFeedback" required>@Model.BehaviourFeedback</textarea>
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <label for="agreedAction"><strong>2. Agreed action</strong></label>
+                            <textarea class="form-control" name="AgreedAction" id="agreedAction" rows="4" 
+                                     placeholder="What actions have been agreed for the EYD's development..." 
+                                     value="@Model.AgreedAction" required>@Model.AgreedAction</textarea>
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <label for="assessorPosition"><strong>3. Assessor's Position and Name</strong></label>
+                            <input type="text" class="form-control" name="AssessorPosition" id="assessorPosition" 
+                                   placeholder="Your professional position/title and name..." 
+                                   value="@Model.AssessorPosition" required />
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check"></i> Submit Assessment
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-lg ml-2" onclick="saveDraft()">
+                                <i class="fas fa-save"></i> Save Draft
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Assessment Completed Display - Full Width -->
+@if (Model.IsAssessmentCompleted)
+{
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="fas fa-check-circle"></i> Assessment Completed</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <strong>Behaviour Feedback:</strong>
+                            <p class="mt-2">@Model.BehaviourFeedback</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <strong>Agreed Action:</strong>
+                            <p class="mt-2">@Model.AgreedAction</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Assessor Position:</strong>
+                            <p class="mt-2">@Model.AssessorPosition</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Completed On:</strong>
+                            <p class="mt-2">@Model.AssessmentCompletedAt?.ToString("MMM dd, yyyy 'at' h:mm tt")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- EYD Reflection Form - Full Width -->
+@if (User.Identity?.IsAuthenticated == true && 
+     Model.EYDUserId == ViewContext.HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value &&
+     Model.IsAssessmentCompleted && 
+     Model.ReflectionCompletedAt == null &&
+     Model.Status == "AssessmentCompleted")
+{
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="fas fa-lightbulb"></i> Add Your Reflection</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>Reflection Instructions:</strong> Please reflect on this learning experience and the feedback provided by your assessor.
+                    </div>
+                    
+                    <form asp-action="SubmitReflection" asp-route-id="@Model.Id" method="post">
+                        <div class="form-group mb-4">
+                            <label for="reflectionNotes"><strong>Your Learning Reflection</strong></label>
+                            <textarea class="form-control" name="ReflectionNotes" id="reflectionNotes" rows="8" 
+                                     placeholder="Reflect on what you learned from this SLE, how the assessor's feedback will help your development, and any actions you will take going forward..." 
+                                     value="@Model.ReflectionNotes" required>@Model.ReflectionNotes</textarea>
+                            <small class="form-text text-muted">Consider: What went well? What did you learn? How will you apply the feedback?</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-check-circle"></i> Complete SLE
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-lg ml-2" onclick="saveReflectionDraft()">
+                                <i class="fas fa-save"></i> Save Draft
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Completed Reflection Display - Full Width -->
+@if (Model.ReflectionCompletedAt.HasValue)
+{
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="fas fa-check-circle"></i> SLE Completed</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <strong>EYD Reflection:</strong>
+                            <p class="mt-2">@Model.ReflectionNotes</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Reflection Completed:</strong>
+                            <p class="mt-2">@Model.ReflectionCompletedAt?.ToString("MMM dd, yyyy 'at' h:mm tt")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Final Status:</strong>
+                            <span class="badge badge-success">@Model.Status</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Actions - Full Width -->
+<div class="row mt-4">
+    <div class="col-12">
         <div class="card">
             <div class="card-header">
                 <h6>Actions</h6>
             </div>
             <div class="card-body">
-                @if (Model.Status == "Scheduled")
+                @if (Model.Status == "Scheduled" || Model.Status == "Invited")
                 {
-                    <button class="btn btn-primary btn-sm btn-block mb-2">
-                        <i class="fas fa-play"></i> Start Assessment
-                    </button>
                     <button class="btn btn-warning btn-sm btn-block mb-2">
                         <i class="fas fa-edit"></i> Edit SLE
                     </button>
@@ -242,7 +475,7 @@
                     </button>
                 }
                 
-                @if (!string.IsNullOrEmpty(Model.ExternalAssessorEmail) && Model.Status == "Scheduled")
+                @if (!string.IsNullOrEmpty(Model.ExternalAssessorEmail) && (Model.Status == "Scheduled" || Model.Status == "Invited"))
                 {
                     <button class="btn btn-info btn-sm btn-block mb-2">
                         <i class="fas fa-envelope"></i> Resend Invitation
@@ -252,6 +485,7 @@
                 <a asp-action="Index" class="btn btn-secondary btn-sm btn-block">
                     <i class="fas fa-arrow-left"></i> Back to List
                 </a>
+            </div>
             </div>
         </div>
     </div>
@@ -292,4 +526,108 @@
             _ => $"Grade {grade}"
         };
     }
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Copy assessment link functionality
+            $('#copyLinkBtn').click(function() {
+                var linkInput = document.getElementById('assessmentLink');
+                linkInput.select();
+                linkInput.setSelectionRange(0, 99999); // For mobile devices
+                
+                navigator.clipboard.writeText(linkInput.value).then(function() {
+                    // Success feedback
+                    var btn = $('#copyLinkBtn');
+                    var originalHtml = btn.html();
+                    btn.html('<i class="fas fa-check"></i>');
+                    btn.removeClass('btn-outline-secondary').addClass('btn-success');
+                    
+                    setTimeout(function() {
+                        btn.html(originalHtml);
+                        btn.removeClass('btn-success').addClass('btn-outline-secondary');
+                    }, 2000);
+                    
+                    // Show tooltip or alert
+                    alert('Assessment link copied to clipboard!');
+                }, function(err) {
+                    // Fallback for older browsers
+                    alert('Failed to copy. Please copy the link manually.');
+                });
+            });
+            
+            // Save draft functionality
+            window.saveDraft = function() {
+                var behaviourFeedback = $('#behaviourFeedback').val();
+                var agreedAction = $('#agreedAction').val();
+                var assessorPosition = $('#assessorPosition').val();
+                
+                // Simple localStorage save for now
+                var draftKey = 'sle_draft_@Model.Id';
+                var draftData = {
+                    behaviourFeedback: behaviourFeedback,
+                    agreedAction: agreedAction,
+                    assessorPosition: assessorPosition,
+                    savedAt: new Date().toISOString()
+                };
+                
+                localStorage.setItem(draftKey, JSON.stringify(draftData));
+                
+                // Show success message
+                alert('Draft saved locally!');
+            };
+            
+            // Save reflection draft functionality
+            window.saveReflectionDraft = function() {
+                var reflectionNotes = $('#reflectionNotes').val();
+                
+                // Simple localStorage save for now
+                var draftKey = 'sle_reflection_draft_@Model.Id';
+                var draftData = {
+                    reflectionNotes: reflectionNotes,
+                    savedAt: new Date().toISOString()
+                };
+                
+                localStorage.setItem(draftKey, JSON.stringify(draftData));
+                
+                // Show success message
+                alert('Reflection draft saved locally!');
+            };
+            
+            // Load draft on page load
+            var draftKey = 'sle_draft_@Model.Id';
+            var savedDraft = localStorage.getItem(draftKey);
+            if (savedDraft && !@Model.IsAssessmentCompleted.ToString().ToLower()) {
+                try {
+                    var draftData = JSON.parse(savedDraft);
+                    if (draftData.behaviourFeedback && !$('#behaviourFeedback').val()) {
+                        $('#behaviourFeedback').val(draftData.behaviourFeedback);
+                    }
+                    if (draftData.agreedAction && !$('#agreedAction').val()) {
+                        $('#agreedAction').val(draftData.agreedAction);
+                    }
+                    if (draftData.assessorPosition && !$('#assessorPosition').val()) {
+                        $('#assessorPosition').val(draftData.assessorPosition);
+                    }
+                } catch(e) {
+                    console.log('Error loading draft:', e);
+                }
+            }
+            
+            // Load reflection draft on page load
+            var reflectionDraftKey = 'sle_reflection_draft_@Model.Id';
+            var savedReflectionDraft = localStorage.getItem(reflectionDraftKey);
+            if (savedReflectionDraft && !@((Model.ReflectionCompletedAt.HasValue).ToString().ToLower())) {
+                try {
+                    var reflectionDraftData = JSON.parse(savedReflectionDraft);
+                    if (reflectionDraftData.reflectionNotes && !$('#reflectionNotes').val()) {
+                        $('#reflectionNotes').val(reflectionDraftData.reflectionNotes);
+                    }
+                } catch(e) {
+                    console.log('Error loading reflection draft:', e);
+                }
+            }
+        });
+    </script>
 }

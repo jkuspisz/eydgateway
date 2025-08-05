@@ -420,6 +420,11 @@ namespace EYDGateway.Controllers
                 CurrentRole = user.Role ?? ""
             };
 
+            // Pass available roles to view
+            ViewBag.AvailableRoles = currentUser.Role == "Superuser" 
+                ? new[] { "ES", "TPD", "Dean", "EYD", "Admin", "Superuser" }
+                : new[] { "ES", "TPD", "Dean", "EYD" }; // Admin can't assign Admin/Superuser roles
+            
             ViewBag.CurrentUserRole = currentUser.Role;
             return View(viewModel);
         }
@@ -473,6 +478,22 @@ namespace EYDGateway.Controllers
                 user.DisplayName = !string.IsNullOrEmpty(model.DisplayName) 
                     ? model.DisplayName 
                     : $"{model.FirstName} {model.LastName}".Trim();
+
+                // Handle role change if different
+                if (!string.IsNullOrEmpty(model.CurrentRole) && model.CurrentRole != user.Role)
+                {
+                    // Remove user from old role if they had one
+                    if (!string.IsNullOrEmpty(user.Role))
+                    {
+                        await _userManager.RemoveFromRoleAsync(user, user.Role);
+                    }
+                    
+                    // Update role field
+                    user.Role = model.CurrentRole;
+                    
+                    // Add user to new Identity role
+                    await _userManager.AddToRoleAsync(user, model.CurrentRole);
+                }
 
                 // Update password if requested
                 if (model.ChangePassword && !string.IsNullOrEmpty(model.NewPassword))
@@ -562,6 +583,9 @@ namespace EYDGateway.Controllers
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
+                    // Add user to the selected Identity role
+                    await _userManager.AddToRoleAsync(user, model.Role);
+                    
                     TempData["SuccessMessage"] = $"User '{model.FirstName} {model.LastName}' created successfully.";
                     return RedirectToAction("ManageUsers");
                 }

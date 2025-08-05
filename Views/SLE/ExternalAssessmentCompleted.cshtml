@@ -1,0 +1,80 @@
+@model EYDGateway.Models.SLE
+@{
+    ViewData["Title"] = "Assessment Completed";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                    </div>
+                    
+                    <h2 class="text-success mb-3">Assessment Completed</h2>
+                    
+                    <p class="lead">
+                        Thank you for completing the assessment for <strong>@(Model.EYDUser?.DisplayName ?? "the EYD")</strong>.
+                    </p>
+                    
+                    <div class="alert alert-info">
+                        <h5>Assessment Details</h5>
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">SLE Type:</dt>
+                            <dd class="col-sm-8">@Model.SLEType</dd>
+                            
+                            <dt class="col-sm-4">Title:</dt>
+                            <dd class="col-sm-8">@Model.Title</dd>
+                            
+                            <dt class="col-sm-4">EYD:</dt>
+                            <dd class="col-sm-8">@(Model.EYDUser?.DisplayName ?? "Unknown")</dd>
+                            
+                            <dt class="col-sm-4">Completed:</dt>
+                            <dd class="col-sm-8">@Model.AssessmentCompletedAt?.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt")</dd>
+                        </dl>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <p class="text-muted">
+                            Your assessment has been submitted successfully and will be available to the EYD and their supervisors.
+                        </p>
+                        
+                        <p class="text-muted">
+                            If you have any questions about this assessment, please contact the EYD program coordinator.
+                        </p>
+                    </div>
+                    
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success mt-3">
+                            @TempData["Success"]
+                        </div>
+                    }
+                    
+                    <div class="mt-4">
+                        <small class="text-muted">
+                            <i class="fas fa-lock"></i> This assessment link is now inactive and cannot be used again.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .text-success {
+        color: #28a745 !important;
+    }
+    
+    .fa-check-circle {
+        color: #28a745;
+    }
+</style>

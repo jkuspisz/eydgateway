@@ -18,14 +18,40 @@ namespace EYDGateway.Controllers
 
         public async Task<IActionResult> Dashboard()
         {
+            // Redirect to user-specific dashboard
             var currentUser = await _context.Users
-                .Include(u => u.Scheme)
-                    .ThenInclude(s => s.Area)
-                .FirstOrDefaultAsync(u => u.UserName == User.Identity.Name);
+                .FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
 
             if (currentUser?.Role != "TPD" && currentUser?.Role != "Dean")
             {
                 return Unauthorized();
+            }
+
+            return RedirectToAction("UserDashboard", new { userId = currentUser.Id });
+        }
+
+        public async Task<IActionResult> UserDashboard(string? userId = null)
+        {
+            var currentUser = await _context.Users
+                .Include(u => u.Scheme)
+                    .ThenInclude(s => s!.Area)
+                .FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
+
+            if (currentUser?.Role != "TPD" && currentUser?.Role != "Dean")
+            {
+                return Unauthorized();
+            }
+
+            // If no userId provided, use current user's ID
+            if (string.IsNullOrEmpty(userId))
+            {
+                userId = currentUser.Id;
+            }
+
+            // Security check: users can only access their own dashboard
+            if (userId != currentUser.Id)
+            {
+                return Forbid("You can only access your own dashboard.");
             }
 
             // TPDs are assigned to a specific scheme, get the area through the scheme
@@ -44,22 +70,33 @@ namespace EYDGateway.Controllers
             var assignedUsers = await _context.Users
                 .Where(u => u.SchemeId == currentUser.SchemeId && u.Role == "EYD")
                 .Include(u => u.Scheme)
-                    .ThenInclude(s => s.Area)
+                    .ThenInclude(s => s!.Area)
+                .ToListAsync();
+
+            // Get pending assessment invitations for this TPD
+            var pendingInvitations = await _context.SLEs
+                .Where(sle => sle.AssessorUserId == currentUser.Id && 
+                             sle.Status == "Invited" && 
+                             !sle.IsAssessmentCompleted)
+                .Include(sle => sle.EYDUser)
+                .Include(sle => sle.EPAMappings)
+                    .ThenInclude(em => em.EPA)
                 .ToListAsync();
 
             var viewModel = new TPDDashboardViewModel
             {
-                UserName = currentUser.DisplayName ?? currentUser.UserName,
+                UserId = currentUser.Id,
+                UserName = currentUser.DisplayName ?? currentUser.UserName ?? "Unknown User",
                 AssignedArea = assignedArea?.Name ?? "No Area Assigned",
-                ManagedSchemes = allAreaSchemes, // Now includes all schemes in the area
-                AllAreaSchemes = allAreaSchemes, // For the dropdown in view-only functions
-                AssignedEYDUsers = assignedUsers,
+                AssignedScheme = managedScheme?.Name ?? "No Scheme Assigned",
+                AllAreaSchemes = allAreaSchemes,
+                EYDUsers = assignedUsers,
+                AssignedEYDUsers = assignedUsers, // Compatibility
+                PendingInvitations = pendingInvitations, // Individual assessment tasks for this TPD
                 CurrentSchemeId = currentUser.SchemeId // Track the currently selected scheme
             };
 
-            // Pass the actual user role to the view
             ViewBag.UserRole = currentUser.Role;
-
             return View(viewModel);
         }
 
@@ -198,12 +235,16 @@ namespace EYDGateway.Controllers
 
     public class TPDDashboardViewModel
     {
-        public string UserName { get; set; }
-        public string AssignedArea { get; set; }
+        public string UserId { get; set; } = "";
+        public string UserName { get; set; } = "";
+        public string AssignedArea { get; set; } = "";
+        public string AssignedScheme { get; set; } = "";
         public List<Scheme> ManagedSchemes { get; set; } = new List<Scheme>();
-        public List<ApplicationUser> AssignedEYDUsers { get; set; } = new List<ApplicationUser>();
-        public int? CurrentSchemeId { get; set; } // Track currently selected scheme
         public List<Scheme> AllAreaSchemes { get; set; } = new List<Scheme>(); // All schemes in the area
+        public List<ApplicationUser> AssignedEYDUsers { get; set; } = new List<ApplicationUser>();
+        public List<ApplicationUser> EYDUsers { get; set; } = new List<ApplicationUser>(); // Alias for compatibility
+        public List<SLE> PendingInvitations { get; set; } = new List<SLE>(); // Assessment invitations for this TPD
+        public int? CurrentSchemeId { get; set; } // Track currently selected scheme
     }
 
     public class SchemeProgressViewModel

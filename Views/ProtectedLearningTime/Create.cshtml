@@ -1,0 +1,206 @@
+@model EYDGateway.ViewModels.CreateProtectedLearningTimeViewModel
+
+@{
+    ViewData["Title"] = "Create Protected Learning Time";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4>@ViewData["Title"]</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label">Title</label>
+                            <input asp-for="Title" class="form-control" required />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Format" class="form-label">Format</label>
+                                    <input asp-for="Format" class="form-control" required />
+                                    <span asp-validation-for="Format" class="text-danger"></span>
+                                    <div class="form-text">e.g., Workshop, Seminar, Online Course, etc.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="LengthOfPLT" class="form-label">Length of Protected Learning Time</label>
+                                    <input asp-for="LengthOfPLT" class="form-control" required />
+                                    <span asp-validation-for="LengthOfPLT" class="text-danger"></span>
+                                    <div class="form-text">e.g., 2 hours, Half day, Full day</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="WhenAndWhoLed" class="form-label">When did it happen and who led on it?</label>
+                            <input asp-for="WhenAndWhoLed" class="form-control" required />
+                            <span asp-validation-for="WhenAndWhoLed" class="text-danger"></span>
+                            <div class="form-text">Include date/time and who facilitated the session</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="BriefOutlineOfLearning" class="form-label">Brief Outline of Learning Achieved</label>
+                            <textarea asp-for="BriefOutlineOfLearning" class="form-control" rows="6" required></textarea>
+                            <span asp-validation-for="BriefOutlineOfLearning" class="text-danger"></span>
+                            <div class="form-text">Provide a brief outline of what was learned during this session.</div>
+                        </div>
+                        
+                        <!-- EPA Selection Section -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6>EPA Selection (Select 2 or more)</h6>
+                                <small class="text-muted">
+                                    <span id="epa-requirement-text">Please select at least 2 EPAs that this Protected Learning Time relates to</span>
+                                </small>
+                            </div>
+                            <div class="card-body">
+                                <div id="epa-selection-area">
+                                    <div class="text-center">
+                                        <i class="fas fa-spinner fa-spin"></i> Loading available EPAs...
+                                    </div>
+                                </div>
+                                <span asp-validation-for="SelectedEPAIds" class="text-danger"></span>
+                                <div id="selected-epas-summary" style="display: none;">
+                                    <h6>Selected EPAs:</h6>
+                                    <div id="selected-epas-list"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Create PLT Entry</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        // Store previously selected EPA IDs for validation error scenarios
+        var previouslySelectedEPAIds = @Html.Raw(Json.Serialize(Model.SelectedEPAIds));
+        
+        $(document).ready(function() {
+            // Load EPAs immediately for PLT
+            loadAvailableEPAs();
+        });
+
+        function loadAvailableEPAs() {
+            console.log('Loading EPAs for PLT');
+            $('#epa-selection-area').html('<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading available EPAs...</div>');
+            
+            $.ajax({
+                url: '@Url.Action("GetAvailableEPAs", "ProtectedLearningTime")',
+                type: 'GET',
+                success: function(response) {
+                    console.log('EPA AJAX response:', response);
+                    if (response.success) {
+                        renderEPASelection(response.epas, response.minSelections);
+                        updateEPARequirements(response.minSelections);
+                    } else {
+                        console.error('EPA loading failed:', response.message);
+                        $('#epa-selection-area').html('<div class="alert alert-danger">Error loading EPAs: ' + response.message + '</div>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('EPA AJAX error:', status, error, xhr.responseText);
+                    $('#epa-selection-area').html('<div class="alert alert-danger">Failed to load EPAs. Please try again. Error: ' + error + '</div>');
+                }
+            });
+        }
+
+        function renderEPASelection(epas, minSelections) {
+            console.log('Rendering EPAs:', epas, 'minSelections:', minSelections);
+            var html = '<div class="row">';
+            
+            epas.forEach(function(epa, index) {
+                if (index % 2 === 0 && index > 0) {
+                    html += '</div><div class="row">';
+                }
+                
+                html += '<div class="col-md-6">';
+                html += '<div class="form-check mb-2">';
+                html += '<input class="form-check-input epa-checkbox" type="checkbox" value="' + epa.id + '" id="epa_' + epa.id + '" name="SelectedEPAIds">';
+                html += '<label class="form-check-label" for="epa_' + epa.id + '">';
+                html += '<strong>' + epa.code + '</strong> - ' + epa.title;
+                if (epa.description) {
+                    html += '<br><small class="text-muted">' + epa.description + '</small>';
+                }
+                html += '</label>';
+                html += '</div>';
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            
+            if (epas.length === 0) {
+                html = '<div class="alert alert-info">No EPAs are currently available.</div>';
+            }
+            
+            $('#epa-selection-area').html(html);
+            
+            // Restore previously selected EPAs (for validation error scenarios)
+            if (previouslySelectedEPAIds && previouslySelectedEPAIds.length > 0) {
+                previouslySelectedEPAIds.forEach(function(epaId) {
+                    $('#epa_' + epaId).prop('checked', true);
+                });
+                updateSelectedEPAsSummary();
+            }
+            
+            // Add change event handlers
+            $('.epa-checkbox').change(function() {
+                validateEPASelection(minSelections);
+                updateSelectedEPAsSummary();
+            });
+        }
+
+        function updateEPARequirements(minSelections) {
+            $('#epa-requirement-text').text('Please select at least ' + minSelections + ' EPAs that this Protected Learning Time relates to');
+        }
+
+        function validateEPASelection(minSelections) {
+            var selectedCount = $('.epa-checkbox:checked').length;
+            
+            // Update UI feedback based on selection count
+            if (selectedCount >= minSelections) {
+                $('.epa-checkbox').removeClass('is-invalid');
+                $('#epa-selection-area').removeClass('border-danger');
+            } else {
+                $('#epa-selection-area').addClass('border-danger');
+            }
+        }
+
+        function updateSelectedEPAsSummary() {
+            var selectedEPAs = $('.epa-checkbox:checked');
+            
+            if (selectedEPAs.length > 0) {
+                var summaryHtml = '<div class="d-flex flex-wrap gap-1">';
+                selectedEPAs.each(function() {
+                    var label = $('label[for="' + $(this).attr('id') + '"]').clone();
+                    label.find('br, small').remove(); // Remove description
+                    summaryHtml += '<span class="badge bg-primary">' + label.text().trim() + '</span>';
+                });
+                summaryHtml += '</div>';
+                
+                $('#selected-epas-list').html(summaryHtml);
+                $('#selected-epas-summary').show();
+            } else {
+                $('#selected-epas-summary').hide();
+            }
+        }
+    </script>
+}

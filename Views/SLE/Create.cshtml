@@ -10,6 +10,13 @@
                 <h4>@ViewData["Title"]</h4>
             </div>
             <div class="card-body">
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger">
+                        <div asp-validation-summary="All" class="text-danger"></div>
+                    </div>
+                }
+                
                 <form asp-action="Create" method="post">
                     <div class="row">
                         <div class="col-md-6">
@@ -44,7 +51,7 @@
 
                     <div class="form-group">
                         <label asp-for="Description">Description</label>
-                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="Describe the learning context and objectives"></textarea>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="Describe the learning context"></textarea>
                         <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
 
@@ -64,8 +71,8 @@
                             <span asp-validation-for="Setting" class="text-danger"></span>
                         </div>
 
-                        <!-- Audience fields for DCT -->
-                        <div class="audience-fields" data-types="DCT" style="display: none;">
+                        <!-- Audience fields for DtCT -->
+                        <div class="audience-fields" data-types="DtCT" style="display: none;">
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
@@ -85,12 +92,6 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label asp-for="LearningObjectives">Learning Objectives</label>
-                        <textarea asp-for="LearningObjectives" class="form-control" rows="3" placeholder="What specific learning outcomes should this SLE achieve?"></textarea>
-                        <span asp-validation-for="LearningObjectives" class="text-danger"></span>
-                    </div>
-
                     <!-- EPA Selection Section -->
                     <div class="card mb-4">
                         <div class="card-header">
@@ -102,6 +103,11 @@
                         <div class="card-body">
                             <div id="epa-selection-area">
                                 <p class="text-muted">Please select an SLE type to see available EPAs.</p>
+                            </div>
+                            <span asp-validation-for="SelectedEPAIds" class="text-danger"></span>
+                            <div id="selected-epas-summary" style="display: none;">
+                                <h6>Selected EPAs:</h6>
+                                <div id="selected-epas-list"></div>
                             </div>
                         </div>
                     </div>
@@ -115,21 +121,37 @@
                             <div class="form-check mb-3">
                                 <input class="form-check-input" type="radio" asp-for="IsInternalAssessor" value="true" id="internalAssessor" checked />
                                 <label class="form-check-label" for="internalAssessor">
-                                    Internal Assessor
+                                    Internal Assessor (ES or TPD)
                                 </label>
                             </div>
 
                             <div class="internal-assessor-section">
+                                @if (Model.AssignedES != null)
+                                {
+                                    <div class="alert alert-info mb-3">
+                                        <strong>Your Assigned ES:</strong> @Model.AssignedES.DisplayName (@Model.AssignedES.Email)
+                                        <button type="button" class="btn btn-sm btn-primary ml-2" id="selectAssignedES" 
+                                                data-assessor-id="@Model.AssignedES.Id" data-assessor-name="@Model.AssignedES.DisplayName">
+                                            Select My ES
+                                        </button>
+                                    </div>
+                                }
+
                                 <div class="form-group">
-                                    <label asp-for="AssessorUserId">Select Assessor</label>
-                                    <select asp-for="AssessorUserId" class="form-control">
-                                        <option value="">Please select an assessor...</option>
+                                    <label asp-for="AssessorUserId">Or Search for Another Assessor</label>
+                                    <select asp-for="AssessorUserId" class="form-control" id="assessorSelect">
+                                        <option value="">Search for ES or TPD in your area...</option>
                                         @foreach (var assessor in Model.AvailableAssessors)
                                         {
-                                            <option value="@assessor.Id">@assessor.DisplayName (@assessor.Email)</option>
+                                            <option value="@assessor.Id">
+                                                @assessor.DisplayName (@assessor.Role) - @assessor.Email
+                                            </option>
                                         }
                                     </select>
                                     <span asp-validation-for="AssessorUserId" class="text-danger"></span>
+                                    <small class="form-text text-muted">
+                                        Available ES and TPD users in your area/scheme
+                                    </small>
                                 </div>
                             </div>
 
@@ -141,6 +163,10 @@
                             </div>
 
                             <div class="external-assessor-section" style="display: none;">
+                                <div class="alert alert-warning mb-3">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>External Assessor:</strong> A unique assessment link will be generated that you can send to the external assessor.
+                                </div>
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
@@ -194,13 +220,23 @@
 
 @section Scripts {
     <script>
+        // Store selected EPA IDs from server model for restoration after validation errors
+        var previouslySelectedEPAIds = @Html.Raw(Json.Serialize(Model.SelectedEPAIds ?? new List<int>()));
+        
         $(document).ready(function() {
             // Handle SLE type change
             $('#sleTypeSelect').change(function() {
                 var selectedType = $(this).val();
                 updateLocationFields(selectedType);
-                updateEPARequirements(selectedType);
+                updateEPARequirementsInitial(selectedType);
                 updateSLETypeInfo(selectedType);
+                
+                // Load EPAs when type changes
+                if (selectedType) {
+                    loadAvailableEPAs(selectedType);
+                } else {
+                    $('#epa-selection-area').html('<p class="text-muted">Please select an SLE type to see available EPAs.</p>');
+                }
             });
 
             // Handle assessor type change
@@ -219,8 +255,11 @@
             var currentType = $('#sleTypeSelect').val();
             if (currentType) {
                 updateLocationFields(currentType);
-                updateEPARequirements(currentType);
+                updateEPARequirementsInitial(currentType);
                 updateSLETypeInfo(currentType);
+                
+                // Load EPAs for current type (important for validation error scenarios)
+                loadAvailableEPAs(currentType);
             }
         });
 
@@ -239,7 +278,7 @@
             });
         }
 
-        function updateEPARequirements(sleType) {
+        function updateEPARequirementsInitial(sleType) {
             var requirementText = 'Please select SLE type first';
             
             if (sleType) {
@@ -247,13 +286,13 @@
                 if (singleEPATypes.includes(sleType)) {
                     requirementText = 'This SLE type requires exactly 1 EPA selection';
                 } else {
-                    requirementText = 'This SLE type allows 1-2 EPA selections';
+                    requirementText = 'This SLE type allows up to 2 EPA selections';
                 }
             }
             
             $('#epa-requirement-text').text(requirementText);
             
-            // TODO: Load available EPAs via AJAX
+            // Load available EPAs via AJAX
             if (sleType) {
                 loadAvailableEPAs(sleType);
             }
@@ -265,7 +304,7 @@
                 'DOPS': 'Direct Observation of Procedural Skills: Direct observation of a student performing a procedure.',
                 'MiniCEX': 'Mini Clinical Evaluation Exercise: A short focused clinical encounter assessment.',
                 'DOPSSim': 'Simulated DOPS: Direct observation of procedural skills in a simulated environment.',
-                'DCT': 'Dental Care Treatment: Assessment of comprehensive dental care delivery.',
+                'DtCT': 'Developing the Clinical Teacher: Assessment of teaching and educational skills.',
                 'DENTL': 'Dental Team Learning: Assessment of collaborative learning within dental teams.'
             };
             
@@ -274,18 +313,216 @@
         }
 
         function loadAvailableEPAs(sleType) {
-            // TODO: Implement AJAX call to load EPAs
-            $('#epa-selection-area').html('<p class="text-muted">Loading available EPAs...</p>');
+            if (!sleType) {
+                $('#epa-selection-area').html('<p class="text-muted">Please select an SLE type to see available EPAs.</p>');
+                return;
+            }
+
+            console.log('Loading EPAs for SLE type:', sleType);
+            $('#epa-selection-area').html('<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading available EPAs...</div>');
             
-            // Placeholder for AJAX implementation
-            setTimeout(function() {
-                $('#epa-selection-area').html(
-                    '<div class="alert alert-info">' +
-                    '<p><strong>EPA Selection Feature:</strong></p>' +
-                    '<p>EPA selection will be implemented to show appropriate EPAs based on the selected SLE type and validation rules.</p>' +
-                    '</div>'
-                );
-            }, 500);
+            $.ajax({
+                url: '@Url.Action("GetAvailableEPAs", "SLE")',
+                type: 'GET',
+                data: { sleType: sleType },
+                success: function(response) {
+                    console.log('EPA AJAX response:', response);
+                    if (response.success) {
+                        renderEPASelection(response.epas, response.maxSelections);
+                        updateEPARequirements(sleType, response.maxSelections);
+                    } else {
+                        console.error('EPA loading failed:', response.message);
+                        $('#epa-selection-area').html('<div class="alert alert-danger">Error loading EPAs: ' + response.message + '</div>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('EPA AJAX error:', status, error, xhr.responseText);
+                    $('#epa-selection-area').html('<div class="alert alert-danger">Failed to load EPAs. Please try again. Error: ' + error + '</div>');
+                }
+            });
         }
+
+        function renderEPASelection(epas, maxSelections) {
+            console.log('Rendering EPAs:', epas, 'maxSelections:', maxSelections);
+            var html = '<div class="row">';
+            
+            epas.forEach(function(epa, index) {
+                if (index % 2 === 0 && index > 0) {
+                    html += '</div><div class="row">';
+                }
+                
+                html += '<div class="col-md-6">';
+                html += '<div class="form-check mb-2">';
+                html += '<input class="form-check-input epa-checkbox" type="checkbox" value="' + epa.id + '" id="epa_' + epa.id + '" name="SelectedEPAIds">';
+                html += '<label class="form-check-label" for="epa_' + epa.id + '">';
+                html += '<strong>' + epa.code + '</strong> - ' + epa.title;
+                if (epa.description) {
+                    html += '<br><small class="text-muted">' + epa.description + '</small>';
+                }
+                html += '</label>';
+                html += '</div>';
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            
+            if (epas.length === 0) {
+                html = '<div class="alert alert-info">No EPAs are currently available for this SLE type.</div>';
+            }
+            
+            $('#epa-selection-area').html(html);
+            
+            // Restore previously selected EPAs (for validation error scenarios)
+            if (previouslySelectedEPAIds && previouslySelectedEPAIds.length > 0) {
+                previouslySelectedEPAIds.forEach(function(epaId) {
+                    $('#epa_' + epaId).prop('checked', true);
+                });
+                
+                // Update UI after restoration
+                validateEPASelection(maxSelections);
+                updateSelectedEPAsSummary();
+            }
+            
+            // Add change event handlers for validation
+            $('.epa-checkbox').change(function() {
+                validateEPASelection(maxSelections);
+                updateSelectedEPAsSummary();
+            });
+        }
+
+        function validateEPASelection(maxSelections) {
+            var selectedCount = $('.epa-checkbox:checked').length;
+            
+            if (selectedCount >= maxSelections) {
+                $('.epa-checkbox:not(:checked)').prop('disabled', true);
+            } else {
+                $('.epa-checkbox').prop('disabled', false);
+            }
+            
+            // Update UI feedback
+            if (selectedCount > 0) {
+                $('#selected-epas-summary').show();
+            } else {
+                $('#selected-epas-summary').hide();
+            }
+        }
+
+        function updateSelectedEPAsSummary() {
+            var selectedEPAs = [];
+            $('.epa-checkbox:checked').each(function() {
+                var label = $('label[for="' + $(this).attr('id') + '"]').text().trim();
+                selectedEPAs.push(label);
+            });
+            
+            if (selectedEPAs.length > 0) {
+                var html = '<ul class="list-unstyled mb-0">';
+                selectedEPAs.forEach(function(epa) {
+                    html += '<li><i class="fas fa-check text-success"></i> ' + epa + '</li>';
+                });
+                html += '</ul>';
+                $('#selected-epas-list').html(html);
+            }
+        }
+
+        function updateEPARequirements(sleType, maxSelections) {
+            var requirementText = 'Please select SLE type first';
+            
+            if (sleType && maxSelections) {
+                if (maxSelections === 1) {
+                    requirementText = 'This SLE type requires exactly 1 EPA selection';
+                } else {
+                    requirementText = 'This SLE type allows up to ' + maxSelections + ' EPA selections';
+                }
+            }
+            
+            $('#epa-requirement-text').text(requirementText);
+        }
+
+        // Assessor Selection Logic
+        $(document).ready(function() {
+            // Handle internal/external assessor radio button changes
+            $('input[name="IsInternalAssessor"]').change(function() {
+                if ($(this).val() === 'true') {
+                    $('.internal-assessor-section').show();
+                    $('.external-assessor-section').hide();
+                    // Clear external assessor fields
+                    $('#ExternalAssessorName').val('');
+                    $('#ExternalAssessorEmail').val('');
+                    $('#ExternalAssessorInstitution').val('');
+                } else {
+                    $('.internal-assessor-section').hide();
+                    $('.external-assessor-section').show();
+                    // Clear internal assessor selection
+                    $('#AssessorUserId').val('');
+                }
+            });
+
+            // Handle "Select My ES" button click
+            $('#selectAssignedES').click(function() {
+                console.log('Select My ES button clicked');
+                var assessorId = $(this).data('assessor-id');
+                var assessorName = $(this).data('assessor-name');
+                console.log('Assessor ID:', assessorId, 'Name:', assessorName);
+                
+                $('#AssessorUserId').val(assessorId);
+                console.log('Set AssessorUserId to:', assessorId);
+                
+                // Visual feedback
+                $(this).removeClass('btn-primary').addClass('btn-success');
+                $(this).html('<i class="fas fa-check"></i> Selected');
+                
+                // Update the dropdown to show selection
+                $('#assessorSelect option').each(function() {
+                    if ($(this).val() === assessorId) {
+                        $(this).prop('selected', true);
+                        console.log('Selected option:', $(this).text());
+                    }
+                });
+            });
+
+            // Make assessor select searchable (if you have Select2 or similar)
+            if (typeof $.fn.select2 !== 'undefined') {
+                $('#assessorSelect').select2({
+                    placeholder: 'Search for ES or TPD in your area...',
+                    allowClear: true
+                });
+            }
+            
+            // Add form submission debugging
+            $('form').on('submit', function(e) {
+                console.log('=== FORM SUBMISSION DEBUG ===');
+                console.log('SLE Type:', $('#SLEType').val());
+                console.log('SLE Type (from sleTypeSelect):', $('#sleTypeSelect').val());
+                console.log('Title:', $('#Title').val());
+                
+                // Get all selected EPA checkboxes
+                var selectedEPAs = [];
+                $('.epa-checkbox:checked').each(function() {
+                    selectedEPAs.push({
+                        id: $(this).val(),
+                        name: $(this).closest('.form-check').find('label').text()
+                    });
+                });
+                
+                console.log('Selected EPAs:', selectedEPAs);
+                console.log('Selected EPA IDs:', selectedEPAs.map(epa => epa.id));
+                console.log('EPA checkbox count:', $('.epa-checkbox:checked').length);
+                
+                // Log form data
+                var formData = new FormData(this);
+                console.log('Form data entries:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(`${key}: ${value}`);
+                }
+                
+                // If no EPAs selected, prevent submission and show error
+                if (selectedEPAs.length === 0) {
+                    console.log('ERROR: No EPAs selected - preventing submission');
+                    e.preventDefault();
+                    alert('Please select at least one EPA before creating the SLE.');
+                    return false;
+                }
+            });
+        });
     </script>
 }

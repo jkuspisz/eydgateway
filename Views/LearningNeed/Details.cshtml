@@ -1,0 +1,141 @@
+@model EYDGateway.ViewModels.LearningNeedDetailViewModel
+
+@{
+    ViewData["Title"] = "Learning Need Details";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4>@ViewData["Title"]</h4>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.LearningNeed.Name)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.LearningNeed.Name)</dd>
+                        
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.LearningNeed.DateIdentified)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.LearningNeed.DateIdentified)</dd>
+                        
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.LearningNeed.LearningObjectives)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.LearningNeed.LearningObjectives)</dd>
+                        
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.LearningNeed.HowToAddress)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.LearningNeed.HowToAddress)</dd>
+                        
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.LearningNeed.WhenToMeet)</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.LearningNeed.WhenToMeet)</dd>
+                        
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.LearningNeed.Priority)</dt>
+                        <dd class="col-sm-9">
+                            <span class="badge bg-@(Model.LearningNeed.Priority switch {
+                                EYDGateway.Models.LearningNeedPriority.Critical => "danger",
+                                EYDGateway.Models.LearningNeedPriority.High => "warning",
+                                EYDGateway.Models.LearningNeedPriority.Medium => "info",
+                                EYDGateway.Models.LearningNeedPriority.Low => "secondary",
+                                _ => "secondary"
+                            })">@Html.DisplayFor(model => model.LearningNeed.Priority)</span>
+                        </dd>
+                        
+                        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.LearningNeed.Status)</dt>
+                        <dd class="col-sm-9">
+                            <span class="badge bg-@(Model.LearningNeed.Status switch {
+                                EYDGateway.Models.LearningNeedStatus.Completed => "success",
+                                EYDGateway.Models.LearningNeedStatus.Submitted => "primary",
+                                EYDGateway.Models.LearningNeedStatus.Draft => "info",
+                                EYDGateway.Models.LearningNeedStatus.Deferred => "secondary",
+                                _ => "secondary"
+                            })">@Html.DisplayFor(model => model.LearningNeed.Status)</span>
+                        </dd>
+                    </dl>
+                    
+                    <hr class="my-4">
+                    <h5 class="@(Model.LearningNeed.Status == EYDGateway.Models.LearningNeedStatus.Completed ? "text-success" : "text-muted")">Achievement Details</h5>
+                    
+                    <dl class="row">
+                        <dt class="col-sm-3">The Development/Learning Need was achieved by:</dt>
+                        <dd class="col-sm-9">
+                            @if (!string.IsNullOrEmpty(Model.LearningNeed.AchievedBy))
+                            {
+                                @Html.DisplayFor(model => model.LearningNeed.AchievedBy)
+                            }
+                            else
+                            {
+                                <span class="text-muted fst-italic">Not yet completed</span>
+                            }
+                        </dd>
+                        
+                        <dt class="col-sm-3">Reflection on meeting the development / learning need:</dt>
+                        <dd class="col-sm-9">
+                            @if (!string.IsNullOrEmpty(Model.LearningNeed.ReflectionOnMeeting))
+                            {
+                                <div class="border p-3 bg-light rounded">
+                                    @Html.Raw(Html.DisplayFor(model => model.LearningNeed.ReflectionOnMeeting)?.ToString()?.Replace("\n", "<br/>") ?? "")
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="text-muted fst-italic">Not yet completed</span>
+                            }
+                        </dd>
+                        
+                        <dt class="col-sm-3">Date of Achievement:</dt>
+                        <dd class="col-sm-9">
+                            @if (Model.LearningNeed.DateOfAchievement != DateTime.MinValue)
+                            {
+                                @Html.DisplayFor(model => model.LearningNeed.DateOfAchievement)
+                            }
+                            else
+                            {
+                                <span class="text-muted fst-italic">Not yet achieved</span>
+                            }
+                        </dd>
+                        
+                        @if (Model.LearningNeed.CompletedAt.HasValue)
+                        {
+                            <dt class="col-sm-3">Completed At</dt>
+                            <dd class="col-sm-9">@Html.DisplayFor(model => model.LearningNeed.CompletedAt)</dd>
+                        }
+                    </dl>
+                    
+                    <hr class="my-4">
+                    <dl class="row">
+                        <dt class="col-sm-3">Created</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.LearningNeed.CreatedAt)</dd>
+                        
+                        <dt class="col-sm-3">Last Updated</dt>
+                        <dd class="col-sm-9">@Html.DisplayFor(model => model.LearningNeed.UpdatedAt)</dd>
+                    </dl>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                        <div>
+                            @if (Model.CanEdit)
+                            {
+                                <a asp-action="Edit" asp-route-id="@Model.LearningNeed.Id" class="btn btn-primary me-2">Edit</a>
+                                
+                                @if (Model.LearningNeed.Status == EYDGateway.Models.LearningNeedStatus.Draft)
+                                {
+                                    <form asp-action="Submit" asp-route-id="@Model.LearningNeed.Id" method="post" style="display: inline;">
+                                        <button type="submit" class="btn btn-success me-2" onclick="return confirm('Are you sure you want to submit this learning need?')">Submit</button>
+                                    </form>
+                                }
+                                
+                                @if (Model.LearningNeed.Status == EYDGateway.Models.LearningNeedStatus.Submitted && !Model.IsOwner)
+                                {
+                                    <form asp-action="Complete" asp-route-id="@Model.LearningNeed.Id" method="post" style="display: inline;">
+                                        <button type="submit" class="btn btn-info me-2" onclick="return confirm('Mark this learning need as complete?')">Mark Complete</button>
+                                    </form>
+                                }
+                                
+                                <a asp-action="Delete" asp-route-id="@Model.LearningNeed.Id" class="btn btn-danger">Delete</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
