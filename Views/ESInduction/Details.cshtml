@@ -1,0 +1,253 @@
+@model EYDGateway.Models.ESInduction
+
+@{
+    ViewData["Title"] = "ES Induction Details - " + (Model?.EYDUser?.UserName ?? "Unknown");
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-graduate"></i> ES Induction Details
+                    </h4>
+                    <small>EYD User: @(Model?.EYDUser?.UserName ?? "Unknown")</small>
+                </div>
+                <div class="card-body">
+                    
+                    <!-- Status and Meeting Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-calendar"></i> Meeting Information
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Meeting Date:</strong> @(Model?.MeetingDate?.ToString("dd MMMM yyyy") ?? "Unknown")</p>
+                                    <p><strong>Educational Supervisor:</strong> @(Model?.ESUser?.UserName ?? "Unknown")</p>
+                                    <p><strong>EYD User:</strong> @(Model?.EYDUser?.UserName ?? "Unknown")</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-@(Model?.IsCompleted == true ? "success" : "warning")">
+                                <div class="card-header bg-@(Model?.IsCompleted == true ? "success" : "warning") text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-@(Model?.IsCompleted == true ? "check-circle" : "clock")"></i> Status
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    @if (Model?.IsCompleted == true)
+                                    {
+                                        <div class="alert alert-success mb-2">
+                                            <i class="fas fa-check-circle"></i>
+                                            <strong>Completed</strong>
+                                        </div>
+                                        @if (Model?.CompletedAt.HasValue == true)
+                                        {
+                                            <p><strong>Completed On:</strong><br>@Model.CompletedAt.Value.ToString("dd/MM/yyyy HH:mm")</p>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-warning mb-2">
+                                            <i class="fas fa-clock"></i>
+                                            <strong>In Progress</strong>
+                                        </div>
+                                        <p class="text-muted">This induction has not been marked as completed yet.</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Educational Transition Document & PDP -->
+                    <div class="card mb-4 border-@(Model?.HasReadTransitionDocumentAndAgreedPDP == true ? "success" : "warning")">
+                        <div class="card-header bg-@(Model?.HasReadTransitionDocumentAndAgreedPDP == true ? "success" : "warning") text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-file-check"></i> Educational Transition Document and PDP
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-@(Model?.HasReadTransitionDocumentAndAgreedPDP == true ? "success" : "warning")">
+                                @if (Model?.HasReadTransitionDocumentAndAgreedPDP == true)
+                                {
+                                    <h6 class="alert-heading">
+                                        <i class="fas fa-check-circle"></i> Confirmed
+                                    </h6>
+                                    <p class="mb-0">
+                                        <strong>Yes</strong> - The Educational Transition Document has been read and a Personal Development Plan (PDP) has been agreed for this placement.
+                                    </p>
+                                }
+                                else
+                                {
+                                    <h6 class="alert-heading">
+                                        <i class="fas fa-exclamation-triangle"></i> Not Confirmed
+                                    </h6>
+                                    <p class="mb-0">
+                                        <strong>No</strong> - The Educational Transition Document has not been read or a Personal Development Plan (PDP) has not been agreed for this placement.
+                                    </p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Meeting Notes and Comments -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-comments"></i> Meeting Notes and Comments
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            @if (!string.IsNullOrWhiteSpace(Model?.MeetingNotesAndComments))
+                            {
+                                <div class="border rounded p-3 bg-light">
+                                    <p style="white-space: pre-wrap; margin-bottom: 0;">@Model?.MeetingNotesAndComments</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-light mb-0">
+                                    <i class="fas fa-info-circle"></i>
+                                    No meeting notes or comments have been recorded for this induction.
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Placement Description -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-dark text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-hospital"></i> Placement Description and Details
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            @if (!string.IsNullOrWhiteSpace(Model?.PlacementDescription))
+                            {
+                                <div class="border rounded p-3 bg-light">
+                                    <p style="white-space: pre-wrap; margin-bottom: 0;">@Model?.PlacementDescription</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-light mb-0">
+                                    <i class="fas fa-info-circle"></i>
+                                    No placement description has been provided for this induction.
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Record Information -->
+                    <div class="card mb-4 border-light">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">
+                                <i class="fas fa-info-circle"></i> Record Information
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Record ID:</strong> #@Model?.Id</p>
+                                    <p><strong>Created By:</strong> @(Model?.ESUser?.UserName ?? "Unknown")</p>
+                                    <p><strong>Created On:</strong> @(Model?.CreatedAt.ToString("dd/MM/yyyy HH:mm") ?? "Unknown")</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Last Updated:</strong> @(Model?.UpdatedAt.ToString("dd/MM/yyyy HH:mm") ?? "Unknown")</p>
+                                    @if (Model?.UpdatedAt > Model?.CreatedAt.AddMinutes(1))
+                                    {
+                                        <p><small class="text-muted">(Record has been modified since creation)</small></p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="btn-toolbar" role="toolbar">
+                                @if (ViewBag.CanEdit)
+                                {
+                                    <div class="btn-group mr-2" role="group">
+                                        <a class="btn btn-warning" asp-action="Edit" asp-route-id="@Model?.Id">
+                                            <i class="fas fa-edit"></i> Edit Record
+                                        </a>
+                                        <a class="btn btn-danger" asp-action="Delete" asp-route-id="@Model?.Id">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </a>
+                                    </div>
+                                }
+                                
+                                <div class="btn-group mr-2" role="group">
+                                    <a class="btn btn-info" asp-action="Index" asp-route-id="@ViewBag.TargetUserId">
+                                        <i class="fas fa-list"></i> Back to Induction
+                                    </a>
+                                    <a class="btn btn-secondary" asp-controller="EYD" asp-action="ViewProfile" asp-route-id="@ViewBag.TargetUserId">
+                                        <i class="fas fa-arrow-left"></i> Back to Portfolio
+                                    </a>
+                                </div>
+
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-outline-secondary" onclick="window.print()">
+                                        <i class="fas fa-print"></i> Print
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Print functionality enhancement
+            $('button[onclick="window.print()"]').on('click', function(e) {
+                e.preventDefault();
+                
+                // Add print-specific styles
+                var printStyles = `
+                    <style type="text/css" media="print">
+                        .btn, .btn-group, .btn-toolbar, .card:last-child { display: none !important; }
+                        .card { break-inside: avoid; }
+                        body { font-size: 12pt; }
+                        h4, h5, h6 { color: #000 !important; }
+                        .alert { border: 1px solid #000 !important; }
+                    </style>
+                `;
+                
+                $('head').append(printStyles);
+                window.print();
+                
+                // Remove print styles after printing
+                setTimeout(function() {
+                    $('style[media="print"]').remove();
+                }, 1000);
+            });
+
+            // Show success/error messages if present
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <text>
+                toastr.success('@TempData["SuccessMessage"]');
+                </text>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <text>
+                toastr.error('@TempData["ErrorMessage"]');
+                </text>
+            }
+        });
+    </script>
+}

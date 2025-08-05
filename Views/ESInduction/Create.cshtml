@@ -1,0 +1,150 @@
+@model EYDGateway.ViewModels.CreateESInductionViewModel
+
+@{
+    ViewData["Title"] = "Create ES Induction - " + (Model?.EYDUserName ?? "Unknown User");
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-md"></i> Create ES Induction
+                    </h4>
+                    <small>Educational Supervisor: @(Model?.EYDUserName ?? "Unknown")</small>
+                </div>
+                <div class="card-body">
+                    <form asp-controller="ESInduction" asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="EYDUserId" />
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="MeetingDate" class="form-label">
+                                        <i class="fas fa-calendar"></i> Meeting Date
+                                    </label>
+                                    <input asp-for="MeetingDate" type="date" class="form-control" required />
+                                    <span asp-validation-for="MeetingDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <div class="form-check mt-4">
+                                        <input type="checkbox" 
+                                               id="HasReadTransitionDocumentAndAgreedPDP" 
+                                               name="HasReadTransitionDocumentAndAgreedPDP" 
+                                               value="true" 
+                                               class="form-check-input" 
+                                               @(Model?.HasReadTransitionDocumentAndAgreedPDP == true ? "checked" : "") />
+                                        <label for="HasReadTransitionDocumentAndAgreedPDP" class="form-check-label">
+                                            <i class="fas fa-file-contract"></i> Has read transition document and agreed PDP
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group mb-3">
+                                    <label asp-for="MeetingNotesAndComments" class="form-label">
+                                        <i class="fas fa-sticky-note"></i> Meeting Notes and Comments
+                                    </label>
+                                    <textarea asp-for="MeetingNotesAndComments" class="form-control" rows="4" 
+                                              placeholder="Enter meeting notes and comments..." required></textarea>
+                                    <span asp-validation-for="MeetingNotesAndComments" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group mb-3">
+                                    <label asp-for="PlacementDescription" class="form-label">
+                                        <i class="fas fa-map-marker-alt"></i> Placement Description
+                                    </label>
+                                    <textarea asp-for="PlacementDescription" class="form-control" rows="3" 
+                                              placeholder="Describe the placement details..." required></textarea>
+                                    <span asp-validation-for="PlacementDescription" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a class="btn btn-secondary" asp-controller="ES" asp-action="Dashboard">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Create ES Induction
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            // Check if there are any validation errors on page load
+            var validationErrors = $('.text-danger').filter(function() {
+                return $(this).text().trim() !== '';
+            });
+            
+            if (validationErrors.length > 0) {
+                console.log('Validation errors found on page load:');
+                validationErrors.each(function() {
+                    console.log('- ' + $(this).text());
+                });
+            }
+            
+            $('form').on('submit', function(e) {
+                console.log('Form submission attempted');
+                console.log('HasReadTransitionDocumentAndAgreedPDP checked:', $('#HasReadTransitionDocumentAndAgreedPDP').is(':checked'));
+                console.log('MeetingNotesAndComments value:', $('#MeetingNotesAndComments').val());
+                console.log('PlacementDescription value:', $('#PlacementDescription').val());
+                console.log('MeetingDate value:', $('#MeetingDate').val());
+                console.log('EYDUserId hidden field value:', $('input[name="EYDUserId"]').val());
+                
+                // Ensure checkbox sends correct value
+                var checkbox = $('#HasReadTransitionDocumentAndAgreedPDP');
+                if (!checkbox.is(':checked')) {
+                    // If unchecked, add a hidden field with false value
+                    $('<input>').attr({
+                        type: 'hidden',
+                        name: 'HasReadTransitionDocumentAndAgreedPDP',
+                        value: 'false'
+                    }).appendTo(this);
+                }
+                
+                // Log all form data being sent
+                var formData = new FormData(this);
+                console.log('=== All Form Data Being Sent ===');
+                for (var pair of formData.entries()) {
+                    console.log(pair[0] + ': ' + pair[1]);
+                }
+                
+                // Check form action URL
+                console.log('Form action URL:', $(this).attr('action'));
+                console.log('Form method:', $(this).attr('method'));
+                
+                // Let's see if validation is blocking submission
+                if (!this.checkValidity()) {
+                    console.log('Form validation failed');
+                    e.preventDefault();
+                    return false;
+                }
+                console.log('Form validation passed, submitting...');
+                
+                // Add a delay to see if we can catch the response
+                setTimeout(function() {
+                    console.log('Form should have submitted by now...');
+                }, 1000);
+            });
+        });
+    </script>
+}

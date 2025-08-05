@@ -282,7 +282,7 @@ namespace EYDGateway.Controllers
         }
 
         // Placeholder actions for portfolio sections
-        public IActionResult ESInduction(string? id = null) => View("PlaceholderPage", new { Title = "Educational Supervisor Induction Meeting" });
+        public IActionResult ESInduction(string? id = null) => RedirectToAction("Index", "ESInduction", new { id = id });
         public IActionResult InductionChecklist(string? id = null) => View("PlaceholderPage", new { Title = "Induction Checklist" });
         public IActionResult QualityImprovement(string? id = null) => View("PlaceholderPage", new { Title = "Quality Improvement" });
         public IActionResult Reflection(string? id = null) => RedirectToAction("Index", "Reflection", new { id = id });

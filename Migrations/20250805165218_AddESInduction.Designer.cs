@@ -3,6 +3,7 @@ using System;
 using EYDGateway.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EYDGateway.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250805165218_AddESInduction")]
+    partial class AddESInduction
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -374,58 +377,6 @@ namespace EYDGateway.Migrations
                         .IsUnique();
 
                     b.ToTable("EPAMappings");
-                });
-
-            modelBuilder.Entity("EYDGateway.Models.ESInduction", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ESUserId")
-                        .IsRequired()
-                        .HasColumnType("varchar(450)");
-
-                    b.Property<string>("EYDUserId")
-                        .IsRequired()
-                        .HasColumnType("varchar(450)");
-
-                    b.Property<bool>("HasReadTransitionDocumentAndAgreedPDP")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsCompleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("MeetingDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("MeetingNotesAndComments")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("PlacementDescription")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ESUserId");
-
-                    b.HasIndex("EYDUserId")
-                        .IsUnique();
-
-                    b.ToTable("ESInductions");
                 });
 
             modelBuilder.Entity("EYDGateway.Models.EYDESAssignment", b =>
@@ -1140,25 +1091,6 @@ namespace EYDGateway.Migrations
                     b.Navigation("EPA");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("EYDGateway.Models.ESInduction", b =>
-                {
-                    b.HasOne("EYDGateway.Models.ApplicationUser", "ESUser")
-                        .WithMany()
-                        .HasForeignKey("ESUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("EYDGateway.Models.ApplicationUser", "EYDUser")
-                        .WithMany()
-                        .HasForeignKey("EYDUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ESUser");
-
-                    b.Navigation("EYDUser");
                 });
 
             modelBuilder.Entity("EYDGateway.Models.EYDESAssignment", b =>

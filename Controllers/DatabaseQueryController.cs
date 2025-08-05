@@ -49,5 +49,33 @@ namespace EYDGateway.Controllers
 
             return Json(result);
         }
+
+        public async Task<IActionResult> CheckAssignments()
+        {
+            var assignments = await _context.EYDESAssignments
+                .Include(a => a.EYDUser)
+                .Include(a => a.ESUser)
+                .Select(a => new {
+                    a.Id,
+                    a.EYDUserId,
+                    EYDUserName = a.EYDUser.DisplayName,
+                    EYDUserEmail = a.EYDUser.Email,
+                    a.ESUserId,
+                    ESUserName = a.ESUser.DisplayName,
+                    ESUserEmail = a.ESUser.Email,
+                    a.AssignedDate,
+                    a.IsActive
+                })
+                .ToListAsync();
+
+            var result = new
+            {
+                Assignments = assignments,
+                AssignmentCount = assignments.Count,
+                ActiveAssignments = assignments.Count(a => a.IsActive)
+            };
+
+            return Json(result);
+        }
     }
 }

@@ -1,0 +1,194 @@
+@model EYDGateway.Models.ESInduction
+
+@{
+    ViewData["Title"] = "Delete ES Induction - " + (Model?.EYDUser?.UserName ?? "Unknown");
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Delete ES Induction Record
+                    </h4>
+                    <small>EYD User: @(Model?.EYDUser?.UserName ?? "Unknown")</small>
+                </div>
+                <div class="card-body">
+                    
+                    <div class="alert alert-danger">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-warning"></i> Confirm Deletion
+                        </h5>
+                        <p>Are you sure you want to delete this ES Induction record? This action cannot be undone.</p>
+                        <hr>
+                        <p class="mb-0">
+                            <strong>Warning:</strong> All information about this induction meeting will be permanently removed from the system.
+                        </p>
+                    </div>
+
+                    <!-- Record Summary -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">
+                                <i class="fas fa-info-circle"></i> Record to be Deleted
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Record ID:</strong> #@Model?.Id</p>
+                                    <p><strong>EYD User:</strong> @(Model?.EYDUser?.UserName ?? "Unknown")</p>
+                                    <p><strong>Educational Supervisor:</strong> @(Model?.ESUser?.UserName ?? "Unknown")</p>
+                                    <p><strong>Meeting Date:</strong> @(Model?.MeetingDate?.ToString("dd MMMM yyyy") ?? "Unknown")</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Status:</strong> 
+                                        @if (Model?.IsCompleted == true)
+                                        {
+                                            <span class="badge badge-success">Completed</span>
+                                            @if (Model.CompletedAt.HasValue)
+                                            {
+                                                <br><small class="text-muted">Completed: @Model.CompletedAt.Value.ToString("dd/MM/yyyy HH:mm")</small>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-warning">In Progress</span>
+                                        }
+                                    </p>
+                                    <p><strong>Created:</strong> @(Model?.CreatedAt.ToString("dd/MM/yyyy HH:mm") ?? "Unknown")</p>
+                                    <p><strong>Last Updated:</strong> @(Model?.UpdatedAt.ToString("dd/MM/yyyy HH:mm") ?? "Unknown")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Content Preview -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">
+                                <i class="fas fa-eye"></i> Content Preview
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            
+                            <!-- Transition Document Status -->
+                            <div class="mb-3">
+                                <strong>Educational Transition Document and PDP:</strong>
+                                @if (Model?.HasReadTransitionDocumentAndAgreedPDP == true)
+                                {
+                                    <span class="badge badge-success ml-2">
+                                        <i class="fas fa-check"></i> Confirmed
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-warning ml-2">
+                                        <i class="fas fa-times"></i> Not Confirmed
+                                    </span>
+                                }
+                            </div>
+
+                            <!-- Meeting Notes Preview -->
+                            <div class="mb-3">
+                                <strong>Meeting Notes and Comments:</strong>
+                                @if (!string.IsNullOrWhiteSpace(Model?.MeetingNotesAndComments))
+                                {
+                                    <div class="border rounded p-2 mt-2 bg-light">
+                                        <small style="white-space: pre-wrap;">@(Model!.MeetingNotesAndComments!.Length > 200 ? Model.MeetingNotesAndComments.Substring(0, 200) + "..." : Model.MeetingNotesAndComments)</small>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <small class="text-muted ml-2">No notes recorded</small>
+                                }
+                            </div>
+
+                            <!-- Placement Description Preview -->
+                            <div class="mb-3">
+                                <strong>Placement Description:</strong>
+                                @if (!string.IsNullOrWhiteSpace(Model?.PlacementDescription))
+                                {
+                                    <div class="border rounded p-2 mt-2 bg-light">
+                                        <small style="white-space: pre-wrap;">@(Model!.PlacementDescription!.Length > 200 ? Model.PlacementDescription.Substring(0, 200) + "..." : Model.PlacementDescription)</small>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <small class="text-muted ml-2">No description provided</small>
+                                }
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="card">
+                        <div class="card-body">
+                            <form asp-action="Delete" method="post">
+                                <input type="hidden" asp-for="Id" />
+                                
+                                <div class="btn-toolbar justify-content-between" role="toolbar">
+                                    <div class="btn-group" role="group">
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="fas fa-trash"></i> Yes, Delete This Record
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="btn-group" role="group">
+                                        <a class="btn btn-secondary" asp-action="Details" asp-route-id="@Model!.Id">
+                                            <i class="fas fa-eye"></i> View Details
+                                        </a>
+                                        <a class="btn btn-primary" asp-action="Index" asp-route-id="@ViewBag.TargetUserId">
+                                            <i class="fas fa-times"></i> Cancel
+                                        </a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Add confirmation dialog for delete action
+            $('form').on('submit', function(e) {
+                var confirmed = confirm('Are you absolutely sure you want to delete this ES Induction record?\n\nThis action cannot be undone and all data will be permanently lost.');
+                
+                if (!confirmed) {
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Show loading state
+                var submitBtn = $(this).find('button[type="submit"]');
+                submitBtn.prop('disabled', true);
+                submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Deleting...');
+                
+                return true;
+            });
+
+            // Show success/error messages if present
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <text>
+                toastr.success('@TempData["SuccessMessage"]');
+                </text>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <text>
+                toastr.error('@TempData["ErrorMessage"]');
+                </text>
+            }
+        });
+    </script>
+}

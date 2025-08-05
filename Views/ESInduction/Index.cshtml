@@ -1,0 +1,133 @@
+@model EYDGateway.ViewModels.ESInductionIndexViewModel
+
+@{
+    ViewData["Title"] = "ES Induction Records";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4>ES Induction Records</h4>
+            <small>EYD User: @(Model?.TargetUser?.Email ?? "Unknown User")</small>
+        </div>
+        <div class="card-body">
+            @if (User.IsInRole("ES"))
+            {
+                <div class="mb-3">
+                    @if (Model?.ExistingInduction == null)
+                    {
+                        <a class="btn btn-success" asp-action="Create" asp-route-id="@Model?.TargetUser?.Id">Create ES Induction Record</a>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <strong>ES Induction Record exists for this EYD user.</strong>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (Model?.ExistingInduction != null)
+            {
+                <div class="card">
+                    <div class="card-header">
+                        <h5>ES Induction Record</h5>
+                        <small>Meeting Date: @Model.ExistingInduction.MeetingDate</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <dl class="row">
+                                    <dt class="col-sm-6">Status:</dt>
+                                    <dd class="col-sm-6">
+                                        @if (Model.ExistingInduction.IsCompleted)
+                                        {
+                                            <span class="badge badge-success">Completed</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-warning">In Progress</span>
+                                        }
+                                    </dd>
+                                    
+                                    <dt class="col-sm-6">Created By:</dt>
+                                    <dd class="col-sm-6">@Model.ExistingInduction.ESUser?.Email</dd>
+                                    
+                                    <dt class="col-sm-6">Last Updated:</dt>
+                                    <dd class="col-sm-6">@Model.ExistingInduction.UpdatedAt</dd>
+                                </dl>
+                            </div>
+                            <div class="col-md-6">
+                                <dl class="row">
+                                    <dt class="col-sm-8">Read Transition Document and Agreed PDP:</dt>
+                                    <dd class="col-sm-4">
+                                        @if (Model.ExistingInduction.HasReadTransitionDocumentAndAgreedPDP)
+                                        {
+                                            <span class="badge badge-success">Yes</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-danger">No</span>
+                                        }
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <h6>Meeting Notes and Comments</h6>
+                            <div class="border p-2 bg-light">
+                                @if (!string.IsNullOrEmpty(Model.ExistingInduction.MeetingNotesAndComments))
+                                {
+                                    <p>@Html.Raw(Html.Encode(Model.ExistingInduction.MeetingNotesAndComments).Replace("\n", "<br />"))</p>
+                                }
+                                else
+                                {
+                                    <em class="text-muted">No meeting notes provided.</em>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <h6>Placement Description and Details</h6>
+                            <div class="border p-2 bg-light">
+                                @if (!string.IsNullOrEmpty(Model.ExistingInduction.PlacementDescription))
+                                {
+                                    <p>@Html.Raw(Html.Encode(Model.ExistingInduction.PlacementDescription).Replace("\n", "<br />"))</p>
+                                }
+                                else
+                                {
+                                    <em class="text-muted">No placement description provided.</em>
+                                }
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            @if (User.IsInRole("ES") && Model.ExistingInduction.ESUserId == User.Identity?.Name)
+                            {
+                                <a class="btn btn-warning" asp-action="Edit" asp-route-id="@Model.ExistingInduction.Id">Edit</a>
+                                <a class="btn btn-danger" asp-action="Delete" asp-route-id="@Model.ExistingInduction.Id">Delete</a>
+                            }
+                            <a class="btn btn-info" asp-action="Details" asp-route-id="@Model.ExistingInduction.Id">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <strong>No ES Induction record found for this EYD user.</strong>
+                    @if (User.IsInRole("ES"))
+                    {
+                        <p>You can create one using the button above.</p>
+                    }
+                </div>
+            }
+            
+            <div class="mt-4">
+                <a class="btn btn-secondary" asp-controller="EYD" asp-action="Portfolio" asp-route-id="@Model?.TargetUser?.Id">Back to Portfolio</a>
+            </div>
+        </div>
+    </div>
+</div>

@@ -26,6 +26,7 @@ namespace EYDGateway.Data
         public DbSet<ClinicalExperienceLog> ClinicalExperienceLogs { get; set; }
         public DbSet<ProtectedLearningTime> ProtectedLearningTimes { get; set; }
         public DbSet<LearningNeed> LearningNeeds { get; set; }
+        public DbSet<ESInduction> ESInductions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -289,6 +290,63 @@ namespace EYDGateway.Data
                     .IsUnique();
                 entity.HasIndex(e => e.SLEType);
                 entity.HasIndex(e => e.Status);
+            });
+
+            // Configure ESInduction
+            modelBuilder.Entity<ESInduction>(entity =>
+            {
+                entity.Property(e => e.Id)
+                    .HasColumnType("integer");
+                    
+                entity.Property(e => e.EYDUserId)
+                    .HasColumnType("varchar(450)")
+                    .IsRequired();
+                    
+                entity.Property(e => e.ESUserId)
+                    .HasColumnType("varchar(450)")
+                    .IsRequired();
+                    
+                entity.Property(e => e.HasReadTransitionDocumentAndAgreedPDP)
+                    .HasColumnType("boolean");
+                    
+                entity.Property(e => e.MeetingNotesAndComments)
+                    .HasColumnType("text")
+                    .IsRequired();
+                    
+                entity.Property(e => e.PlacementDescription)
+                    .HasColumnType("text")
+                    .IsRequired();
+                    
+                entity.Property(e => e.MeetingDate)
+                    .HasColumnType("timestamp with time zone");
+                    
+                entity.Property(e => e.CreatedAt)
+                    .HasColumnType("timestamp with time zone");
+                    
+                entity.Property(e => e.UpdatedAt)
+                    .HasColumnType("timestamp with time zone");
+                    
+                entity.Property(e => e.IsCompleted)
+                    .HasColumnType("boolean");
+                    
+                entity.Property(e => e.CompletedAt)
+                    .HasColumnType("timestamp with time zone");
+                    
+                entity.HasOne(e => e.EYDUser)
+                    .WithMany()
+                    .HasForeignKey(e => e.EYDUserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                    
+                entity.HasOne(e => e.ESUser)
+                    .WithMany()
+                    .HasForeignKey(e => e.ESUserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                    
+                // Each EYD user should have only one ES Induction record
+                entity.HasIndex(e => e.EYDUserId)
+                    .IsUnique();
+                    
+                entity.HasIndex(e => e.ESUserId);
             });
 
             // TODO: Add configurations for new user-scoped models after migration
