@@ -1,0 +1,247 @@
+@model EYDGateway.ViewModels.EditSignificantEventViewModel
+
+@{
+    ViewData["Title"] = "Edit Significant Event";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h4 class="mb-1">
+                                <i class="fas fa-edit"></i> Edit Significant Event
+                            </h4>
+                            <small>Update your significant event reflection</small>
+                        </div>
+                        <div class="text-end">
+                            @if (Model.ESSignedOff)
+                            {
+                                <span class="badge bg-success me-1">
+                                    <i class="fas fa-check"></i> ES Signed
+                                </span>
+                            }
+                            @if (Model.TPDSignedOff)
+                            {
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check"></i> TPD Signed
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (Model.ESSignedOff && !Model.TPDSignedOff)
+                    {
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Note:</strong> This significant event has been signed off by your ES. 
+                            Any changes made will require re-approval.
+                        </div>
+                    }
+
+                    <form asp-action="Edit" method="post" id="significantEventForm">
+                        <input asp-for="Id" type="hidden" />
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label asp-for="Title" class="form-label"></label>
+                                <input asp-for="Title" class="form-control" placeholder="Brief title describing the significant event" />
+                                <span asp-validation-for="Title" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label asp-for="AccountOfExperience" class="form-label"></label>
+                                <textarea asp-for="AccountOfExperience" class="form-control" rows="4" 
+                                         placeholder="Describe what happened during this significant event. Provide a factual account of the experience."></textarea>
+                                <span asp-validation-for="AccountOfExperience" class="text-danger"></span>
+                                <small class="form-text text-muted">Provide a clear, factual description of the event</small>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label asp-for="AnalysisOfSituation" class="form-label"></label>
+                                <textarea asp-for="AnalysisOfSituation" class="form-control" rows="4" 
+                                         placeholder="Analyze the situation. What factors contributed to this event? What went well? What could have been different?"></textarea>
+                                <span asp-validation-for="AnalysisOfSituation" class="text-danger"></span>
+                                <small class="form-text text-muted">Analyze the contributing factors and circumstances</small>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label asp-for="ReflectionOnEvent" class="form-label"></label>
+                                <textarea asp-for="ReflectionOnEvent" class="form-control" rows="4" 
+                                         placeholder="Reflect on what you learned from this event. How will this experience change your future practice?"></textarea>
+                                <span asp-validation-for="ReflectionOnEvent" class="text-danger"></span>
+                                <small class="form-text text-muted">Consider the learning and how it will impact your future practice</small>
+                            </div>
+                        </div>
+
+                        <!-- EPA Selection Section -->
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-link"></i> Link to EPAs (Optional)
+                                </h6>
+                                <small class="text-muted">Select 1-2 EPAs that relate to this significant event</small>
+                            </div>
+                            <div class="card-body" id="epaSelectionContainer">
+                                <div class="row" id="epaCheckboxes">
+                                    <!-- EPAs will be loaded here via AJAX -->
+                                </div>
+                                <div id="epaValidationMessage" class="text-danger mt-2" style="display: none;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Sign-off Status Display -->
+                        @if (Model.ESSignedOff || Model.TPDSignedOff)
+                        {
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-clipboard-check"></i> Sign-off Status
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        @if (Model.ESSignedOff)
+                                        {
+                                            <div class="col-md-6">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <span class="badge bg-success me-2">
+                                                        <i class="fas fa-check"></i> ES Signed
+                                                    </span>
+                                                    <div>
+                                                        <div><strong>@Model.ESUserName</strong></div>
+                                                        <small class="text-muted">@Model.ESSignedOffAt?.ToString("dd/MM/yyyy HH:mm")</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                        @if (Model.TPDSignedOff)
+                                        {
+                                            <div class="col-md-6">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <span class="badge bg-success me-2">
+                                                        <i class="fas fa-check"></i> TPD Signed
+                                                    </span>
+                                                    <div>
+                                                        <div><strong>@Model.TPDUserName</strong></div>
+                                                        <small class="text-muted">@Model.TPDSignedOffAt?.ToString("dd/MM/yyyy HH:mm")</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to List
+                            </a>
+                            <div>
+                                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-info me-2">
+                                    <i class="fas fa-eye"></i> View Details
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Update Significant Event
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        let selectedEPAIds = @Html.Raw(Json.Serialize(Model.SelectedEPAIds ?? new List<int>()));
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEPAs();
+        });
+
+        function loadEPAs() {
+            fetch('/SignificantEvent/GetAvailableEPAs')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        renderEPACheckboxes(data.epas, data.minSelections || 0);
+                    } else {
+                        console.error('Failed to load EPAs:', data.message);
+                        document.getElementById('epaCheckboxes').innerHTML = 
+                            '<div class="alert alert-warning">Unable to load EPAs. Please refresh the page.</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading EPAs:', error);
+                    document.getElementById('epaCheckboxes').innerHTML = 
+                        '<div class="alert alert-danger">Error loading EPAs. Please refresh the page.</div>';
+                });
+        }
+
+        function renderEPACheckboxes(epas, minSelections) {
+            const container = document.getElementById('epaCheckboxes');
+            container.innerHTML = '';
+
+            epas.forEach((epa, index) => {
+                const colDiv = document.createElement('div');
+                colDiv.className = 'col-md-6 mb-2';
+                
+                const isChecked = selectedEPAIds.includes(epa.id);
+                
+                colDiv.innerHTML = `
+                    <div class="form-check">
+                        <input class="form-check-input epa-checkbox" type="checkbox" 
+                               name="SelectedEPAIds" value="${epa.id}" id="epa_${epa.id}"
+                               ${isChecked ? 'checked' : ''}
+                               onchange="validateEPASelection()">
+                        <label class="form-check-label" for="epa_${epa.id}">
+                            <strong>${epa.code}:</strong> ${epa.title}
+                            ${epa.description ? `<br><small class="text-muted">${epa.description}</small>` : ''}
+                        </label>
+                    </div>
+                `;
+                
+                container.appendChild(colDiv);
+            });
+        }
+
+        function validateEPASelection() {
+            const checkboxes = document.querySelectorAll('.epa-checkbox:checked');
+            const validationMessage = document.getElementById('epaValidationMessage');
+            
+            if (checkboxes.length > 2) {
+                validationMessage.textContent = 'Please select no more than 2 EPAs.';
+                validationMessage.style.display = 'block';
+                // Uncheck the last checked checkbox
+                checkboxes[checkboxes.length - 1].checked = false;
+            } else {
+                validationMessage.style.display = 'none';
+            }
+        }
+
+        // Form submission validation
+        document.getElementById('significantEventForm').addEventListener('submit', function(e) {
+            const checkboxes = document.querySelectorAll('.epa-checkbox:checked');
+            if (checkboxes.length > 2) {
+                e.preventDefault();
+                document.getElementById('epaValidationMessage').textContent = 'Please select no more than 2 EPAs.';
+                document.getElementById('epaValidationMessage').style.display = 'block';
+            }
+        });
+    </script>
+}

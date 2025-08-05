@@ -1,0 +1,181 @@
+@model IEnumerable<EYDGateway.ViewModels.SignificantEventIndexViewModel>
+
+@{
+    ViewData["Title"] = "Significant Events";
+    var targetUser = ViewBag.TargetUser as EYDGateway.Models.ApplicationUser;
+    var canEdit = ViewBag.CanEdit as bool? ?? false;
+    var isViewingOthersContent = ViewBag.IsViewingOthersContent as bool? ?? false;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header @(isViewingOthersContent ? "bg-info" : "bg-primary") text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        @if (isViewingOthersContent)
+                        {
+                            <span>Significant Events - @targetUser?.DisplayName</span>
+                        }
+                        else
+                        {
+                            <span>My Significant Events</span>
+                        }
+                    </h4>
+                    <small>
+                        @if (isViewingOthersContent)
+                        {
+                            <span>View-only access to significant event reflections</span>
+                        }
+                        else
+                        {
+                            <span>Record and reflect on significant learning events</span>
+                        }
+                    </small>
+                </div>
+                <div class="card-body">
+                    @if (canEdit)
+                    {
+                        <div class="mb-3">
+                            <a class="btn btn-success" asp-action="Create">
+                                <i class="fas fa-plus"></i> Create New Significant Event
+                            </a>
+                        </div>
+                    }
+
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (Model?.Any() == true)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Status</th>
+                                        <th>Sign-off Progress</th>
+                                        <th>EPAs</th>
+                                        <th>Created</th>
+                                        <th>Updated</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@item.Title</strong>
+                                            </td>
+                                            <td>
+                                                @if (item.IsLocked)
+                                                {
+                                                    <span class="badge bg-secondary">
+                                                        <i class="fas fa-lock"></i> Locked
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-info">
+                                                        <i class="fas fa-edit"></i> Editable
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="d-flex gap-1">
+                                                    @if (item.ESSignedOff)
+                                                    {
+                                                        <span class="badge bg-success">
+                                                            <i class="fas fa-check"></i> ES
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-warning">
+                                                            <i class="fas fa-clock"></i> ES
+                                                        </span>
+                                                    }
+                                                    
+                                                    @if (item.TPDSignedOff)
+                                                    {
+                                                        <span class="badge bg-success">
+                                                            <i class="fas fa-check"></i> TPD
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-warning">
+                                                            <i class="fas fa-clock"></i> TPD
+                                                        </span>
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if (item.EPAs.Any())
+                                                {
+                                                    @foreach (var epa in item.EPAs)
+                                                    {
+                                                        <span class="badge bg-primary me-1 mb-1">@epa.EPACode</span>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No EPAs</span>
+                                                }
+                                            </td>
+                                            <td>@item.CreatedAt.ToString("dd/MM/yyyy")</td>
+                                            <td>@item.UpdatedAt.ToString("dd/MM/yyyy")</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@item.Id">
+                                                        <i class="fas fa-eye"></i> View
+                                                    </a>
+                                                    @if (canEdit && !item.IsLocked)
+                                                    {
+                                                        <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@item.Id">
+                                                            <i class="fas fa-edit"></i> Edit
+                                                        </a>
+                                                        <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@item.Id">
+                                                            <i class="fas fa-trash"></i> Delete
+                                                        </a>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>
+                                @if (isViewingOthersContent)
+                                {
+                                    <span>No significant events found for this user.</span>
+                                }
+                                else
+                                {
+                                    <span>No significant events found.</span>
+                                }
+                            </strong>
+                            @if (canEdit)
+                            {
+                                <span>Start by creating your first significant event reflection.</span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -72,7 +72,10 @@
                                         <strong>EPA Mappings:</strong> 
                                         @if (item.EPAMappings != null && item.EPAMappings.Any())
                                         {
-                                            <span class="badge bg-info">@item.EPAMappings.Count() EPAs</span>
+                                            @foreach (var mapping in item.EPAMappings)
+                                            {
+                                                <span class="badge bg-info me-1">@mapping.EPA.Code</span>
+                                            }
                                         }
                                         else
                                         {

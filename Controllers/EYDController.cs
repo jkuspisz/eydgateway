@@ -167,6 +167,10 @@ namespace EYDGateway.Controllers
             var learningNeedTotal = await _context.LearningNeeds.CountAsync(ln => ln.UserId == id);
             var learningNeedComplete = await _context.LearningNeeds.CountAsync(ln => ln.UserId == id && ln.Status == LearningNeedStatus.Completed);
             
+            // Significant Event counters - count entries and locked status
+            var significantEventTotal = await _context.SignificantEvents.CountAsync(se => se.UserId == id);
+            var significantEventComplete = await _context.SignificantEvents.CountAsync(se => se.UserId == id && se.IsLocked);
+            
             return new List<PortfolioSectionGroup>
             {
                 new PortfolioSectionGroup 
@@ -230,7 +234,7 @@ namespace EYDGateway.Controllers
                     {
                         new PortfolioSection { Id = "clinical-log", Title = "Monthly Clinical Log", Controller = "ClinicalLog", Action = "Index", TotalCount = clinicalLogTotal, CompletedCount = clinicalLogComplete },
                         new PortfolioSection { Id = "epa", Title = "Entrustable Activity Log", Action = "EPA" },
-                        new PortfolioSection { Id = "significant-events", Title = "Significant Event Log", Action = "SignificantEvents" }
+                        new PortfolioSection { Id = "significant-events", Title = "Significant Event Log", Controller = "SignificantEvent", Action = "Index", TotalCount = significantEventTotal, CompletedCount = significantEventComplete }
                     }
                 },
                 new PortfolioSectionGroup 

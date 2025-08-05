@@ -28,6 +28,7 @@ namespace EYDGateway.Data
         public DbSet<LearningNeed> LearningNeeds { get; set; }
         public DbSet<ESInduction> ESInductions { get; set; }
         public DbSet<ClinicalLog> ClinicalLogs { get; set; }
+        public DbSet<SignificantEvent> SignificantEvents { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -348,6 +349,83 @@ namespace EYDGateway.Data
                     .IsUnique();
                     
                 entity.HasIndex(e => e.ESUserId);
+            });
+
+            // Configure SignificantEvent
+            modelBuilder.Entity<SignificantEvent>(entity =>
+            {
+                entity.Property(e => e.Id)
+                    .HasColumnType("integer");
+                    
+                entity.Property(e => e.UserId)
+                    .HasColumnType("varchar(450)")
+                    .IsRequired();
+                    
+                entity.Property(e => e.Title)
+                    .HasColumnType("varchar(200)")
+                    .IsRequired();
+                    
+                entity.Property(e => e.AccountOfExperience)
+                    .HasColumnType("text")
+                    .IsRequired();
+                    
+                entity.Property(e => e.AnalysisOfSituation)
+                    .HasColumnType("text")
+                    .IsRequired();
+                    
+                entity.Property(e => e.ReflectionOnEvent)
+                    .HasColumnType("text")
+                    .IsRequired();
+                    
+                entity.Property(e => e.IsLocked)
+                    .HasColumnType("boolean");
+                    
+                entity.Property(e => e.ESSignedOff)
+                    .HasColumnType("boolean");
+                    
+                entity.Property(e => e.ESSignedOffAt)
+                    .HasColumnType("timestamp with time zone");
+                    
+                entity.Property(e => e.ESUserId)
+                    .HasColumnType("varchar(450)");
+                    
+                entity.Property(e => e.TPDSignedOff)
+                    .HasColumnType("boolean");
+                    
+                entity.Property(e => e.TPDSignedOffAt)
+                    .HasColumnType("timestamp with time zone");
+                    
+                entity.Property(e => e.TPDUserId)
+                    .HasColumnType("varchar(450)");
+                    
+                entity.Property(e => e.CreatedAt)
+                    .HasColumnType("timestamp with time zone");
+                    
+                entity.Property(e => e.UpdatedAt)
+                    .HasColumnType("timestamp with time zone");
+                    
+                // Relationships
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                    
+                entity.HasOne(e => e.ESUser)
+                    .WithMany()
+                    .HasForeignKey(e => e.ESUserId)
+                    .OnDelete(DeleteBehavior.SetNull);
+                    
+                entity.HasOne(e => e.TPDUser)
+                    .WithMany()
+                    .HasForeignKey(e => e.TPDUserId)
+                    .OnDelete(DeleteBehavior.SetNull);
+                    
+                // Indexes
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => e.ESUserId);
+                entity.HasIndex(e => e.TPDUserId);
+                entity.HasIndex(e => e.ESSignedOff);
+                entity.HasIndex(e => e.TPDSignedOff);
             });
 
             // TODO: Add configurations for new user-scoped models after migration

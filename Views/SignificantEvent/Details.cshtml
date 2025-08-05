@@ -1,0 +1,230 @@
+@model EYDGateway.ViewModels.SignificantEventDetailsViewModel
+
+@{
+    ViewData["Title"] = "Significant Event Details";
+    var canEdit = ViewBag.CanEdit as bool? ?? false;
+    var canSignOff = ViewBag.CanSignOff as bool? ?? false;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h4 class="mb-1">
+                                <i class="fas fa-exclamation-triangle"></i> @Model.Title
+                            </h4>
+                            <small>Significant Event Reflection</small>
+                        </div>
+                        <div class="text-end">
+                            <!-- Status badges -->
+                            @if (Model.IsLocked)
+                            {
+                                <span class="badge bg-secondary mb-1">
+                                    <i class="fas fa-lock"></i> Locked
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-info mb-1">
+                                    <i class="fas fa-edit"></i> Editable
+                                </span>
+                            }
+                            
+                            <div>
+                                @if (Model.ESSignedOff)
+                                {
+                                    <span class="badge bg-success me-1">
+                                        <i class="fas fa-check"></i> ES Signed
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning me-1">
+                                        <i class="fas fa-clock"></i> ES Pending
+                                    </span>
+                                }
+                                
+                                @if (Model.TPDSignedOff)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check"></i> TPD Signed
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-clock"></i> TPD Pending
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <dl class="row">
+                        <dt class="col-sm-3">Event Title</dt>
+                        <dd class="col-sm-9">
+                            <h5 class="text-primary">@Model.Title</h5>
+                        </dd>
+                        
+                        <dt class="col-sm-3">Account of Experience</dt>
+                        <dd class="col-sm-9">
+                            <div class="border rounded p-3 bg-light">
+                                @Html.DisplayFor(model => model.AccountOfExperience)
+                            </div>
+                        </dd>
+                        
+                        <dt class="col-sm-3">Analysis of the Situation</dt>
+                        <dd class="col-sm-9">
+                            <div class="border rounded p-3 bg-light">
+                                @Html.DisplayFor(model => model.AnalysisOfSituation)
+                            </div>
+                        </dd>
+                        
+                        <dt class="col-sm-3">Reflection on the Event</dt>
+                        <dd class="col-sm-9">
+                            <div class="border rounded p-3 bg-light">
+                                @Html.DisplayFor(model => model.ReflectionOnEvent)
+                            </div>
+                        </dd>
+                        
+                        <dt class="col-sm-3">Related EPAs</dt>
+                        <dd class="col-sm-9">
+                            @if (Model.EPAMappings != null && Model.EPAMappings.Any())
+                            {
+                                <div class="row">
+                                    @foreach (var mapping in Model.EPAMappings)
+                                    {
+                                        <div class="col-md-6 mb-2">
+                                            <div class="card border-primary">
+                                                <div class="card-body p-2">
+                                                    <h6 class="card-title mb-1">
+                                                        <span class="badge bg-primary me-2">@mapping.EPACode</span>
+                                                        @mapping.EPATitle
+                                                    </h6>
+                                                    @if (!string.IsNullOrEmpty(mapping.EPADescription))
+                                                    {
+                                                        <p class="card-text small text-muted mb-0">@mapping.EPADescription</p>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    No EPA mappings have been assigned to this significant event.
+                                </div>
+                            }
+                        </dd>
+                    </dl>
+                    
+                    <!-- Sign-off Section -->
+                    @if (Model.ESSignedOff || Model.TPDSignedOff)
+                    {
+                        <hr class="my-4">
+                        <h6 class="text-muted mb-3">Sign-off Information</h6>
+                        <dl class="row">
+                            @if (Model.ESSignedOff)
+                            {
+                                <dt class="col-sm-3">ES Sign-off</dt>
+                                <dd class="col-sm-9">
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-success me-2">
+                                            <i class="fas fa-check"></i> Signed
+                                        </span>
+                                        <span>by @Model.ESUserName on @Model.ESSignedOffAt?.ToString("dd/MM/yyyy HH:mm")</span>
+                                    </div>
+                                </dd>
+                            }
+                            
+                            @if (Model.TPDSignedOff)
+                            {
+                                <dt class="col-sm-3">TPD Sign-off</dt>
+                                <dd class="col-sm-9">
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-success me-2">
+                                            <i class="fas fa-check"></i> Signed
+                                        </span>
+                                        <span>by @Model.TPDUserName on @Model.TPDSignedOffAt?.ToString("dd/MM/yyyy HH:mm")</span>
+                                    </div>
+                                </dd>
+                            }
+                        </dl>
+                    }
+                    
+                    <hr class="my-4">
+                    <dl class="row">
+                        <dt class="col-sm-3">Author</dt>
+                        <dd class="col-sm-9">@Model.UserName</dd>
+                        
+                        <dt class="col-sm-3">Created</dt>
+                        <dd class="col-sm-9">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+                        
+                        <dt class="col-sm-3">Last Updated</dt>
+                        <dd class="col-sm-9">@Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+                    </dl>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" asp-route-id="@Model.UserId" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                        <div>
+                            @if (canEdit)
+                            {
+                                @if (!Model.IsLocked)
+                                {
+                                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary me-2">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger me-2">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                }
+                            }
+                            
+                            @if (canSignOff)
+                            {
+                                @if (!Model.ESSignedOff)
+                                {
+                                    <form asp-action="ESSignOff" asp-route-id="@Model.Id" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-success me-2" 
+                                                onclick="return confirm('Are you sure you want to sign off this significant event as ES?')">
+                                            <i class="fas fa-check-circle"></i> ES Sign Off
+                                        </button>
+                                    </form>
+                                }
+                                
+                                @if (Model.ESSignedOff && !Model.TPDSignedOff)
+                                {
+                                    <form asp-action="TPDSignOff" asp-route-id="@Model.Id" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-success me-2" 
+                                                onclick="return confirm('Are you sure you want to sign off this significant event as TPD? This will lock the event.')">
+                                            <i class="fas fa-check-circle"></i> TPD Sign Off
+                                        </button>
+                                    </form>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
