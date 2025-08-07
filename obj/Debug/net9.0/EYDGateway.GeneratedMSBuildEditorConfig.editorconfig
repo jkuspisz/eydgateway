@@ -128,6 +128,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRVlEXEVQQU1hdHJpeC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/james/Documents/EYDgateway/EYDGateway/Views/EYD/PatientSatisfactionResults.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRVlEXFBhdGllbnRTYXRpc2ZhY3Rpb25SZXN1bHRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/james/Documents/EYDgateway/EYDGateway/Views/EYD/PlaceholderPage.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRVlEXFBsYWNlaG9sZGVyUGFnZS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
@@ -202,6 +206,14 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/james/Documents/EYDgateway/EYDGateway/Views/ProtectedLearningTime/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHJvdGVjdGVkTGVhcm5pbmdUaW1lXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/james/Documents/EYDgateway/EYDGateway/Views/PSQ/PSQFeedback.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUFNRXFBTUUZlZWRiYWNrLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/james/Documents/EYDgateway/EYDGateway/Views/PSQ/PSQFeedbackSubmitted.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUFNRXFBTUUZlZWRiYWNrU3VibWl0dGVkLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/james/Documents/EYDgateway/EYDGateway/Views/Reflection/Create.cshtml]

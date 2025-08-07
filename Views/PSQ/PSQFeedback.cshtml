@@ -1,0 +1,338 @@
+@model EYDGateway.ViewModels.SubmitPSQResponseDto
+@{
+    ViewData["Title"] = "Patient Satisfaction Questionnaire";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-heart"></i> Patient Satisfaction Questionnaire
+                    </h4>
+                    <small>For: @ViewBag.PerformerName</small>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>Your feedback is important to us!</strong><br>
+                        This questionnaire is completely anonymous. Your responses will help improve the quality of dental care.
+                    </div>
+
+                    <form asp-action="PSQFeedback" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="QuestionnaireCode" />
+
+                        <div class="mb-4">
+                            <p><strong>Please rate your experience with this dentist:</strong></p>
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <span class="badge bg-danger me-2">-1 = Strongly Disagree</span>
+                                        <span class="badge bg-warning me-2">-2 = Disagree</span>
+                                        <span class="badge bg-success me-2">3 = Agree</span>
+                                        <span class="badge bg-primary me-2">4 = Strongly Agree</span>
+                                        <span class="badge bg-secondary">Not Observed</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Question 1 -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">1. The Dentist put me at ease</label>
+                            <div class="btn-group d-flex" role="group">
+                                <input type="radio" class="btn-check" name="PutMeAtEaseScore" id="q1_n1" value="-1" required>
+                                <label class="btn btn-outline-danger" for="q1_n1">-1</label>
+                                
+                                <input type="radio" class="btn-check" name="PutMeAtEaseScore" id="q1_n2" value="-2" required>
+                                <label class="btn btn-outline-warning" for="q1_n2">-2</label>
+                                
+                                <input type="radio" class="btn-check" name="PutMeAtEaseScore" id="q1_3" value="3" required>
+                                <label class="btn btn-outline-success" for="q1_3">3</label>
+                                
+                                <input type="radio" class="btn-check" name="PutMeAtEaseScore" id="q1_4" value="4" required>
+                                <label class="btn btn-outline-primary" for="q1_4">4</label>
+                                
+                                <input type="radio" class="btn-check" name="PutMeAtEaseScore" id="q1_999" value="999" required>
+                                <label class="btn btn-outline-secondary" for="q1_999">Not Observed</label>
+                            </div>
+                            <span asp-validation-for="PutMeAtEaseScore" class="text-danger"></span>
+                        </div>
+
+                        <!-- Question 2 -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">2. The Dentist treated me with dignity and respect</label>
+                            <div class="btn-group d-flex" role="group">
+                                <input type="radio" class="btn-check" name="TreatedWithDignityScore" id="q2_n1" value="-1" required>
+                                <label class="btn btn-outline-danger" for="q2_n1">-1</label>
+                                
+                                <input type="radio" class="btn-check" name="TreatedWithDignityScore" id="q2_n2" value="-2" required>
+                                <label class="btn btn-outline-warning" for="q2_n2">-2</label>
+                                
+                                <input type="radio" class="btn-check" name="TreatedWithDignityScore" id="q2_3" value="3" required>
+                                <label class="btn btn-outline-success" for="q2_3">3</label>
+                                
+                                <input type="radio" class="btn-check" name="TreatedWithDignityScore" id="q2_4" value="4" required>
+                                <label class="btn btn-outline-primary" for="q2_4">4</label>
+                                
+                                <input type="radio" class="btn-check" name="TreatedWithDignityScore" id="q2_999" value="999" required>
+                                <label class="btn btn-outline-secondary" for="q2_999">Not Observed</label>
+                            </div>
+                            <span asp-validation-for="TreatedWithDignityScore" class="text-danger"></span>
+                        </div>
+
+                        <!-- Question 3 -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">3. The Dentist listened and responded to my concerns</label>
+                            <div class="btn-group d-flex" role="group">
+                                <input type="radio" class="btn-check" name="ListenedToConcernsScore" id="q3_n1" value="-1" required>
+                                <label class="btn btn-outline-danger" for="q3_n1">-1</label>
+                                
+                                <input type="radio" class="btn-check" name="ListenedToConcernsScore" id="q3_n2" value="-2" required>
+                                <label class="btn btn-outline-warning" for="q3_n2">-2</label>
+                                
+                                <input type="radio" class="btn-check" name="ListenedToConcernsScore" id="q3_3" value="3" required>
+                                <label class="btn btn-outline-success" for="q3_3">3</label>
+                                
+                                <input type="radio" class="btn-check" name="ListenedToConcernsScore" id="q3_4" value="4" required>
+                                <label class="btn btn-outline-primary" for="q3_4">4</label>
+                                
+                                <input type="radio" class="btn-check" name="ListenedToConcernsScore" id="q3_999" value="999" required>
+                                <label class="btn btn-outline-secondary" for="q3_999">Not Observed</label>
+                            </div>
+                            <span asp-validation-for="ListenedToConcernsScore" class="text-danger"></span>
+                        </div>
+
+                        <!-- Question 4 -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">4. The Dentist clearly explained available treatment options including costs</label>
+                            <div class="btn-group d-flex" role="group">
+                                <input type="radio" class="btn-check" name="ExplainedTreatmentOptionsScore" id="q4_n1" value="-1" required>
+                                <label class="btn btn-outline-danger" for="q4_n1">-1</label>
+                                
+                                <input type="radio" class="btn-check" name="ExplainedTreatmentOptionsScore" id="q4_n2" value="-2" required>
+                                <label class="btn btn-outline-warning" for="q4_n2">-2</label>
+                                
+                                <input type="radio" class="btn-check" name="ExplainedTreatmentOptionsScore" id="q4_3" value="3" required>
+                                <label class="btn btn-outline-success" for="q4_3">3</label>
+                                
+                                <input type="radio" class="btn-check" name="ExplainedTreatmentOptionsScore" id="q4_4" value="4" required>
+                                <label class="btn btn-outline-primary" for="q4_4">4</label>
+                                
+                                <input type="radio" class="btn-check" name="ExplainedTreatmentOptionsScore" id="q4_999" value="999" required>
+                                <label class="btn btn-outline-secondary" for="q4_999">Not Observed</label>
+                            </div>
+                            <span asp-validation-for="ExplainedTreatmentOptionsScore" class="text-danger"></span>
+                        </div>
+
+                        <!-- Question 5 -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">5. The Dentist involved me as much as I wanted to be in decisions about my care</label>
+                            <div class="btn-group d-flex" role="group">
+                                <input type="radio" class="btn-check" name="InvolvedInDecisionsScore" id="q5_n1" value="-1" required>
+                                <label class="btn btn-outline-danger" for="q5_n1">-1</label>
+                                
+                                <input type="radio" class="btn-check" name="InvolvedInDecisionsScore" id="q5_n2" value="-2" required>
+                                <label class="btn btn-outline-warning" for="q5_n2">-2</label>
+                                
+                                <input type="radio" class="btn-check" name="InvolvedInDecisionsScore" id="q5_3" value="3" required>
+                                <label class="btn btn-outline-success" for="q5_3">3</label>
+                                
+                                <input type="radio" class="btn-check" name="InvolvedInDecisionsScore" id="q5_4" value="4" required>
+                                <label class="btn btn-outline-primary" for="q5_4">4</label>
+                                
+                                <input type="radio" class="btn-check" name="InvolvedInDecisionsScore" id="q5_999" value="999" required>
+                                <label class="btn btn-outline-secondary" for="q5_999">Not Observed</label>
+                            </div>
+                            <span asp-validation-for="InvolvedInDecisionsScore" class="text-danger"></span>
+                        </div>
+
+                        <!-- Question 6 -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">6. The Dentist involved my family/carers appropriately</label>
+                            <div class="btn-group d-flex" role="group">
+                                <input type="radio" class="btn-check" name="InvolvedFamilyScore" id="q6_n1" value="-1" required>
+                                <label class="btn btn-outline-danger" for="q6_n1">-1</label>
+                                
+                                <input type="radio" class="btn-check" name="InvolvedFamilyScore" id="q6_n2" value="-2" required>
+                                <label class="btn btn-outline-warning" for="q6_n2">-2</label>
+                                
+                                <input type="radio" class="btn-check" name="InvolvedFamilyScore" id="q6_3" value="3" required>
+                                <label class="btn btn-outline-success" for="q6_3">3</label>
+                                
+                                <input type="radio" class="btn-check" name="InvolvedFamilyScore" id="q6_4" value="4" required>
+                                <label class="btn btn-outline-primary" for="q6_4">4</label>
+                                
+                                <input type="radio" class="btn-check" name="InvolvedFamilyScore" id="q6_999" value="999" required>
+                                <label class="btn btn-outline-secondary" for="q6_999">Not Observed</label>
+                            </div>
+                            <span asp-validation-for="InvolvedFamilyScore" class="text-danger"></span>
+                        </div>
+
+                        <!-- Question 7 -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">7. The Dentist tailored their approach to meet my needs</label>
+                            <div class="btn-group d-flex" role="group">
+                                <input type="radio" class="btn-check" name="TailoredApproachScore" id="q7_n1" value="-1" required>
+                                <label class="btn btn-outline-danger" for="q7_n1">-1</label>
+                                
+                                <input type="radio" class="btn-check" name="TailoredApproachScore" id="q7_n2" value="-2" required>
+                                <label class="btn btn-outline-warning" for="q7_n2">-2</label>
+                                
+                                <input type="radio" class="btn-check" name="TailoredApproachScore" id="q7_3" value="3" required>
+                                <label class="btn btn-outline-success" for="q7_3">3</label>
+                                
+                                <input type="radio" class="btn-check" name="TailoredApproachScore" id="q7_4" value="4" required>
+                                <label class="btn btn-outline-primary" for="q7_4">4</label>
+                                
+                                <input type="radio" class="btn-check" name="TailoredApproachScore" id="q7_999" value="999" required>
+                                <label class="btn btn-outline-secondary" for="q7_999">Not Observed</label>
+                            </div>
+                            <span asp-validation-for="TailoredApproachScore" class="text-danger"></span>
+                        </div>
+
+                        <!-- Question 8 -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">8. The Dentist explained what will happen next with my treatment</label>
+                            <div class="btn-group d-flex" role="group">
+                                <input type="radio" class="btn-check" name="ExplainedNextStepsScore" id="q8_n1" value="-1" required>
+                                <label class="btn btn-outline-danger" for="q8_n1">-1</label>
+                                
+                                <input type="radio" class="btn-check" name="ExplainedNextStepsScore" id="q8_n2" value="-2" required>
+                                <label class="btn btn-outline-warning" for="q8_n2">-2</label>
+                                
+                                <input type="radio" class="btn-check" name="ExplainedNextStepsScore" id="q8_3" value="3" required>
+                                <label class="btn btn-outline-success" for="q8_3">3</label>
+                                
+                                <input type="radio" class="btn-check" name="ExplainedNextStepsScore" id="q8_4" value="4" required>
+                                <label class="btn btn-outline-primary" for="q8_4">4</label>
+                                
+                                <input type="radio" class="btn-check" name="ExplainedNextStepsScore" id="q8_999" value="999" required>
+                                <label class="btn btn-outline-secondary" for="q8_999">Not Observed</label>
+                            </div>
+                            <span asp-validation-for="ExplainedNextStepsScore" class="text-danger"></span>
+                        </div>
+
+                        <!-- Question 9 -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">9. The Dentist provided guidance on how to take care of my teeth and gums</label>
+                            <div class="btn-group d-flex" role="group">
+                                <input type="radio" class="btn-check" name="ProvidedGuidanceScore" id="q9_n1" value="-1" required>
+                                <label class="btn btn-outline-danger" for="q9_n1">-1</label>
+                                
+                                <input type="radio" class="btn-check" name="ProvidedGuidanceScore" id="q9_n2" value="-2" required>
+                                <label class="btn btn-outline-warning" for="q9_n2">-2</label>
+                                
+                                <input type="radio" class="btn-check" name="ProvidedGuidanceScore" id="q9_3" value="3" required>
+                                <label class="btn btn-outline-success" for="q9_3">3</label>
+                                
+                                <input type="radio" class="btn-check" name="ProvidedGuidanceScore" id="q9_4" value="4" required>
+                                <label class="btn btn-outline-primary" for="q9_4">4</label>
+                                
+                                <input type="radio" class="btn-check" name="ProvidedGuidanceScore" id="q9_999" value="999" required>
+                                <label class="btn btn-outline-secondary" for="q9_999">Not Observed</label>
+                            </div>
+                            <span asp-validation-for="ProvidedGuidanceScore" class="text-danger"></span>
+                        </div>
+
+                        <!-- Question 10 -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">10. The Dentist allocated the right amount of time for my treatment</label>
+                            <div class="btn-group d-flex" role="group">
+                                <input type="radio" class="btn-check" name="AllocatedTimeScore" id="q10_n1" value="-1" required>
+                                <label class="btn btn-outline-danger" for="q10_n1">-1</label>
+                                
+                                <input type="radio" class="btn-check" name="AllocatedTimeScore" id="q10_n2" value="-2" required>
+                                <label class="btn btn-outline-warning" for="q10_n2">-2</label>
+                                
+                                <input type="radio" class="btn-check" name="AllocatedTimeScore" id="q10_3" value="3" required>
+                                <label class="btn btn-outline-success" for="q10_3">3</label>
+                                
+                                <input type="radio" class="btn-check" name="AllocatedTimeScore" id="q10_4" value="4" required>
+                                <label class="btn btn-outline-primary" for="q10_4">4</label>
+                                
+                                <input type="radio" class="btn-check" name="AllocatedTimeScore" id="q10_999" value="999" required>
+                                <label class="btn btn-outline-secondary" for="q10_999">Not Observed</label>
+                            </div>
+                            <span asp-validation-for="AllocatedTimeScore" class="text-danger"></span>
+                        </div>
+
+                        <!-- Question 11 -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">11. The Dentist worked well with other team members</label>
+                            <div class="btn-group d-flex" role="group">
+                                <input type="radio" class="btn-check" name="WorkedWithTeamScore" id="q11_n1" value="-1" required>
+                                <label class="btn btn-outline-danger" for="q11_n1">-1</label>
+                                
+                                <input type="radio" class="btn-check" name="WorkedWithTeamScore" id="q11_n2" value="-2" required>
+                                <label class="btn btn-outline-warning" for="q11_n2">-2</label>
+                                
+                                <input type="radio" class="btn-check" name="WorkedWithTeamScore" id="q11_3" value="3" required>
+                                <label class="btn btn-outline-success" for="q11_3">3</label>
+                                
+                                <input type="radio" class="btn-check" name="WorkedWithTeamScore" id="q11_4" value="4" required>
+                                <label class="btn btn-outline-primary" for="q11_4">4</label>
+                                
+                                <input type="radio" class="btn-check" name="WorkedWithTeamScore" id="q11_999" value="999" required>
+                                <label class="btn btn-outline-secondary" for="q11_999">Not Observed</label>
+                            </div>
+                            <span asp-validation-for="WorkedWithTeamScore" class="text-danger"></span>
+                        </div>
+
+                        <!-- Question 12 -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">12. I feel I can trust this dentist with my dental care</label>
+                            <div class="btn-group d-flex" role="group">
+                                <input type="radio" class="btn-check" name="CanTrustDentistScore" id="q12_n1" value="-1" required>
+                                <label class="btn btn-outline-danger" for="q12_n1">-1</label>
+                                
+                                <input type="radio" class="btn-check" name="CanTrustDentistScore" id="q12_n2" value="-2" required>
+                                <label class="btn btn-outline-warning" for="q12_n2">-2</label>
+                                
+                                <input type="radio" class="btn-check" name="CanTrustDentistScore" id="q12_3" value="3" required>
+                                <label class="btn btn-outline-success" for="q12_3">3</label>
+                                
+                                <input type="radio" class="btn-check" name="CanTrustDentistScore" id="q12_4" value="4" required>
+                                <label class="btn btn-outline-primary" for="q12_4">4</label>
+                                
+                                <input type="radio" class="btn-check" name="CanTrustDentistScore" id="q12_999" value="999" required>
+                                <label class="btn btn-outline-secondary" for="q12_999">Not Observed</label>
+                            </div>
+                            <span asp-validation-for="CanTrustDentistScore" class="text-danger"></span>
+                        </div>
+
+                        <!-- Open-ended questions -->
+                        <hr class="my-4">
+                        <h5>Additional Comments (Optional)</h5>
+                        
+                        <div class="mb-4">
+                            <label asp-for="DoesWellComment" class="form-label fw-bold">13. Anything you feel this dentist does particularly well?</label>
+                            <textarea asp-for="DoesWellComment" class="form-control" rows="3" 
+                                      placeholder="Please share what you appreciated about your experience..."></textarea>
+                            <span asp-validation-for="DoesWellComment" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="CouldImproveComment" class="form-label fw-bold">14. Anything you feel this dentist could improve upon?</label>
+                            <textarea asp-for="CouldImproveComment" class="form-control" rows="3" 
+                                      placeholder="Please share any suggestions for improvement..."></textarea>
+                            <span asp-validation-for="CouldImproveComment" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-paper-plane"></i> Submit Feedback
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

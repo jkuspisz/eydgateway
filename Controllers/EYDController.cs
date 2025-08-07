@@ -478,7 +478,115 @@ namespace EYDGateway.Controllers
         }
         
         public IActionResult SignificantEvents(string? id = null) => View("PlaceholderPage", new { Title = "Significant Event Log" });
-        public IActionResult PatientSatisfaction(string? id = null) => View("PlaceholderPage", new { Title = "Patient Satisfaction Questionnaire" });
+        
+        public async Task<IActionResult> PatientSatisfaction(string? id = null)
+        {
+            try
+            {
+                // Get current user
+                var currentUser = await _context.Users
+                    .FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
+                
+                if (currentUser == null)
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                // Allow EYD, ES, TPD, and Dean users to access PSQ data
+                if (currentUser.Role != "EYD" && currentUser.Role != "ES" && currentUser.Role != "TPD" && currentUser.Role != "Dean")
+                {
+                    return Unauthorized();
+                }
+
+                // Determine target user ID
+                string targetUserId;
+                if (string.IsNullOrEmpty(id))
+                {
+                    targetUserId = currentUser.Id;
+                }
+                else
+                {
+                    targetUserId = id;
+                    
+                    // Security check for different user roles
+                    if (currentUser.Role == "EYD" && targetUserId != currentUser.Id)
+                    {
+                        return Forbid("You can only view your own PSQ data.");
+                    }
+                    else if (currentUser.Role == "ES")
+                    {
+                        // Check if the ES user supervises this EYD
+                        var isAssigned = await _context.EYDESAssignments
+                            .AnyAsync(assignment => assignment.ESUserId == currentUser.Id && 
+                                     assignment.EYDUserId == targetUserId && 
+                                     assignment.IsActive);
+                        
+                        if (!isAssigned)
+                        {
+                            return Forbid("You can only view PSQ data for EYD users assigned to you.");
+                        }
+                    }
+                    else if (currentUser.Role == "TPD" || currentUser.Role == "Dean")
+                    {
+                        // TPD and Dean can view PSQs for users in their area/scheme
+                        var portfolioUser = await _context.Users.FindAsync(targetUserId);
+                        if (portfolioUser == null || 
+                            (currentUser.Role == "TPD" && portfolioUser.SchemeId != currentUser.SchemeId) ||
+                            (currentUser.Role == "Dean" && portfolioUser.AreaId != currentUser.AreaId))
+                        {
+                            return Forbid("You can only view PSQ data for users in your area/scheme.");
+                        }
+                    }
+                }
+
+                // Get target user's name for display
+                var targetUser = await _context.Users.FindAsync(targetUserId);
+                if (targetUser == null)
+                {
+                    return NotFound("User not found.");
+                }
+
+                // Get or create PSQ questionnaire for this user
+                var questionnaire = await _context.PSQQuestionnaires
+                    .FirstOrDefaultAsync(q => q.PerformerId == targetUserId && q.IsActive);
+
+                if (questionnaire == null && currentUser.Role == "EYD" && targetUserId == currentUser.Id)
+                {
+                    // Only EYD users can create their own PSQ questionnaires
+                    questionnaire = new PSQQuestionnaire
+                    {
+                        PerformerId = targetUserId,
+                        Title = $"PSQ Assessment for {targetUser.DisplayName ?? targetUser.UserName}",
+                        UniqueCode = GenerateUniqueCode(),
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    
+                    _context.PSQQuestionnaires.Add(questionnaire);
+                    await _context.SaveChangesAsync();
+                }
+
+                if (questionnaire == null)
+                {
+                    // For supervisors viewing EYD users who haven't created a PSQ yet
+                    return View("PSQNotCreated", new { TargetUserName = targetUser.DisplayName ?? targetUser.UserName });
+                }
+
+                // Get PSQ results
+                var results = await GetPSQResults(questionnaire.Id, targetUser);
+                
+                // Set ViewBag for QR code and URL generation
+                ViewBag.UniqueCode = questionnaire.UniqueCode;
+                ViewBag.PerformerId = targetUserId;
+                
+                return View("PatientSatisfactionResults", results);
+            }
+            catch (Exception)
+            {
+                return View("PlaceholderPage", new { Title = "Patient Satisfaction Questionnaire - Error Loading Data" });
+            }
+        }
+
         public IActionResult MultiSourceFeedback(string? id = null) => View("PlaceholderPage", new { Title = "Multi Source Feedback Questionnaire" });
         public IActionResult AdHocESReport(string? id = null) => View("PlaceholderPage", new { Title = "Ad hoc ES Report" });
         public IActionResult InterimReview(string? id = null) => View("PlaceholderPage", new { Title = "Interim Review of Competence Progression" });
@@ -517,6 +625,119 @@ namespace EYDGateway.Controllers
                 "DtCT" => "Developing the Clinical Teacher",
                 "DENTL" => "Direct Evaluation of Non-Technical Learning",
                 _ => sleType
+            };
+        }
+
+        private string GenerateUniqueCode()
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            var random = new Random();
+            return new string(Enumerable.Repeat(chars, 8)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+        private async Task<PSQResultsDto> GetPSQResults(int questionnaireId, ApplicationUser targetUser)
+        {
+            var questionnaire = await _context.PSQQuestionnaires
+                .FirstOrDefaultAsync(q => q.Id == questionnaireId);
+
+            if (questionnaire == null)
+            {
+                throw new InvalidOperationException("Questionnaire not found");
+            }
+
+            var responses = await _context.PSQResponses
+                .Where(r => r.PSQQuestionnaireId == questionnaireId)
+                .OrderByDescending(r => r.SubmittedAt)
+                .ToListAsync();
+
+            var feedbackUrl = Url.Action("PSQFeedback", "PSQ", 
+                new { code = questionnaire.UniqueCode }, Request.Scheme) ?? "";
+
+            var results = new PSQResultsDto
+            {
+                Questionnaire = questionnaire,
+                TotalResponses = responses.Count,
+                PerformerName = targetUser.DisplayName ?? targetUser.UserName ?? "Unknown User",
+                FeedbackUrl = feedbackUrl,
+                QuestionAverages = CalculateQuestionAverages(responses),
+                PositiveComments = responses
+                    .Where(r => !string.IsNullOrEmpty(r.DoesWellComment))
+                    .Select(r => r.DoesWellComment!)
+                    .ToList(),
+                ImprovementComments = responses
+                    .Where(r => !string.IsNullOrEmpty(r.CouldImproveComment))
+                    .Select(r => r.CouldImproveComment!)
+                    .ToList(),
+                RecentResponses = responses.Take(10).ToList()
+            };
+
+            if (results.QuestionAverages.Any())
+            {
+                results.OverallAverage = results.QuestionAverages.Values.Average();
+            }
+
+            return results;
+        }
+
+        private Dictionary<string, double> CalculateQuestionAverages(List<PSQResponse> responses)
+        {
+            var questionAverages = new Dictionary<string, double>();
+            
+            if (!responses.Any()) return questionAverages;
+
+            var questions = new[]
+            {
+                ("PutMeAtEase", "The Dentist put me at ease"),
+                ("TreatedWithDignity", "Treated me with dignity and respect"),
+                ("ListenedToConcerns", "Listened and responded to my concerns"),
+                ("ExplainedTreatmentOptions", "Clearly explained treatment options including costs"),
+                ("InvolvedInDecisions", "Involved me in decisions about my care"),
+                ("InvolvedFamily", "Involved family/carers appropriately"),
+                ("TailoredApproach", "Tailored approach to meet my needs"),
+                ("ExplainedNextSteps", "Explained what will happen next with treatment"),
+                ("ProvidedGuidance", "Provided guidance on dental care"),
+                ("AllocatedTime", "Allocated right amount of time for treatment"),
+                ("WorkedWithTeam", "Worked well with other team members"),
+                ("CanTrustDentist", "Can trust this dentist with dental care")
+            };
+
+            foreach (var (key, title) in questions)
+            {
+                var scores = GetScoresForQuestion(responses, key)
+                    .Where(score => score != 999) // Exclude "Not observed"
+                    .ToList();
+
+                if (scores.Any())
+                {
+                    questionAverages[key] = scores.Average(); // Use the key instead of title
+                }
+                else
+                {
+                    questionAverages[key] = 0.0; // Default to 0 if no valid scores
+                }
+            }
+
+            return questionAverages;
+        }
+
+        private List<int> GetScoresForQuestion(List<PSQResponse> responses, string questionKey)
+        {
+            return questionKey switch
+            {
+                "PutMeAtEase" => responses.Where(r => r.PutMeAtEaseScore.HasValue).Select(r => r.PutMeAtEaseScore!.Value).ToList(),
+                "TreatedWithDignity" => responses.Where(r => r.TreatedWithDignityScore.HasValue).Select(r => r.TreatedWithDignityScore!.Value).ToList(),
+                "ListenedToConcerns" => responses.Where(r => r.ListenedToConcernsScore.HasValue).Select(r => r.ListenedToConcernsScore!.Value).ToList(),
+                "ExplainedTreatmentOptions" => responses.Where(r => r.ExplainedTreatmentOptionsScore.HasValue).Select(r => r.ExplainedTreatmentOptionsScore!.Value).ToList(),
+                "InvolvedInDecisions" => responses.Where(r => r.InvolvedInDecisionsScore.HasValue).Select(r => r.InvolvedInDecisionsScore!.Value).ToList(),
+                "InvolvedFamily" => responses.Where(r => r.InvolvedFamilyScore.HasValue).Select(r => r.InvolvedFamilyScore!.Value).ToList(),
+                "TailoredApproach" => responses.Where(r => r.TailoredApproachScore.HasValue).Select(r => r.TailoredApproachScore!.Value).ToList(),
+                "ExplainedNextSteps" => responses.Where(r => r.ExplainedNextStepsScore.HasValue).Select(r => r.ExplainedNextStepsScore!.Value).ToList(),
+                "ProvidedGuidance" => responses.Where(r => r.ProvidedGuidanceScore.HasValue).Select(r => r.ProvidedGuidanceScore!.Value).ToList(),
+                "AllocatedTime" => responses.Where(r => r.AllocatedTimeScore.HasValue).Select(r => r.AllocatedTimeScore!.Value).ToList(),
+                "WorkedWithTeam" => responses.Where(r => r.WorkedWithTeamScore.HasValue).Select(r => r.WorkedWithTeamScore!.Value).ToList(),
+                "CanTrustDentist" => responses.Where(r => r.CanTrustDentistScore.HasValue).Select(r => r.CanTrustDentistScore!.Value).ToList(),
+                _ => new List<int>()
             };
         }
     }

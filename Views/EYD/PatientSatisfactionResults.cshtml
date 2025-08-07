@@ -1,0 +1,365 @@
+@model EYDGateway.ViewModels.PSQResultsDto
+@{
+    ViewData["Title"] = "Patient Satisfaction Results";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-chart-bar"></i> Patient Satisfaction Questionnaire Results
+                    </h4>
+                    <small>For: @Model.PerformerName</small>
+                </div>
+                <div class="card-body">
+                    
+                    @if (Model.TotalResponses == 0)
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            No patient responses have been submitted yet. Share the QR code or direct link below with patients to start collecting feedback.
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Summary Stats -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body text-center">
+                                        <h3 class="mb-0">@Model.TotalResponses</h3>
+                                        <small>Total Responses</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body text-center">
+                                        <h3 class="mb-0">@Model.OverallAverage.ToString("F1")</h3>
+                                        <small>Overall Average</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body text-center">
+                                        <h3 class="mb-0">@Model.RecentResponses.Count</h3>
+                                        <small>Recent Responses</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Question-by-Question Results -->
+                        <h5 class="mb-3">Detailed Question Results</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Question</th>
+                                        <th>Average Score</th>
+                                        <th class="text-center">Performance</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model.QuestionAverages.ContainsKey("PutMeAtEase"))
+                                    {
+                                        <tr>
+                                            <td>Put me at ease</td>
+                                            <td>@Model.QuestionAverages["PutMeAtEase"].ToString("F1")</td>
+                                            <td class="text-center">
+                                                @{
+                                                    var score1 = Model.QuestionAverages["PutMeAtEase"];
+                                                    string badge1 = score1 >= 3.5 ? "success" : score1 >= 2.5 ? "warning" : "danger";
+                                                }
+                                                <span class="badge bg-@badge1">@GetPerformanceLabel(score1)</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                    @if (Model.QuestionAverages.ContainsKey("TreatedWithDignity"))
+                                    {
+                                        <tr>
+                                            <td>Treated with dignity and respect</td>
+                                            <td>@Model.QuestionAverages["TreatedWithDignity"].ToString("F1")</td>
+                                            <td class="text-center">
+                                                @{
+                                                    var score2 = Model.QuestionAverages["TreatedWithDignity"];
+                                                    string badge2 = score2 >= 3.5 ? "success" : score2 >= 2.5 ? "warning" : "danger";
+                                                }
+                                                <span class="badge bg-@badge2">@GetPerformanceLabel(score2)</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                    @if (Model.QuestionAverages.ContainsKey("ListenedToConcerns"))
+                                    {
+                                        <tr>
+                                            <td>Listened and responded to concerns</td>
+                                            <td>@Model.QuestionAverages["ListenedToConcerns"].ToString("F1")</td>
+                                            <td class="text-center">
+                                                @{
+                                                    var score3 = Model.QuestionAverages["ListenedToConcerns"];
+                                                    string badge3 = score3 >= 3.5 ? "success" : score3 >= 2.5 ? "warning" : "danger";
+                                                }
+                                                <span class="badge bg-@badge3">@GetPerformanceLabel(score3)</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                    @if (Model.QuestionAverages.ContainsKey("ExplainedTreatmentOptions"))
+                                    {
+                                        <tr>
+                                            <td>Clearly explained treatment options</td>
+                                            <td>@Model.QuestionAverages["ExplainedTreatmentOptions"].ToString("F1")</td>
+                                            <td class="text-center">
+                                                @{
+                                                    var score4 = Model.QuestionAverages["ExplainedTreatmentOptions"];
+                                                    string badge4 = score4 >= 3.5 ? "success" : score4 >= 2.5 ? "warning" : "danger";
+                                                }
+                                                <span class="badge bg-@badge4">@GetPerformanceLabel(score4)</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                    @if (Model.QuestionAverages.ContainsKey("InvolvedInDecisions"))
+                                    {
+                                        <tr>
+                                            <td>Involved me in decisions</td>
+                                            <td>@Model.QuestionAverages["InvolvedInDecisions"].ToString("F1")</td>
+                                            <td class="text-center">
+                                                @{
+                                                    var score5 = Model.QuestionAverages["InvolvedInDecisions"];
+                                                    string badge5 = score5 >= 3.5 ? "success" : score5 >= 2.5 ? "warning" : "danger";
+                                                }
+                                                <span class="badge bg-@badge5">@GetPerformanceLabel(score5)</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                    @if (Model.QuestionAverages.ContainsKey("InvolvedFamily"))
+                                    {
+                                        <tr>
+                                            <td>Involved family/carers appropriately</td>
+                                            <td>@Model.QuestionAverages["InvolvedFamily"].ToString("F1")</td>
+                                            <td class="text-center">
+                                                @{
+                                                    var score6 = Model.QuestionAverages["InvolvedFamily"];
+                                                    string badge6 = score6 >= 3.5 ? "success" : score6 >= 2.5 ? "warning" : "danger";
+                                                }
+                                                <span class="badge bg-@badge6">@GetPerformanceLabel(score6)</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                    @if (Model.QuestionAverages.ContainsKey("TailoredApproach"))
+                                    {
+                                        <tr>
+                                            <td>Tailored approach to meet needs</td>
+                                            <td>@Model.QuestionAverages["TailoredApproach"].ToString("F1")</td>
+                                            <td class="text-center">
+                                                @{
+                                                    var score7 = Model.QuestionAverages["TailoredApproach"];
+                                                    string badge7 = score7 >= 3.5 ? "success" : score7 >= 2.5 ? "warning" : "danger";
+                                                }
+                                                <span class="badge bg-@badge7">@GetPerformanceLabel(score7)</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                    @if (Model.QuestionAverages.ContainsKey("ExplainedNextSteps"))
+                                    {
+                                        <tr>
+                                            <td>Explained next steps</td>
+                                            <td>@Model.QuestionAverages["ExplainedNextSteps"].ToString("F1")</td>
+                                            <td class="text-center">
+                                                @{
+                                                    var score8 = Model.QuestionAverages["ExplainedNextSteps"];
+                                                    string badge8 = score8 >= 3.5 ? "success" : score8 >= 2.5 ? "warning" : "danger";
+                                                }
+                                                <span class="badge bg-@badge8">@GetPerformanceLabel(score8)</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                    @if (Model.QuestionAverages.ContainsKey("ProvidedGuidance"))
+                                    {
+                                        <tr>
+                                            <td>Provided dental care guidance</td>
+                                            <td>@Model.QuestionAverages["ProvidedGuidance"].ToString("F1")</td>
+                                            <td class="text-center">
+                                                @{
+                                                    var score9 = Model.QuestionAverages["ProvidedGuidance"];
+                                                    string badge9 = score9 >= 3.5 ? "success" : score9 >= 2.5 ? "warning" : "danger";
+                                                }
+                                                <span class="badge bg-@badge9">@GetPerformanceLabel(score9)</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                    @if (Model.QuestionAverages.ContainsKey("AllocatedTime"))
+                                    {
+                                        <tr>
+                                            <td>Allocated right amount of time</td>
+                                            <td>@Model.QuestionAverages["AllocatedTime"].ToString("F1")</td>
+                                            <td class="text-center">
+                                                @{
+                                                    var score10 = Model.QuestionAverages["AllocatedTime"];
+                                                    string badge10 = score10 >= 3.5 ? "success" : score10 >= 2.5 ? "warning" : "danger";
+                                                }
+                                                <span class="badge bg-@badge10">@GetPerformanceLabel(score10)</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                    @if (Model.QuestionAverages.ContainsKey("WorkedWithTeam"))
+                                    {
+                                        <tr>
+                                            <td>Worked well with team</td>
+                                            <td>@Model.QuestionAverages["WorkedWithTeam"].ToString("F1")</td>
+                                            <td class="text-center">
+                                                @{
+                                                    var score11 = Model.QuestionAverages["WorkedWithTeam"];
+                                                    string badge11 = score11 >= 3.5 ? "success" : score11 >= 2.5 ? "warning" : "danger";
+                                                }
+                                                <span class="badge bg-@badge11">@GetPerformanceLabel(score11)</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                    @if (Model.QuestionAverages.ContainsKey("CanTrustDentist"))
+                                    {
+                                        <tr>
+                                            <td>Can trust this dentist</td>
+                                            <td>@Model.QuestionAverages["CanTrustDentist"].ToString("F1")</td>
+                                            <td class="text-center">
+                                                @{
+                                                    var score12 = Model.QuestionAverages["CanTrustDentist"];
+                                                    string badge12 = score12 >= 3.5 ? "success" : score12 >= 2.5 ? "warning" : "danger";
+                                                }
+                                                <span class="badge bg-@badge12">@GetPerformanceLabel(score12)</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Comments Section -->
+                        @if (Model.PositiveComments.Any() || Model.ImprovementComments.Any())
+                        {
+                            <hr class="my-4">
+                            <h5 class="mb-3">Patient Comments</h5>
+                            
+                            @if (Model.PositiveComments.Any())
+                            {
+                                <div class="mb-4">
+                                    <h6 class="text-success">
+                                        <i class="fas fa-thumbs-up"></i> What this dentist does well:
+                                    </h6>
+                                    @foreach (var comment in Model.PositiveComments)
+                                    {
+                                        <div class="alert alert-success">
+                                            <i class="fas fa-quote-left"></i> 
+                                            @comment
+                                            <i class="fas fa-quote-right"></i>
+                                        </div>
+                                    }
+                                </div>
+                            }
+
+                            @if (Model.ImprovementComments.Any())
+                            {
+                                <div class="mb-4">
+                                    <h6 class="text-warning">
+                                        <i class="fas fa-lightbulb"></i> Areas for improvement:
+                                    </h6>
+                                    @foreach (var comment in Model.ImprovementComments)
+                                    {
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-quote-left"></i> 
+                                            @comment
+                                            <i class="fas fa-quote-right"></i>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        }
+                    }
+
+                    <!-- QR Code Section - Always visible for patient access -->
+                    <hr class="my-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Patient Feedback Access</h5>
+                            <p>Share this QR code with patients for easy access to the feedback form:</p>
+                            <div class="text-center">
+                                <img src="@Url.Action("QRCode", "PSQ", new { code = ViewBag.UniqueCode })" 
+                                     alt="QR Code for Patient Feedback" 
+                                     class="img-fluid border rounded p-2" 
+                                     style="max-width: 200px;" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Direct Link</h5>
+                            <p>Or provide patients with this direct link:</p>
+                            <div class="input-group">
+                                <input type="text" 
+                                       class="form-control" 
+                                       value="@Url.Action("PSQFeedback", "PSQ", new { code = ViewBag.UniqueCode }, Context.Request.Scheme)" 
+                                       readonly 
+                                       id="feedbackUrl">
+                                <button class="btn btn-outline-secondary" 
+                                        type="button" 
+                                        onclick="copyToClipboard('feedbackUrl')">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="mt-4">
+                        @if (User.IsInRole("EYD"))
+                        {
+                            <a href="@Url.Action("Portfolio", "EYD")" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Portfolio
+                            </a>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("ViewPortfolio", "EYD", new { id = ViewBag.PerformerId })" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Portfolio
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private string GetPerformanceLabel(double score)
+    {
+        if (score >= 3.5) return "Excellent";
+        if (score >= 2.5) return "Good";
+        if (score >= 1.5) return "Needs Improvement";
+        return "Poor";
+    }
+}
+
+@section Scripts {
+<script>
+    function copyToClipboard(elementId) {
+        var copyText = document.getElementById(elementId);
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(copyText.value);
+        
+        // Show feedback
+        var button = event.target.closest('button');
+        var originalHtml = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i>';
+        button.classList.remove('btn-outline-secondary');
+        button.classList.add('btn-success');
+        
+        setTimeout(function() {
+            button.innerHTML = originalHtml;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-secondary');
+        }, 2000);
+    }
+</script>
+}

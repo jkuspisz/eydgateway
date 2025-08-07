@@ -29,6 +29,10 @@ namespace EYDGateway.Data
         public DbSet<ESInduction> ESInductions { get; set; }
         public DbSet<ClinicalLog> ClinicalLogs { get; set; }
         public DbSet<SignificantEvent> SignificantEvents { get; set; }
+        
+        // PSQ (Patient Satisfaction Questionnaire) System
+        public DbSet<PSQQuestionnaire> PSQQuestionnaires { get; set; }
+        public DbSet<PSQResponse> PSQResponses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
