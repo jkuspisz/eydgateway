@@ -515,6 +515,9 @@ namespace EYDGateway.Migrations
                     b.Property<int?>("SLEId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("SignificantEventId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasMaxLength(450)
@@ -535,6 +538,8 @@ namespace EYDGateway.Migrations
                     b.HasIndex("ProtectedLearningTimeId");
 
                     b.HasIndex("SLEId");
+
+                    b.HasIndex("SignificantEventId");
 
                     b.HasIndex("UserId");
 
@@ -1027,6 +1032,80 @@ namespace EYDGateway.Migrations
                     b.ToTable("Schemes");
                 });
 
+            modelBuilder.Entity("EYDGateway.Models.SignificantEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AccountOfExperience")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("AnalysisOfSituation")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("ESSignedOff")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ESSignedOffAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ESUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("varchar(450)");
+
+                    b.Property<bool>("IsLocked")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ReflectionOnEvent")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("TPDSignedOff")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("TPDSignedOffAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TPDUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("varchar(450)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("varchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ESSignedOff");
+
+                    b.HasIndex("ESUserId");
+
+                    b.HasIndex("TPDSignedOff");
+
+                    b.HasIndex("TPDUserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("SignificantEvents");
+                });
+
             modelBuilder.Entity("EYDGateway.Models.TemporaryAccess", b =>
                 {
                     b.Property<int>("Id")
@@ -1310,6 +1389,10 @@ namespace EYDGateway.Migrations
                         .WithMany("EPAMappings")
                         .HasForeignKey("SLEId");
 
+                    b.HasOne("EYDGateway.Models.SignificantEvent", null)
+                        .WithMany("EPAMappings")
+                        .HasForeignKey("SignificantEventId");
+
                     b.HasOne("EYDGateway.Models.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -1444,6 +1527,31 @@ namespace EYDGateway.Migrations
                     b.Navigation("Area");
                 });
 
+            modelBuilder.Entity("EYDGateway.Models.SignificantEvent", b =>
+                {
+                    b.HasOne("EYDGateway.Models.ApplicationUser", "ESUser")
+                        .WithMany()
+                        .HasForeignKey("ESUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("EYDGateway.Models.ApplicationUser", "TPDUser")
+                        .WithMany()
+                        .HasForeignKey("TPDUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("EYDGateway.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ESUser");
+
+                    b.Navigation("TPDUser");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("EYDGateway.Models.TemporaryAccess", b =>
                 {
                     b.HasOne("EYDGateway.Models.ApplicationUser", "ApprovedByUser")
@@ -1556,6 +1664,11 @@ namespace EYDGateway.Migrations
                 });
 
             modelBuilder.Entity("EYDGateway.Models.SLE", b =>
+                {
+                    b.Navigation("EPAMappings");
+                });
+
+            modelBuilder.Entity("EYDGateway.Models.SignificantEvent", b =>
                 {
                     b.Navigation("EPAMappings");
                 });

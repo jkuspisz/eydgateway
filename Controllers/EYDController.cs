@@ -215,18 +215,6 @@ namespace EYDGateway.Controllers
                 },
                 new PortfolioSectionGroup 
                 { 
-                    Id = "uploads-group", 
-                    Title = "Document Uploads", 
-                    Icon = "fas fa-cloud-upload-alt",
-                    Sections = new List<PortfolioSection>
-                    {
-                        new PortfolioSection { Id = "eyd-uploads", Title = "EYD Uploads", Action = "EYDUploads" },
-                        new PortfolioSection { Id = "es-uploads", Title = "ES Uploads", Action = "ESUploads" },
-                        new PortfolioSection { Id = "tpd-uploads", Title = "TPD Uploads", Action = "TPDUploads" }
-                    }
-                },
-                new PortfolioSectionGroup 
-                { 
                     Id = "logs-group", 
                     Title = "Clinical Logs & Activities", 
                     Icon = "fas fa-clipboard-list",
@@ -235,6 +223,18 @@ namespace EYDGateway.Controllers
                         new PortfolioSection { Id = "clinical-log", Title = "Monthly Clinical Log", Controller = "ClinicalLog", Action = "Index", TotalCount = clinicalLogTotal, CompletedCount = clinicalLogComplete },
                         new PortfolioSection { Id = "epa", Title = "Entrustable Activity Log", Action = "EPA" },
                         new PortfolioSection { Id = "significant-events", Title = "Significant Event Log", Controller = "SignificantEvent", Action = "Index", TotalCount = significantEventTotal, CompletedCount = significantEventComplete }
+                    }
+                },
+                new PortfolioSectionGroup 
+                { 
+                    Id = "uploads-group", 
+                    Title = "Document Uploads", 
+                    Icon = "fas fa-cloud-upload-alt",
+                    Sections = new List<PortfolioSection>
+                    {
+                        new PortfolioSection { Id = "eyd-uploads", Title = "EYD Uploads", Action = "EYDUploads" },
+                        new PortfolioSection { Id = "es-uploads", Title = "ES Uploads", Action = "ESUploads" },
+                        new PortfolioSection { Id = "tpd-uploads", Title = "TPD Uploads", Action = "TPDUploads" }
                     }
                 },
                 new PortfolioSectionGroup 

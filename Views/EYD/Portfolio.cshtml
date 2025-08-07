@@ -8,12 +8,11 @@
         <div class="col-md-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h2>Personal Portfolio</h2>
-                    <p class="text-muted">Welcome, @Model.UserName</p>
-                    <small class="text-muted">Scheme: @Model.AssignedScheme | Area: @Model.AssignedArea</small>
-                    <div class="mt-2">
+                    <div class="d-flex align-items-center">
+                        <p class="text-muted mb-0 me-3">Welcome, @Model.UserName</p>
                         <span class="badge bg-success">Portfolio ID: @Model.UserId.Substring(0, 8)...</span>
                     </div>
+                    <small class="text-muted">Scheme: @Model.AssignedScheme | Area: @Model.AssignedArea</small>
                 </div>
                 <div>
                     <span class="badge bg-info fs-6">EYD User</span>
@@ -31,11 +30,11 @@
     }
 
     <!-- Portfolio Section Groups -->
-    <div class="row">
+    <div class="portfolio-grid">
         @foreach (var group in Model.PortfolioSectionGroups)
         {
-            <div class="col-lg-4 col-md-6 mb-3">
-                <div class="card portfolio-group-card h-100">
+            <div class="portfolio-grid-item">
+                <div class="card portfolio-group-card">
                     <div class="card-header bg-primary text-white py-2">
                         <h6 class="mb-0">
                             <i class="@group.Icon me-2"></i>@group.Title
@@ -50,11 +49,11 @@
                         {
                             <div class="portfolio-section-item mb-2" onclick="navigateToSection('@portfolioSection.Controller', '@portfolioSection.Action', '@portfolioSection.Parameters', '@Model.UserId')">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <div class="flex-grow-1">
-                                        <h6 class="portfolio-section-title mb-1">@portfolioSection.Title</h6>
+                                    <div class="d-flex align-items-center flex-grow-1">
+                                        <h6 class="portfolio-section-title mb-1 me-2">@portfolioSection.Title</h6>
                                         @if (portfolioSection.CompletedCount.HasValue && portfolioSection.TotalCount.HasValue)
                                         {
-                                            <small class="text-muted">@portfolioSection.CompletedCount / @portfolioSection.TotalCount items</small>
+                                            <small class="text-muted">@portfolioSection.CompletedCount/@portfolioSection.TotalCount</small>
                                         }
                                     </div>
                                     <div class="portfolio-section-icon">
@@ -94,6 +93,35 @@
 </div>
 
 <style>
+/* CSS Masonry Layout for Portfolio Cards */
+.portfolio-grid {
+    column-count: auto;
+    column-width: 300px;
+    column-gap: 1rem;
+    column-fill: balance;
+}
+
+.portfolio-grid-item {
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 1rem;
+    break-inside: avoid; /* Prevents cards from breaking across columns */
+}
+
+/* Responsive adjustments */
+@@media (max-width: 768px) {
+    .portfolio-grid {
+        column-width: 100%;
+        column-count: 1;
+    }
+}
+
+@@media (min-width: 1200px) {
+    .portfolio-grid {
+        column-width: 350px;
+    }
+}
+
 .portfolio-group-card {
     transition: transform 0.2s ease-in-out;
 }
