@@ -37,6 +37,17 @@ namespace EYDGateway.Data
         // MSF (Multi-Source Feedback) System
         public DbSet<MSFQuestionnaire> MSFQuestionnaires { get; set; }
         public DbSet<MSFResponse> MSFResponses { get; set; }
+        
+        // IRCP (Interim Review of Competence Progression) System
+        public DbSet<InterimReview> InterimReviews { get; set; }
+        public DbSet<IRCPEPAAssessment> IRCPEPAAssessments { get; set; }
+        
+        // New IRCP Workflow System
+        public DbSet<IRCPReview> IRCPReviews { get; set; }
+        public DbSet<IRCPESAssessment> IRCPESAssessments { get; set; }
+        public DbSet<IRCPESSection> IRCPESSections { get; set; }
+        public DbSet<IRCPEYDReflection> IRCPEYDReflections { get; set; }
+        public DbSet<IRCPPanelReview> IRCPPanelReviews { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -695,7 +695,419 @@ namespace EYDGateway.Controllers
             }
         }
         public IActionResult AdHocESReport(string? id = null) => View("PlaceholderPage", new { Title = "Ad hoc ES Report" });
-        public IActionResult InterimReview(string? id = null) => View("PlaceholderPage", new { Title = "Interim Review of Competence Progression" });
+        public async Task<IActionResult> InterimReview(string? id = null)
+        {
+            var currentUser = await _context.Users
+                .Include(u => u.Scheme)
+                .ThenInclude(s => s!.Area)
+                .FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
+
+            if (currentUser == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Allow EYD, ES, TPD, Dean, and Admin users to access IRCP
+            if (currentUser.Role != "EYD" && currentUser.Role != "ES" && currentUser.Role != "TPD" && 
+                currentUser.Role != "Dean" && currentUser.Role != "Admin")
+            {
+                return Unauthorized();
+            }
+
+            // Determine target user ID
+            string targetUserId;
+            if (string.IsNullOrEmpty(id))
+            {
+                targetUserId = currentUser.Id;
+            }
+            else
+            {
+                targetUserId = id;
+                
+                // Security check for different user roles
+                if (currentUser.Role == "EYD" && targetUserId != currentUser.Id)
+                {
+                    return Forbid("You can only view your own IRCP data.");
+                }
+                else if (currentUser.Role == "ES")
+                {
+                    // Check if the ES user supervises this EYD
+                    var isAssigned = await _context.EYDESAssignments
+                        .AnyAsync(assignment => assignment.ESUserId == currentUser.Id && 
+                                 assignment.EYDUserId == targetUserId && 
+                                 assignment.IsActive);
+                    
+                    if (!isAssigned)
+                    {
+                        return Forbid("You can only access IRCP for EYD users assigned to you.");
+                    }
+                }
+                else if (currentUser.Role == "TPD" || currentUser.Role == "Dean")
+                {
+                    // TPD and Dean can view IRCPs for users in their area/scheme
+                    var portfolioUser = await _context.Users.FindAsync(targetUserId);
+                    if (portfolioUser == null || 
+                        (currentUser.Role == "TPD" && portfolioUser.SchemeId != currentUser.SchemeId) ||
+                        (currentUser.Role == "Dean" && portfolioUser.AreaId != currentUser.AreaId))
+                    {
+                        return Forbid("You can only view IRCP data for users in your area/scheme.");
+                    }
+                }
+                // Admin can access any IRCP
+            }
+
+            // Get target user details
+            var targetUser = await _context.Users
+                .Include(u => u.Scheme)
+                .ThenInclude(s => s!.Area)
+                .FirstOrDefaultAsync(u => u.Id == targetUserId);
+
+            if (targetUser == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            // Get or create IRCP review record (simplified for now)
+            // var ircpReview = await _context.IRCPReviews
+            //     .Include(r => r.ESAssessments)
+            //     .Include(r => r.EYDReflection)
+            //     .Include(r => r.PanelReview)
+            //     .FirstOrDefaultAsync(r => r.EYDUserId == targetUserId);
+
+            // Get real EPA data for the target user
+            var epas = await _epaService.GetAllActiveEPAsAsync();
+            var activityColumns = ActivityTypes.GetStandardColumns();
+            
+            // Get target user's EPA mappings from database
+            var userEPAMappings = await _context.EPAMappings
+                .Include(m => m.EPA)
+                .Where(m => m.UserId == targetUserId)
+                .GroupBy(m => new { m.EPAId, m.EntityType })
+                .Select(g => new
+                {
+                    EPAId = g.Key.EPAId,
+                    EntityType = g.Key.EntityType,
+                    Count = g.Count(),
+                    LatestDate = g.Max(m => m.CreatedAt)
+                })
+                .ToListAsync();
+
+            // Create EPA matrix data for the view
+            var epaMatrixData = epas.Select(epa => new
+            {
+                Id = epa.Id,
+                Code = epa.Code,
+                Title = epa.Title,
+                Activities = activityColumns.Select(col => 
+                {
+                    var mapping = userEPAMappings
+                        .FirstOrDefault(m => m.EPAId == epa.Id && m.EntityType == col.EntityType);
+                    return mapping?.Count ?? 0;
+                }).ToArray(),
+                Total = userEPAMappings.Where(m => m.EPAId == epa.Id).Sum(m => m.Count)
+            }).ToList();
+
+            // For now, use mock workflow status
+            var esStatus = "InProgress"; // Will be: NotStarted, InProgress, Completed
+            var eydStatus = "NotStarted";
+            var panelStatus = "NotStarted";
+
+            // Determine edit permissions based on workflow status and locks
+            bool canEditES = currentUser.Role == "ES";
+            
+            bool canEditEYD = currentUser.Role == "EYD" && targetUserId == currentUser.Id && 
+                            esStatus == "Completed";
+            
+            // TPD/Dean can always access their Panel section regardless of ES/EYD completion
+            bool canEditPanel = (currentUser.Role == "TPD" || currentUser.Role == "Dean");
+            
+            bool canUnlock = currentUser.Role == "Admin" || currentUser.Role == "TPD";
+
+            // Load saved form data if it exists
+            var savedESData = new Dictionary<string, string>();
+            var savedEYDData = new Dictionary<string, string>();
+            var savedPanelData = new Dictionary<string, string>();
+
+            if (TempData[$"IRCP_{targetUserId}_ES"] != null)
+            {
+                var jsonData = TempData[$"IRCP_{targetUserId}_ES"].ToString();
+                savedESData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                TempData.Keep($"IRCP_{targetUserId}_ES"); // Keep for next request
+            }
+
+            if (TempData[$"IRCP_{targetUserId}_EYD"] != null)
+            {
+                var jsonData = TempData[$"IRCP_{targetUserId}_EYD"].ToString();
+                savedEYDData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                TempData.Keep($"IRCP_{targetUserId}_EYD"); // Keep for next request
+            }
+
+            if (TempData[$"IRCP_{targetUserId}_Panel"] != null)
+            {
+                var jsonData = TempData[$"IRCP_{targetUserId}_Panel"].ToString();
+                savedPanelData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                TempData.Keep($"IRCP_{targetUserId}_Panel"); // Keep for next request
+            }
+
+            // Create view model
+            var viewModel = new
+            {
+                UserId = targetUser.Id,
+                UserName = targetUser.DisplayName ?? targetUser.UserName,
+                CurrentUserRole = currentUser.Role,
+                IsCurrentUser = targetUserId == currentUser.Id,
+                
+                // Edit permissions
+                CanEditES = canEditES,
+                CanEditEYD = canEditEYD,
+                CanEditPanel = canEditPanel,
+                CanUnlock = canUnlock,
+                
+                // Workflow status (mock for now)
+                ESStatus = esStatus,
+                EYDStatus = eydStatus,
+                PanelStatus = panelStatus,
+                
+                // Real EPA matrix data
+                EPAData = epaMatrixData,
+                ActivityColumns = activityColumns,
+                
+                // Saved form data
+                SavedESData = savedESData,
+                SavedEYDData = savedEYDData,
+                SavedPanelData = savedPanelData
+            };
+
+            return View("InterimReview", viewModel);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SaveIRCPSection(string section, string userId, string action)
+        {
+            try
+            {
+                var currentUser = await _context.Users
+                    .FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
+
+                if (currentUser == null)
+                {
+                    TempData["ErrorMessage"] = "User not found";
+                    return RedirectToAction("InterimReview", new { id = userId });
+                }
+
+                // For now, simulate saving by storing form data in TempData
+                // This will persist the data across the redirect so user can see it was saved
+                var formData = new Dictionary<string, string>();
+                foreach (var key in Request.Form.Keys)
+                {
+                    formData[key] = Request.Form[key].ToString();
+                }
+                
+                // Store the form data for this user and section
+                var sessionKey = $"IRCP_{userId}_{section}";
+                TempData[sessionKey] = System.Text.Json.JsonSerializer.Serialize(formData);
+
+                bool isSubmit = action == "submit";
+
+                // Set success message
+                TempData["SuccessMessage"] = isSubmit ? "Section submitted successfully" : "Progress saved successfully";
+                
+                // Redirect back to the InterimReview page for the same user
+                return RedirectToAction("InterimReview", new { id = userId });
+            }
+            catch (Exception ex)
+            {
+                // Set error message and redirect back
+                TempData["ErrorMessage"] = $"Error saving section: {ex.Message}";
+                return RedirectToAction("InterimReview", new { id = userId });
+            }
+        }
+
+        private async Task SaveESSection(IRCPReview ircpReview, IFormCollection form, bool isSubmit)
+        {
+            // Clear existing ES assessments if resubmitting
+            var existingAssessments = await _context.IRCPESAssessments
+                .Where(a => a.IRCPReviewId == ircpReview.Id)
+                .ToListAsync();
+            _context.IRCPESAssessments.RemoveRange(existingAssessments);
+
+            // Get all EPAs for validation
+            var epas = await _epaService.GetAllActiveEPAsAsync();
+
+            // Save EPA assessments
+            foreach (var epa in epas)
+            {
+                var entrustmentKey = $"entrustment_{epa.Id}";
+                var reasonKey = $"reason_{epa.Id}";
+
+                if (form.ContainsKey(entrustmentKey))
+                {
+                    var assessment = new IRCPESAssessment
+                    {
+                        IRCPReviewId = ircpReview.Id,
+                        EPACode = epa.Code,
+                        EntrustmentLevel = int.TryParse(form[entrustmentKey].ToString(), out int level) ? level : null,
+                        Justification = form[reasonKey].ToString(),
+                        CreatedDate = DateTime.UtcNow
+                    };
+                    
+                    _context.IRCPESAssessments.Add(assessment);
+                }
+            }
+
+            // Create or update ES section
+            var esSection = await _context.IRCPESSections
+                .FirstOrDefaultAsync(s => s.IRCPReviewId == ircpReview.Id);
+
+            if (esSection == null)
+            {
+                esSection = new IRCPESSection
+                {
+                    IRCPReviewId = ircpReview.Id,
+                    CreatedDate = DateTime.UtcNow
+                };
+                _context.IRCPESSections.Add(esSection);
+            }
+
+            esSection.ConfirmAccuracy = form.ContainsKey("ConfirmAccuracy");
+            esSection.LastModifiedDate = DateTime.UtcNow;
+
+            // Update status
+            if (isSubmit)
+            {
+                ircpReview.ESStatus = IRCPStatus.Completed;
+                ircpReview.ESSubmittedDate = DateTime.UtcNow;
+                ircpReview.ESLocked = true;
+            }
+            else
+            {
+                ircpReview.ESStatus = IRCPStatus.InProgress;
+            }
+        }
+
+        private async Task SaveEYDSection(IRCPReview ircpReview, IFormCollection form, bool isSubmit)
+        {
+            // Get or create EYD reflection
+            var eydReflection = await _context.IRCPEYDReflections
+                .FirstOrDefaultAsync(r => r.IRCPReviewId == ircpReview.Id);
+
+            if (eydReflection == null)
+            {
+                eydReflection = new IRCPEYDReflection
+                {
+                    IRCPReviewId = ircpReview.Id,
+                    CreatedDate = DateTime.UtcNow
+                };
+                _context.IRCPEYDReflections.Add(eydReflection);
+            }
+
+            eydReflection.Reflection = form["EYDReflection"].ToString();
+            eydReflection.LastModifiedDate = DateTime.UtcNow;
+
+            // Update status
+            if (isSubmit)
+            {
+                ircpReview.EYDStatus = IRCPStatus.Completed;
+                ircpReview.EYDSubmittedDate = DateTime.UtcNow;
+                ircpReview.EYDLocked = true;
+            }
+            else
+            {
+                ircpReview.EYDStatus = IRCPStatus.InProgress;
+            }
+        }
+
+        private async Task SavePanelSection(IRCPReview ircpReview, IFormCollection form, bool isSubmit)
+        {
+            // Get or create panel review
+            var panelReview = await _context.IRCPPanelReviews
+                .FirstOrDefaultAsync(r => r.IRCPReviewId == ircpReview.Id);
+
+            if (panelReview == null)
+            {
+                panelReview = new IRCPPanelReview
+                {
+                    IRCPReviewId = ircpReview.Id,
+                    CreatedDate = DateTime.UtcNow
+                };
+                _context.IRCPPanelReviews.Add(panelReview);
+            }
+
+            panelReview.RecommendedOutcome = form["RecommendedOutcome"].ToString();
+            panelReview.DetailedReasons = form["DetailedReasons"].ToString();
+            panelReview.MitigatingCircumstances = form["MitigatingCircumstances"].ToString();
+            panelReview.CompetenciesToDevelop = form["CompetenciesToDevelop"].ToString();
+            panelReview.RecommendedActions = form["RecommendedActions"].ToString();
+            panelReview.LastModifiedDate = DateTime.UtcNow;
+
+            // Update status
+            if (isSubmit)
+            {
+                ircpReview.PanelStatus = IRCPStatus.Completed;
+                ircpReview.PanelSubmittedDate = DateTime.UtcNow;
+                ircpReview.PanelLocked = true;
+            }
+            else
+            {
+                ircpReview.PanelStatus = IRCPStatus.InProgress;
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UnlockIRCPSection(string section, string userId)
+        {
+            try
+            {
+                var currentUser = await _context.Users
+                    .FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
+
+                if (currentUser == null || (currentUser.Role != "Admin" && currentUser.Role != "TPD"))
+                {
+                    return Json(new { success = false, message = "Unauthorized" });
+                }
+
+                var ircpReview = await _context.IRCPReviews
+                    .FirstOrDefaultAsync(r => r.EYDUserId == userId);
+
+                if (ircpReview == null)
+                {
+                    return Json(new { success = false, message = "IRCP review not found" });
+                }
+
+                // Unlock the specified section
+                switch (section.ToLower())
+                {
+                    case "es":
+                        ircpReview.ESLocked = false;
+                        ircpReview.ESStatus = IRCPStatus.InProgress;
+                        break;
+                    case "eyd":
+                        ircpReview.EYDLocked = false;
+                        ircpReview.EYDStatus = IRCPStatus.InProgress;
+                        break;
+                    case "panel":
+                        ircpReview.PanelLocked = false;
+                        ircpReview.PanelStatus = IRCPStatus.InProgress;
+                        break;
+                    default:
+                        return Json(new { success = false, message = "Invalid section" });
+                }
+
+                ircpReview.LastModifiedDate = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+
+                return Json(new { 
+                    success = true, 
+                    message = $"{section} section unlocked successfully",
+                    redirect = $"/EYD/InterimReview/{userId}"
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error unlocking section: {ex.Message}" });
+            }
+        }
+
         public IActionResult FinalReview(string? id = null) => View("PlaceholderPage", new { Title = "Final Review of Competence Progression" });
         
         private async Task<List<SLECompletionStat>> GetSLECompletionStats(string userId)

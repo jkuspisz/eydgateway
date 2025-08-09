@@ -1,3 +1,14 @@
+C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.csproj.AssemblyReference.cache
+C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\rpswa.dswa.cache.json
+C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.AssemblyInfoInputs.cache
+C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.AssemblyInfo.cs
+C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.csproj.CoreCompileInputs.cache
+C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.RazorAssemblyInfo.cache
+C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.RazorAssemblyInfo.cs
+C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.sourcelink.json
 C:\Users\james\Documents\EYDgateway\EYDGateway\bin\Debug\net9.0\appsettings.Development.json
 C:\Users\james\Documents\EYDgateway\EYDGateway\bin\Debug\net9.0\appsettings.json
 C:\Users\james\Documents\EYDgateway\EYDGateway\bin\Debug\net9.0\appsettings.Production.json
@@ -44,6 +55,7 @@ C:\Users\james\Documents\EYDgateway\EYDGateway\bin\Debug\net9.0\Microsoft.Extens
 C:\Users\james\Documents\EYDgateway\EYDGateway\bin\Debug\net9.0\Mono.TextTemplating.dll
 C:\Users\james\Documents\EYDgateway\EYDGateway\bin\Debug\net9.0\Npgsql.dll
 C:\Users\james\Documents\EYDgateway\EYDGateway\bin\Debug\net9.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
+C:\Users\james\Documents\EYDgateway\EYDGateway\bin\Debug\net9.0\QRCoder.dll
 C:\Users\james\Documents\EYDgateway\EYDGateway\bin\Debug\net9.0\SQLitePCLRaw.batteries_v2.dll
 C:\Users\james\Documents\EYDgateway\EYDGateway\bin\Debug\net9.0\SQLitePCLRaw.core.dll
 C:\Users\james\Documents\EYDgateway\EYDGateway\bin\Debug\net9.0\SQLitePCLRaw.provider.e_sqlite3.dll
@@ -139,17 +151,6 @@ C:\Users\james\Documents\EYDgateway\EYDGateway\bin\Debug\net9.0\runtimes\win-arm
 C:\Users\james\Documents\EYDgateway\EYDGateway\bin\Debug\net9.0\runtimes\win-arm64\native\e_sqlite3.dll
 C:\Users\james\Documents\EYDgateway\EYDGateway\bin\Debug\net9.0\runtimes\win-x64\native\e_sqlite3.dll
 C:\Users\james\Documents\EYDgateway\EYDGateway\bin\Debug\net9.0\runtimes\win-x86\native\e_sqlite3.dll
-C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.csproj.AssemblyReference.cache
-C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\rpswa.dswa.cache.json
-C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.AssemblyInfoInputs.cache
-C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.AssemblyInfo.cs
-C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.csproj.CoreCompileInputs.cache
-C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.MvcApplicationPartsAssemblyInfo.cs
-C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.MvcApplicationPartsAssemblyInfo.cache
-C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.RazorAssemblyInfo.cache
-C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.RazorAssemblyInfo.cs
-C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.sourcelink.json
 C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\rjimswa.dswa.cache.json
 C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\rjsmrazor.dswa.cache.json
 C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\rjsmcshtml.dswa.cache.json
@@ -293,4 +294,3 @@ C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\refint\EYDGatewa
 C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.pdb
 C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\EYDGateway.genruntimeconfig.cache
 C:\Users\james\Documents\EYDgateway\EYDGateway\obj\Debug\net9.0\ref\EYDGateway.dll
-C:\Users\james\Documents\EYDgateway\EYDGateway\bin\Debug\net9.0\QRCoder.dll
