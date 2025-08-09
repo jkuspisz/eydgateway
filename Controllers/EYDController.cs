@@ -60,8 +60,9 @@ namespace EYDGateway.Controllers
                 Console.WriteLine($"DEBUG Portfolio: Retrieved id from query: '{id}'");
             }
 
-            // Allow EYD users and ES users to access portfolios
-            if (currentUser?.Role != "EYD" && currentUser?.Role != "ES")
+            // Allow EYD, ES, TPD, Dean, and Admin users to access portfolios
+            if (currentUser?.Role != "EYD" && currentUser?.Role != "ES" && 
+                currentUser?.Role != "TPD" && currentUser?.Role != "Dean" && currentUser?.Role != "Admin")
             {
                 return Unauthorized();
             }
@@ -74,6 +75,7 @@ namespace EYDGateway.Controllers
 
             // Security check: EYD users can only access their own portfolio
             // ES users can access portfolios of EYDs they supervise
+            // TPD and Dean can view portfolios for users in their area/scheme
             if (currentUser.Role == "EYD" && id != currentUser.Id)
             {
                 return Forbid("You can only access your own portfolio.");
@@ -91,6 +93,18 @@ namespace EYDGateway.Controllers
                     return Forbid("You can only view portfolios of EYD users assigned to you.");
                 }
             }
+            else if ((currentUser.Role == "TPD" || currentUser.Role == "Dean") && id != currentUser.Id)
+            {
+                // TPD and Dean can view portfolios for users in their area/scheme
+                var targetUser = await _context.Users.FindAsync(id);
+                if (targetUser == null || 
+                    (currentUser.Role == "TPD" && targetUser.SchemeId != currentUser.SchemeId) ||
+                    (currentUser.Role == "Dean" && targetUser.AreaId != currentUser.AreaId))
+                {
+                    return Forbid("You can only view portfolios for users in your area/scheme.");
+                }
+            }
+            // Admin can access any portfolio
 
             // Get portfolio user data
             var portfolioUser = await _context.Users
@@ -109,6 +123,9 @@ namespace EYDGateway.Controllers
             // Get SLE completion statistics for this user
             var sleStats = await GetSLECompletionStats(portfolioUser.Id);
 
+            // Get IRCP status for this user
+            var ircpStatus = GetIRCPStatus(portfolioUser.Id);
+
             var viewModel = new EYDPortfolioViewModel
             {
                 UserId = portfolioUser.Id,
@@ -117,7 +134,11 @@ namespace EYDGateway.Controllers
                 AssignedArea = portfolioUser.Scheme?.Area?.Name ?? "No Area Assigned",
                 SLECompletionStats = sleStats,
                 // Portfolio section groups - organized by functionality
-                PortfolioSectionGroups = await GetPortfolioSectionGroups(portfolioUser.Id)
+                PortfolioSectionGroups = await GetPortfolioSectionGroups(portfolioUser.Id),
+                // IRCP Status
+                IRCPESStatus = ircpStatus.ESStatus,
+                IRCPEYDStatus = ircpStatus.EYDStatus,
+                IRCPPanelStatus = ircpStatus.PanelStatus
             };
 
             Console.WriteLine($"DEBUG Portfolio: Created ViewModel for {viewModel.UserName} (UserID: {viewModel.UserId})");
@@ -313,8 +334,9 @@ namespace EYDGateway.Controllers
                     return RedirectToAction("Login", "Account");
                 }
 
-                // Allow both EYD and ES users to access EPA data
-                if (currentUser.Role != "EYD" && currentUser.Role != "ES")
+                // Allow EYD, ES, TPD, Dean, and Admin users to access EPA data
+                if (currentUser.Role != "EYD" && currentUser.Role != "ES" && 
+                    currentUser.Role != "TPD" && currentUser.Role != "Dean" && currentUser.Role != "Admin")
                 {
                     return Unauthorized();
                 }
@@ -329,8 +351,12 @@ namespace EYDGateway.Controllers
                 {
                     targetUserId = id;
                     
-                    // Security check for ES users
-                    if (currentUser.Role == "ES")
+                    // Security check for different user roles
+                    if (currentUser.Role == "EYD" && targetUserId != currentUser.Id)
+                    {
+                        return Forbid("You can only view your own EPA data.");
+                    }
+                    else if (currentUser.Role == "ES")
                     {
                         var isAssigned = await _context.EYDESAssignments
                             .AnyAsync(assignment => assignment.ESUserId == currentUser.Id && 
@@ -342,10 +368,18 @@ namespace EYDGateway.Controllers
                             return Forbid("You can only view EPA data for EYD users assigned to you.");
                         }
                     }
-                    else if (currentUser.Role == "EYD" && targetUserId != currentUser.Id)
+                    else if ((currentUser.Role == "TPD" || currentUser.Role == "Dean") && targetUserId != currentUser.Id)
                     {
-                        return Forbid("You can only view your own EPA data.");
+                        // TPD and Dean can view EPA data for users in their area/scheme
+                        var epaTargetUser = await _context.Users.FindAsync(targetUserId);
+                        if (epaTargetUser == null || 
+                            (currentUser.Role == "TPD" && epaTargetUser.SchemeId != currentUser.SchemeId) ||
+                            (currentUser.Role == "Dean" && epaTargetUser.AreaId != currentUser.AreaId))
+                        {
+                            return Forbid("You can only view EPA data for users in your area/scheme.");
+                        }
                     }
+                    // Admin can access any EPA data
                 }
 
                 // Get all active EPAs
@@ -807,19 +841,82 @@ namespace EYDGateway.Controllers
                 Total = userEPAMappings.Where(m => m.EPAId == epa.Id).Sum(m => m.Count)
             }).ToList();
 
-            // For now, use mock workflow status
-            var esStatus = "InProgress"; // Will be: NotStarted, InProgress, Completed
+            // Check for section locks first
+            bool esLocked = TempData[$"IRCP_{targetUserId}_ES_Locked"] != null && TempData[$"IRCP_{targetUserId}_ES_Locked"].ToString() == "true";
+            bool eydLocked = TempData[$"IRCP_{targetUserId}_EYD_Locked"] != null && TempData[$"IRCP_{targetUserId}_EYD_Locked"].ToString() == "true";
+            bool panelLocked = TempData[$"IRCP_{targetUserId}_Panel_Locked"] != null && TempData[$"IRCP_{targetUserId}_Panel_Locked"].ToString() == "true";
+            
+            // Keep lock data for next request
+            if (esLocked) TempData.Keep($"IRCP_{targetUserId}_ES_Locked");
+            if (eydLocked) TempData.Keep($"IRCP_{targetUserId}_EYD_Locked");
+            if (panelLocked) TempData.Keep($"IRCP_{targetUserId}_Panel_Locked");
+
+            // Check actual workflow status based on saved data and lock status
+            var esStatus = "NotStarted";
             var eydStatus = "NotStarted";
             var panelStatus = "NotStarted";
 
+            // Check if ES section has been completed
+            if (esLocked)
+            {
+                esStatus = "Completed";
+            }
+            else if (TempData[$"IRCP_{targetUserId}_ES"] != null)
+            {
+                var jsonData = TempData[$"IRCP_{targetUserId}_ES"].ToString();
+                var esData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                
+                // Check if ES has confirmed their assessment (this indicates completion)
+                if (esData.ContainsKey("ESConfirmation") && esData["ESConfirmation"] == "true")
+                {
+                    esStatus = "Completed";
+                }
+                else if (esData.Count > 0)
+                {
+                    esStatus = "InProgress";
+                }
+                TempData.Keep($"IRCP_{targetUserId}_ES");
+            }
+
+            // Check EYD status
+            if (eydLocked)
+            {
+                eydStatus = "Completed";
+            }
+            else if (TempData[$"IRCP_{targetUserId}_EYD"] != null)
+            {
+                var jsonData = TempData[$"IRCP_{targetUserId}_EYD"].ToString();
+                var eydData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                if (eydData.Count > 0)
+                {
+                    eydStatus = "InProgress";
+                }
+                TempData.Keep($"IRCP_{targetUserId}_EYD");
+            }
+
+            // Check Panel status
+            if (panelLocked)
+            {
+                panelStatus = "Completed";
+            }
+            else if (TempData[$"IRCP_{targetUserId}_Panel"] != null)
+            {
+                var jsonData = TempData[$"IRCP_{targetUserId}_Panel"].ToString();
+                var panelData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                if (panelData.Count > 0)
+                {
+                    panelStatus = "InProgress";
+                }
+                TempData.Keep($"IRCP_{targetUserId}_Panel");
+            }
+
             // Determine edit permissions based on workflow status and locks
-            bool canEditES = currentUser.Role == "ES";
+            bool canEditES = currentUser.Role == "ES" && !esLocked;
             
-            bool canEditEYD = currentUser.Role == "EYD" && targetUserId == currentUser.Id && 
-                            esStatus == "Completed";
+            bool canEditEYD = currentUser.Role == "EYD" && targetUserId == currentUser.Id && !eydLocked;
             
             // TPD/Dean can always access their Panel section regardless of ES/EYD completion
-            bool canEditPanel = (currentUser.Role == "TPD" || currentUser.Role == "Dean");
+            bool canEditPanel = (currentUser.Role == "TPD" || currentUser.Role == "Dean") && !panelLocked;
             
             bool canUnlock = currentUser.Role == "Admin" || currentUser.Role == "TPD";
 
@@ -862,6 +959,11 @@ namespace EYDGateway.Controllers
                 CanEditEYD = canEditEYD,
                 CanEditPanel = canEditPanel,
                 CanUnlock = canUnlock,
+                
+                // Lock status
+                ESLocked = esLocked,
+                EYDLocked = eydLocked,
+                PanelLocked = panelLocked,
                 
                 // Workflow status (mock for now)
                 ESStatus = esStatus,
@@ -909,8 +1011,16 @@ namespace EYDGateway.Controllers
 
                 bool isSubmit = action == "submit";
 
+                // If submitting, lock the section
+                if (isSubmit)
+                {
+                    var lockKey = $"IRCP_{userId}_{section}_Locked";
+                    TempData[lockKey] = "true";
+                    TempData.Keep(lockKey);
+                }
+
                 // Set success message
-                TempData["SuccessMessage"] = isSubmit ? "Section submitted successfully" : "Progress saved successfully";
+                TempData["SuccessMessage"] = isSubmit ? "Section submitted and locked successfully" : "Progress saved successfully";
                 
                 // Redirect back to the InterimReview page for the same user
                 return RedirectToAction("InterimReview", new { id = userId });
@@ -919,6 +1029,41 @@ namespace EYDGateway.Controllers
             {
                 // Set error message and redirect back
                 TempData["ErrorMessage"] = $"Error saving section: {ex.Message}";
+                return RedirectToAction("InterimReview", new { id = userId });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UnlockIRCPSection(string section, string userId)
+        {
+            try
+            {
+                var currentUser = await _context.Users
+                    .FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
+
+                if (currentUser == null)
+                {
+                    TempData["ErrorMessage"] = "User not found";
+                    return RedirectToAction("InterimReview", new { id = userId });
+                }
+
+                // Check if user has permission to unlock (Admin or TPD)
+                if (currentUser.Role != "Admin" && currentUser.Role != "TPD")
+                {
+                    TempData["ErrorMessage"] = "You don't have permission to unlock sections";
+                    return RedirectToAction("InterimReview", new { id = userId });
+                }
+
+                // Remove the lock
+                var lockKey = $"IRCP_{userId}_{section}_Locked";
+                TempData.Remove(lockKey);
+
+                TempData["SuccessMessage"] = $"{section} section unlocked successfully";
+                return RedirectToAction("InterimReview", new { id = userId });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error unlocking section: {ex.Message}";
                 return RedirectToAction("InterimReview", new { id = userId });
             }
         }
@@ -1053,60 +1198,7 @@ namespace EYDGateway.Controllers
             }
         }
 
-        [HttpPost]
-        public async Task<IActionResult> UnlockIRCPSection(string section, string userId)
-        {
-            try
-            {
-                var currentUser = await _context.Users
-                    .FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
 
-                if (currentUser == null || (currentUser.Role != "Admin" && currentUser.Role != "TPD"))
-                {
-                    return Json(new { success = false, message = "Unauthorized" });
-                }
-
-                var ircpReview = await _context.IRCPReviews
-                    .FirstOrDefaultAsync(r => r.EYDUserId == userId);
-
-                if (ircpReview == null)
-                {
-                    return Json(new { success = false, message = "IRCP review not found" });
-                }
-
-                // Unlock the specified section
-                switch (section.ToLower())
-                {
-                    case "es":
-                        ircpReview.ESLocked = false;
-                        ircpReview.ESStatus = IRCPStatus.InProgress;
-                        break;
-                    case "eyd":
-                        ircpReview.EYDLocked = false;
-                        ircpReview.EYDStatus = IRCPStatus.InProgress;
-                        break;
-                    case "panel":
-                        ircpReview.PanelLocked = false;
-                        ircpReview.PanelStatus = IRCPStatus.InProgress;
-                        break;
-                    default:
-                        return Json(new { success = false, message = "Invalid section" });
-                }
-
-                ircpReview.LastModifiedDate = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-
-                return Json(new { 
-                    success = true, 
-                    message = $"{section} section unlocked successfully",
-                    redirect = $"/EYD/InterimReview/{userId}"
-                });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = $"Error unlocking section: {ex.Message}" });
-            }
-        }
 
         public IActionResult FinalReview(string? id = null) => View("PlaceholderPage", new { Title = "Final Review of Competence Progression" });
         
@@ -1130,6 +1222,86 @@ namespace EYDGateway.Controllers
             }
             
             return stats;
+        }
+
+        private (string ESStatus, string EYDStatus, string PanelStatus) GetIRCPStatus(string userId)
+        {
+            var esStatus = "NotStarted";
+            var eydStatus = "NotStarted";
+            var panelStatus = "NotStarted";
+
+            // Check for section locks first
+            bool esLocked = TempData[$"IRCP_{userId}_ES_Locked"]?.ToString() == "true";
+            bool eydLocked = TempData[$"IRCP_{userId}_EYD_Locked"]?.ToString() == "true";
+            bool panelLocked = TempData[$"IRCP_{userId}_Panel_Locked"]?.ToString() == "true";
+
+            // Check ES status
+            if (esLocked)
+            {
+                esStatus = "Completed";
+            }
+            else if (TempData[$"IRCP_{userId}_ES"] != null)
+            {
+                var jsonData = TempData[$"IRCP_{userId}_ES"]?.ToString();
+                if (!string.IsNullOrEmpty(jsonData))
+                {
+                    var esData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                    if (esData.ContainsKey("ESConfirmation") && esData["ESConfirmation"] == "true")
+                    {
+                        esStatus = "Completed";
+                    }
+                    else if (esData.Count > 0)
+                    {
+                        esStatus = "InProgress";
+                    }
+                }
+            }
+
+            // Check EYD status
+            if (eydLocked)
+            {
+                eydStatus = "Completed";
+            }
+            else if (TempData[$"IRCP_{userId}_EYD"] != null)
+            {
+                var jsonData = TempData[$"IRCP_{userId}_EYD"]?.ToString();
+                if (!string.IsNullOrEmpty(jsonData))
+                {
+                    var eydData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                    if (eydData.Count > 0)
+                    {
+                        eydStatus = "InProgress";
+                    }
+                }
+            }
+
+            // Check Panel status
+            if (panelLocked)
+            {
+                panelStatus = "Completed";
+            }
+            else if (TempData[$"IRCP_{userId}_Panel"] != null)
+            {
+                var jsonData = TempData[$"IRCP_{userId}_Panel"]?.ToString();
+                if (!string.IsNullOrEmpty(jsonData))
+                {
+                    var panelData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                    if (panelData.Count > 0)
+                    {
+                        panelStatus = "InProgress";
+                    }
+                }
+            }
+
+            // Keep TempData for future requests
+            if (TempData[$"IRCP_{userId}_ES"] != null) TempData.Keep($"IRCP_{userId}_ES");
+            if (TempData[$"IRCP_{userId}_EYD"] != null) TempData.Keep($"IRCP_{userId}_EYD");
+            if (TempData[$"IRCP_{userId}_Panel"] != null) TempData.Keep($"IRCP_{userId}_Panel");
+            if (esLocked) TempData.Keep($"IRCP_{userId}_ES_Locked");
+            if (eydLocked) TempData.Keep($"IRCP_{userId}_EYD_Locked");
+            if (panelLocked) TempData.Keep($"IRCP_{userId}_Panel_Locked");
+
+            return (esStatus, eydStatus, panelStatus);
         }
         
         private string GetSLETypeName(string sleType)
@@ -1406,6 +1578,11 @@ namespace EYDGateway.Controllers
         public string AssignedArea { get; set; } = "";
         public List<SLECompletionStat> SLECompletionStats { get; set; } = new List<SLECompletionStat>();
         public List<PortfolioSectionGroup> PortfolioSectionGroups { get; set; } = new List<PortfolioSectionGroup>();
+        
+        // IRCP Status indicators
+        public string IRCPESStatus { get; set; } = "NotStarted"; // NotStarted, InProgress, Completed
+        public string IRCPEYDStatus { get; set; } = "NotStarted"; // NotStarted, InProgress, Completed
+        public string IRCPPanelStatus { get; set; } = "NotStarted"; // NotStarted, InProgress, Completed
     }
     
     public class SLECompletionStat

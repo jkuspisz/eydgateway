@@ -68,6 +68,27 @@
                                         <i class="@statusIcon"></i>
                                     </div>
                                 </div>
+                                
+                                @* Special status indicators for IRCP section *@
+                                @if (portfolioSection.Id == "interim-review")
+                                {
+                                    <div class="ircp-status-indicators mt-2">
+                                        <div class="d-flex justify-content-around">
+                                            <div class="ircp-status-box text-center">
+                                                <div class="status-indicator status-@Model.IRCPESStatus.ToLower()"></div>
+                                                <small class="d-block mt-1">ES</small>
+                                            </div>
+                                            <div class="ircp-status-box text-center">
+                                                <div class="status-indicator status-@Model.IRCPEYDStatus.ToLower()"></div>
+                                                <small class="d-block mt-1">EYD</small>
+                                            </div>
+                                            <div class="ircp-status-box text-center">
+                                                <div class="status-indicator status-@Model.IRCPPanelStatus.ToLower()"></div>
+                                                <small class="d-block mt-1">PANEL</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
@@ -151,6 +172,46 @@
 
 .portfolio-section-icon {
     opacity: 0.7;
+}
+
+/* IRCP Status Indicators */
+.ircp-status-indicators {
+    border-top: 1px solid #e9ecef;
+    padding-top: 8px;
+    margin-top: 8px;
+}
+
+.ircp-status-box {
+    flex: 1;
+}
+
+.status-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    margin: 0 auto;
+    border: 1px solid #ccc;
+}
+
+.status-notstarted {
+    background-color: #dc3545; /* Red */
+    border-color: #dc3545;
+}
+
+.status-inprogress {
+    background-color: #ffc107; /* Yellow */
+    border-color: #ffc107;
+}
+
+.status-completed {
+    background-color: #28a745; /* Green */
+    border-color: #28a745;
+}
+
+.ircp-status-box small {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #6c757d;
 }
 </style>
 

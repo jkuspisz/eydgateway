@@ -114,8 +114,22 @@
             <!-- Educational Supervisor Section -->
             <div class="card mb-4">
                 <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="fas fa-user-tie"></i> Educational Supervisor Assessment</h5>
-                    <small>Complete EPA entrustment levels and provide justifications</small>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0"><i class="fas fa-user-tie"></i> Educational Supervisor Assessment</h5>
+                            <small>Complete EPA entrustment levels and provide justifications</small>
+                        </div>
+                        @if (Model.CanUnlock && Model.ESLocked)
+                        {
+                            <form asp-action="UnlockIRCPSection" method="post" style="display: inline;">
+                                <input type="hidden" name="section" value="ES" />
+                                <input type="hidden" name="userId" value="@Model.UserId" />
+                                <button type="submit" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-unlock"></i> Unlock ES Section
+                                </button>
+                            </form>
+                        }
+                    </div>
                 </div>
                 <div class="card-body">
                     @if (Model.CanEditES)
@@ -541,8 +555,22 @@
             <!-- EYD Reflection Section -->
             <div class="card mb-4">
                 <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="fas fa-user-graduate"></i> Trainee Reflection</h5>
-                    <small>Reflect on your progress and professional development</small>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0"><i class="fas fa-user-graduate"></i> Trainee Reflection</h5>
+                            <small>Reflect on your progress and professional development</small>
+                        </div>
+                        @if (Model.CanUnlock && Model.EYDLocked)
+                        {
+                            <form asp-action="UnlockIRCPSection" method="post" style="display: inline;">
+                                <input type="hidden" name="section" value="EYD" />
+                                <input type="hidden" name="userId" value="@Model.UserId" />
+                                <button type="submit" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-unlock"></i> Unlock EYD Section
+                                </button>
+                            </form>
+                        }
+                    </div>
                 </div>
                 <div class="card-body">
                     @if (Model.CanEditEYD)
@@ -622,8 +650,22 @@
             <!-- Panel Review Section -->
             <div class="card mb-4">
                 <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0"><i class="fas fa-users"></i> Panel Review</h5>
-                    <small>Final assessment and recommendations</small>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0"><i class="fas fa-users"></i> Panel Review</h5>
+                            <small>Final assessment and recommendations</small>
+                        </div>
+                        @if (Model.CanUnlock && Model.PanelLocked)
+                        {
+                            <form asp-action="UnlockIRCPSection" method="post" style="display: inline;">
+                                <input type="hidden" name="section" value="Panel" />
+                                <input type="hidden" name="userId" value="@Model.UserId" />
+                                <button type="submit" class="btn btn-dark btn-sm">
+                                    <i class="fas fa-unlock"></i> Unlock Panel Section
+                                </button>
+                            </form>
+                        }
+                    </div>
                 </div>
                 <div class="card-body">
                     @if (Model.CanEditPanel)
@@ -633,37 +675,80 @@
                             <input type="hidden" name="Section" value="Panel" />
                             
                             <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label"><strong>Review Date</strong></label>
+                                        @{
+                                            var savedReviewDate = Model.SavedPanelData.ContainsKey("ReviewDate") ? Model.SavedPanelData["ReviewDate"] : "";
+                                        }
+                                        <input type="date" class="form-control" name="ReviewDate" value="@savedReviewDate" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label"><strong>Panel Members</strong></label>
+                                        @{
+                                            var savedPanelMembers = Model.SavedPanelData.ContainsKey("PanelMembers") ? Model.SavedPanelData["PanelMembers"] : "";
+                                        }
+                                        <input type="text" class="form-control" name="PanelMembers" value="@savedPanelMembers" 
+                                               placeholder="List panel members..." />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
                                 <div class="col-md-12">
                                     <div class="form-group mb-3">
-                                        <label class="form-label"><strong>Panel Decision</strong></label>
+                                        <label class="form-label"><strong>Extra Documentation</strong></label>
                                         @{
-                                            var savedPanelDec = Model.SavedPanelData.ContainsKey("PanelDecision") ? Model.SavedPanelData["PanelDecision"] : "";
+                                            var savedExtraDoc = Model.SavedPanelData.ContainsKey("ExtraDocumentation") ? Model.SavedPanelData["ExtraDocumentation"] : "";
                                         }
-                                        <select class="form-select" name="PanelDecision">
-                                            <option value="">Select Decision</option>
-                                            @if (savedPanelDec == "Satisfactory")
+                                        <textarea class="form-control" name="ExtraDocumentation" rows="3" 
+                                                  placeholder="Any additional documentation or evidence considered...">@savedExtraDoc</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label"><strong>Recommended Outcome</strong></label>
+                                        @{
+                                            var savedOutcome = Model.SavedPanelData.ContainsKey("RecommendedOutcome") ? Model.SavedPanelData["RecommendedOutcome"] : "";
+                                        }
+                                        <select class="form-select" name="RecommendedOutcome">
+                                            <option value="">Select Outcome</option>
+                                            @if (savedOutcome == "Outcome1")
                                             {
-                                                <option value="Satisfactory" selected>Satisfactory Progress</option>
+                                                <option value="Outcome1" selected>Outcome 1 Interim - Predefined competences being demonstrated at an appropriate rate</option>
                                             }
                                             else
                                             {
-                                                <option value="Satisfactory">Satisfactory Progress</option>
+                                                <option value="Outcome1">Outcome 1 Interim - Predefined competences being demonstrated at an appropriate rate</option>
                                             }
-                                            @if (savedPanelDec == "NeedsImprovement")
+                                            @if (savedOutcome == "Outcome2")
                                             {
-                                                <option value="NeedsImprovement" selected>Needs Improvement</option>
-                                            }
-                                            else
-                                            {
-                                                <option value="NeedsImprovement">Needs Improvement</option>
-                                            }
-                                            @if (savedPanelDec == "Unsatisfactory")
-                                            {
-                                                <option value="Unsatisfactory" selected>Unsatisfactory Progress</option>
+                                                <option value="Outcome2" selected>Outcome 2 Interim - Development required with specific recommendations regarding the development of further competences during the remainder of that year of the training programme being made</option>
                                             }
                                             else
                                             {
-                                                <option value="Unsatisfactory">Unsatisfactory Progress</option>
+                                                <option value="Outcome2">Outcome 2 Interim - Development required with specific recommendations regarding the development of further competences during the remainder of that year of the training programme being made</option>
+                                            }
+                                            @if (savedOutcome == "Outcome4")
+                                            {
+                                                <option value="Outcome4" selected>Outcome 4 - Released from training without achieving all specified competences</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="Outcome4">Outcome 4 - Released from training without achieving all specified competences</option>
+                                            }
+                                            @if (savedOutcome == "Outcome5")
+                                            {
+                                                <option value="Outcome5" selected>Outcome 5 - Incomplete evidence presented - additional training time may be required</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="Outcome5">Outcome 5 - Incomplete evidence presented - additional training time may be required</option>
                                             }
                                         </select>
                                     </div>
@@ -673,12 +758,51 @@
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="form-group mb-3">
-                                        <label class="form-label"><strong>Panel Comments</strong></label>
+                                        <label class="form-label"><strong>Detailed Reasons</strong></label>
                                         @{
-                                            var savedPanelComm = Model.SavedPanelData.ContainsKey("PanelComments") ? Model.SavedPanelData["PanelComments"] : "";
+                                            var savedReasons = Model.SavedPanelData.ContainsKey("DetailedReasons") ? Model.SavedPanelData["DetailedReasons"] : "";
                                         }
-                                        <textarea class="form-control" name="PanelComments" rows="6" 
-                                                  placeholder="Provide detailed panel assessment and recommendations...">@savedPanelComm</textarea>
+                                        <textarea class="form-control" name="DetailedReasons" rows="4" 
+                                                  placeholder="Provide detailed reasons for the recommended outcome...">@savedReasons</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label"><strong>Mitigating Circumstances</strong></label>
+                                        @{
+                                            var savedMitigating = Model.SavedPanelData.ContainsKey("MitigatingCircumstances") ? Model.SavedPanelData["MitigatingCircumstances"] : "";
+                                        }
+                                        <textarea class="form-control" name="MitigatingCircumstances" rows="3" 
+                                                  placeholder="Any mitigating circumstances to consider...">@savedMitigating</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label"><strong>Competencies to Develop</strong></label>
+                                        @{
+                                            var savedCompetencies = Model.SavedPanelData.ContainsKey("CompetenciesToDevelop") ? Model.SavedPanelData["CompetenciesToDevelop"] : "";
+                                        }
+                                        <textarea class="form-control" name="CompetenciesToDevelop" rows="4" 
+                                                  placeholder="Identify specific competencies that need development...">@savedCompetencies</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label"><strong>Recommended Actions</strong></label>
+                                        @{
+                                            var savedActions = Model.SavedPanelData.ContainsKey("RecommendedActions") ? Model.SavedPanelData["RecommendedActions"] : "";
+                                        }
+                                        <textarea class="form-control" name="RecommendedActions" rows="4" 
+                                                  placeholder="Specify recommended actions and next steps...">@savedActions</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -717,35 +841,35 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <div class="form-group mb-3">
-                                    <label class="form-label"><strong>Panel Decision</strong></label>
+                                    <label class="form-label"><strong>Review Date</strong></label>
                                     @{
-                                        var savedPanelDecision = Model.SavedPanelData.ContainsKey("PanelDecision") ? Model.SavedPanelData["PanelDecision"] : "";
+                                        var savedReviewDate = Model.SavedPanelData.ContainsKey("ReviewDate") ? Model.SavedPanelData["ReviewDate"] : "";
                                     }
-                                    @if (!string.IsNullOrEmpty(savedPanelDecision))
+                                    @if (!string.IsNullOrEmpty(savedReviewDate))
                                     {
-                                        <div class="border rounded p-3 bg-light">
-                                            @switch (savedPanelDecision)
-                                            {
-                                                case "Satisfactory":
-                                                    <span class="badge bg-success">Satisfactory Progress</span>
-                                                    break;
-                                                case "NeedsImprovement":
-                                                    <span class="badge bg-warning">Needs Improvement</span>
-                                                    break;
-                                                case "Unsatisfactory":
-                                                    <span class="badge bg-danger">Unsatisfactory Progress</span>
-                                                    break;
-                                                default:
-                                                    <span>@savedPanelDecision</span>
-                                                    break;
-                                            }
-                                        </div>
+                                        <div class="border rounded p-3 bg-light">@savedReviewDate</div>
                                     }
                                     else
                                     {
-                                        <div class="border rounded p-3 bg-light text-muted">No decision made</div>
+                                        <div class="border rounded p-3 bg-light text-muted">No date set</div>
+                                    }
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label"><strong>Panel Members</strong></label>
+                                    @{
+                                        var savedPanelMembers = Model.SavedPanelData.ContainsKey("PanelMembers") ? Model.SavedPanelData["PanelMembers"] : "";
+                                    }
+                                    @if (!string.IsNullOrEmpty(savedPanelMembers))
+                                    {
+                                        <div class="border rounded p-3 bg-light">@savedPanelMembers</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="border rounded p-3 bg-light text-muted">No members listed</div>
                                     }
                                 </div>
                             </div>
@@ -754,17 +878,131 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="form-group mb-3">
-                                    <label class="form-label"><strong>Panel Comments</strong></label>
+                                    <label class="form-label"><strong>Extra Documentation</strong></label>
                                     @{
-                                        var savedPanelComments = Model.SavedPanelData.ContainsKey("PanelComments") ? Model.SavedPanelData["PanelComments"] : "";
+                                        var savedExtraDoc = Model.SavedPanelData.ContainsKey("ExtraDocumentation") ? Model.SavedPanelData["ExtraDocumentation"] : "";
                                     }
-                                    @if (!string.IsNullOrEmpty(savedPanelComments))
+                                    @if (!string.IsNullOrEmpty(savedExtraDoc))
                                     {
-                                        <div class="border rounded p-3 bg-light">@savedPanelComments</div>
+                                        <div class="border rounded p-3 bg-light">@savedExtraDoc</div>
                                     }
                                     else
                                     {
-                                        <div class="border rounded p-3 bg-light text-muted">No comments provided</div>
+                                        <div class="border rounded p-3 bg-light text-muted">No additional documentation</div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group mb-3">
+                                    <label class="form-label"><strong>Recommended Outcome</strong></label>
+                                    @{
+                                        var savedOutcome = Model.SavedPanelData.ContainsKey("RecommendedOutcome") ? Model.SavedPanelData["RecommendedOutcome"] : "";
+                                    }
+                                    @if (!string.IsNullOrEmpty(savedOutcome))
+                                    {
+                                        <div class="border rounded p-3 bg-light">
+                                            @switch (savedOutcome)
+                                            {
+                                                case "Outcome1":
+                                                    <span class="badge bg-secondary">Outcome 1 Interim - Predefined competences being demonstrated at an appropriate rate</span>
+                                                    break;
+                                                case "Outcome2":
+                                                    <span class="badge bg-secondary">Outcome 2 Interim - Development required with specific recommendations regarding the development of further competences during the remainder of that year of the training programme being made</span>
+                                                    break;
+                                                case "Outcome4":
+                                                    <span class="badge bg-secondary">Outcome 4 - Released from training without achieving all specified competences</span>
+                                                    break;
+                                                case "Outcome5":
+                                                    <span class="badge bg-secondary">Outcome 5 - Incomplete evidence presented - additional training time may be required</span>
+                                                    break;
+                                                default:
+                                                    <span>@savedOutcome</span>
+                                                    break;
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="border rounded p-3 bg-light text-muted">No outcome selected</div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group mb-3">
+                                    <label class="form-label"><strong>Detailed Reasons</strong></label>
+                                    @{
+                                        var savedReasons = Model.SavedPanelData.ContainsKey("DetailedReasons") ? Model.SavedPanelData["DetailedReasons"] : "";
+                                    }
+                                    @if (!string.IsNullOrEmpty(savedReasons))
+                                    {
+                                        <div class="border rounded p-3 bg-light">@savedReasons</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="border rounded p-3 bg-light text-muted">No reasons provided</div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group mb-3">
+                                    <label class="form-label"><strong>Mitigating Circumstances</strong></label>
+                                    @{
+                                        var savedMitigating = Model.SavedPanelData.ContainsKey("MitigatingCircumstances") ? Model.SavedPanelData["MitigatingCircumstances"] : "";
+                                    }
+                                    @if (!string.IsNullOrEmpty(savedMitigating))
+                                    {
+                                        <div class="border rounded p-3 bg-light">@savedMitigating</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="border rounded p-3 bg-light text-muted">No mitigating circumstances noted</div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group mb-3">
+                                    <label class="form-label"><strong>Competencies to Develop</strong></label>
+                                    @{
+                                        var savedCompetencies = Model.SavedPanelData.ContainsKey("CompetenciesToDevelop") ? Model.SavedPanelData["CompetenciesToDevelop"] : "";
+                                    }
+                                    @if (!string.IsNullOrEmpty(savedCompetencies))
+                                    {
+                                        <div class="border rounded p-3 bg-light">@savedCompetencies</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="border rounded p-3 bg-light text-muted">No competencies specified</div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group mb-3">
+                                    <label class="form-label"><strong>Recommended Actions</strong></label>
+                                    @{
+                                        var savedActions = Model.SavedPanelData.ContainsKey("RecommendedActions") ? Model.SavedPanelData["RecommendedActions"] : "";
+                                    }
+                                    @if (!string.IsNullOrEmpty(savedActions))
+                                    {
+                                        <div class="border rounded p-3 bg-light">@savedActions</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="border rounded p-3 bg-light text-muted">No actions recommended</div>
                                     }
                                 </div>
                             </div>
