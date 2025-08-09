@@ -1,0 +1,43 @@
+@{
+    ViewData["Title"] = "MSF Not Created";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var targetUserName = ViewBag.TargetUserName ?? "This user";
+}
+
+<div class="container-fluid py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-body text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-comments text-muted" style="font-size: 4rem;"></i>
+                    </div>
+                    
+                    <h3 class="card-title mb-4">Multi-Source Feedback Not Available</h3>
+                    
+                    <p class="card-text lead mb-4">
+                        <strong>@targetUserName</strong> has not yet created a Multi-Source Feedback questionnaire.
+                    </p>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Information:</strong> Only EYD users can create their own MSF questionnaires. 
+                        Once created, the questionnaire will automatically appear here with results and analytics.
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="@Url.Action("Index", "EYD")" class="btn btn-primary">
+                            <i class="fas fa-arrow-left"></i> Back to Portfolio
+                        </a>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <small class="text-muted">
+                            The EYD user needs to visit their Multi-Source Feedback section to initialize the questionnaire.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

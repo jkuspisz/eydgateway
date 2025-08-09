@@ -587,7 +587,113 @@ namespace EYDGateway.Controllers
             }
         }
 
-        public IActionResult MultiSourceFeedback(string? id = null) => View("PlaceholderPage", new { Title = "Multi Source Feedback Questionnaire" });
+        public async Task<IActionResult> MultiSourceFeedback(string? id = null)
+        {
+            try
+            {
+                // Get current user
+                var currentUser = await _context.Users
+                    .FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
+                
+                if (currentUser == null)
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                // Allow EYD, ES, TPD, and Dean users to access MSF data
+                if (currentUser.Role != "EYD" && currentUser.Role != "ES" && currentUser.Role != "TPD" && currentUser.Role != "Dean")
+                {
+                    return Unauthorized();
+                }
+
+                // Determine target user ID
+                string targetUserId;
+                if (string.IsNullOrEmpty(id))
+                {
+                    targetUserId = currentUser.Id;
+                }
+                else
+                {
+                    targetUserId = id;
+                    
+                    // Security check for different user roles
+                    if (currentUser.Role == "EYD" && targetUserId != currentUser.Id)
+                    {
+                        return Forbid("You can only view your own MSF data.");
+                    }
+                    else if (currentUser.Role == "ES")
+                    {
+                        // Check if the ES user supervises this EYD
+                        var isAssigned = await _context.EYDESAssignments
+                            .AnyAsync(assignment => assignment.ESUserId == currentUser.Id && 
+                                     assignment.EYDUserId == targetUserId && 
+                                     assignment.IsActive);
+                        
+                        if (!isAssigned)
+                        {
+                            return Forbid("You can only view MSF data for EYD users assigned to you.");
+                        }
+                    }
+                    else if (currentUser.Role == "TPD" || currentUser.Role == "Dean")
+                    {
+                        // TPD and Dean can view MSFs for users in their area/scheme
+                        var portfolioUser = await _context.Users.FindAsync(targetUserId);
+                        if (portfolioUser == null || 
+                            (currentUser.Role == "TPD" && portfolioUser.SchemeId != currentUser.SchemeId) ||
+                            (currentUser.Role == "Dean" && portfolioUser.AreaId != currentUser.AreaId))
+                        {
+                            return Forbid("You can only view MSF data for users in your area/scheme.");
+                        }
+                    }
+                }
+
+                // Get target user's name for display
+                var targetUser = await _context.Users.FindAsync(targetUserId);
+                if (targetUser == null)
+                {
+                    return NotFound("User not found.");
+                }
+
+                // Get or create MSF questionnaire for this user
+                var questionnaire = await _context.MSFQuestionnaires
+                    .FirstOrDefaultAsync(q => q.PerformerId == targetUserId && q.IsActive);
+
+                if (questionnaire == null && currentUser.Role == "EYD" && targetUserId == currentUser.Id)
+                {
+                    // Only EYD users can create their own MSF questionnaires
+                    questionnaire = new MSFQuestionnaire
+                    {
+                        PerformerId = targetUserId,
+                        Title = $"MSF Assessment for {targetUser.DisplayName ?? targetUser.UserName}",
+                        UniqueCode = GenerateUniqueCode(),
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    
+                    _context.MSFQuestionnaires.Add(questionnaire);
+                    await _context.SaveChangesAsync();
+                }
+
+                if (questionnaire == null)
+                {
+                    // For supervisors viewing EYD users who haven't created a MSF yet
+                    return View("MSFNotCreated", new { TargetUserName = targetUser.DisplayName ?? targetUser.UserName });
+                }
+
+                // Get MSF results
+                var results = await GetMSFResults(questionnaire.Id, targetUser);
+                
+                // Set ViewBag for QR code and URL generation
+                ViewBag.UniqueCode = questionnaire.UniqueCode;
+                ViewBag.PerformerId = targetUserId;
+                
+                return View("MultiSourceFeedbackResults", results);
+            }
+            catch (Exception)
+            {
+                return View("PlaceholderPage", new { Title = "Multi Source Feedback Questionnaire - Error Loading Data" });
+            }
+        }
         public IActionResult AdHocESReport(string? id = null) => View("PlaceholderPage", new { Title = "Ad hoc ES Report" });
         public IActionResult InterimReview(string? id = null) => View("PlaceholderPage", new { Title = "Interim Review of Competence Progression" });
         public IActionResult FinalReview(string? id = null) => View("PlaceholderPage", new { Title = "Final Review of Competence Progression" });
@@ -737,6 +843,144 @@ namespace EYDGateway.Controllers
                 "AllocatedTime" => responses.Where(r => r.AllocatedTimeScore.HasValue).Select(r => r.AllocatedTimeScore!.Value).ToList(),
                 "WorkedWithTeam" => responses.Where(r => r.WorkedWithTeamScore.HasValue).Select(r => r.WorkedWithTeamScore!.Value).ToList(),
                 "CanTrustDentist" => responses.Where(r => r.CanTrustDentistScore.HasValue).Select(r => r.CanTrustDentistScore!.Value).ToList(),
+                _ => new List<int>()
+            };
+        }
+
+        private async Task<MSFResultsDto> GetMSFResults(int questionnaireId, ApplicationUser targetUser)
+        {
+            var questionnaire = await _context.MSFQuestionnaires
+                .FirstOrDefaultAsync(q => q.Id == questionnaireId);
+
+            if (questionnaire == null)
+            {
+                throw new InvalidOperationException("MSF Questionnaire not found");
+            }
+
+            var responses = await _context.MSFResponses
+                .Where(r => r.MSFQuestionnaireId == questionnaireId)
+                .OrderByDescending(r => r.SubmittedAt)
+                .ToListAsync();
+
+            var feedbackUrl = Url.Action("MSFFeedback", "MSF", 
+                new { code = questionnaire.UniqueCode }, Request.Scheme) ?? "";
+
+            var results = new MSFResultsDto
+            {
+                Questionnaire = questionnaire,
+                TotalResponses = responses.Count,
+                PerformerName = targetUser.DisplayName ?? targetUser.UserName ?? "Unknown User",
+                FeedbackUrl = feedbackUrl,
+                QuestionAverages = CalculateMSFQuestionAverages(responses),
+                PositiveComments = responses
+                    .Where(r => !string.IsNullOrEmpty(r.DoesWellComment))
+                    .Select(r => r.DoesWellComment!)
+                    .ToList(),
+                ImprovementComments = responses
+                    .Where(r => !string.IsNullOrEmpty(r.CouldImproveComment))
+                    .Select(r => r.CouldImproveComment!)
+                    .ToList(),
+                RecentResponses = responses.Take(10).ToList()
+            };
+
+            if (results.QuestionAverages.Any())
+            {
+                results.OverallAverage = results.QuestionAverages.Values.Average();
+                
+                // Calculate topic averages
+                var communicationQuestions = new[] { "TreatWithCompassion", "EnableInformedDecisions", "RecogniseCommunicationNeeds", "ProduceClearCommunications" };
+                var professionalismQuestions = new[] { "DemonstrateIntegrity", "WorkWithinScope", "EngageWithDevelopment", "KeepPracticeUpToDate", "FacilitateLearning", "InteractWithColleagues", "PromoteEquality" };
+                var managementQuestions = new[] { "RecogniseImpactOfBehaviours", "ManageTimeAndResources", "WorkAsTeamMember", "WorkToStandards", "ParticipateInImprovement", "MinimiseWaste" };
+                
+                var communicationScores = results.QuestionAverages.Where(q => communicationQuestions.Contains(q.Key)).Select(q => q.Value);
+                var professionalismScores = results.QuestionAverages.Where(q => professionalismQuestions.Contains(q.Key)).Select(q => q.Value);
+                var managementScores = results.QuestionAverages.Where(q => managementQuestions.Contains(q.Key)).Select(q => q.Value);
+                
+                results.CommunicationAverage = communicationScores.Any() ? communicationScores.Average() : 0.0;
+                results.ProfessionalismAverage = professionalismScores.Any() ? professionalismScores.Average() : 0.0;
+                results.ManagementLeadershipAverage = managementScores.Any() ? managementScores.Average() : 0.0;
+            }
+
+            return results;
+        }
+
+        private Dictionary<string, double> CalculateMSFQuestionAverages(List<MSFResponse> responses)
+        {
+            var questionAverages = new Dictionary<string, double>();
+            
+            if (!responses.Any()) return questionAverages;
+
+            var questions = new[]
+            {
+                // Communication Topic
+                ("TreatWithCompassion", "Treat patients, carers and colleagues with compassion, dignity and respect"),
+                ("EnableInformedDecisions", "Enable patients to make informed decisions about their care"),
+                ("RecogniseCommunicationNeeds", "Recognise and respond appropriately to the individual communication needs of all patients"),
+                ("ProduceClearCommunications", "Produce clearly written, timely and appropriate professional communications"),
+                
+                // Professionalism Topic
+                ("DemonstrateIntegrity", "Demonstrate integrity and honesty in all professional interactions"),
+                ("WorkWithinScope", "Work within my permitted scope of practice, seeking guidance or support when needed"),
+                ("EngageWithDevelopment", "Engage with opportunities to develop my professional practice"),
+                ("KeepPracticeUpToDate", "Routinely takes steps to keep my practice up to date"),
+                ("FacilitateLearning", "Facilitate the learning of students and/or colleagues"),
+                ("InteractWithColleagues", "Interact with colleagues in ways that recognise and value the contributions of the wider dental team"),
+                ("PromoteEquality", "Actively promote equality, diversity and inclusion in all aspects of my work"),
+                
+                // Management and Leadership Topic
+                ("RecogniseImpactOfBehaviours", "Work in ways that recognise the impact of my behaviours on others"),
+                ("ManageTimeAndResources", "Manage time and resources effectively and efficiently"),
+                ("WorkAsTeamMember", "Work well as a team member, taking the lead as appropriate"),
+                ("WorkToStandards", "Routinely work in ways consistent with relevant professional standards and legislation"),
+                ("ParticipateInImprovement", "Participate in projects and activities designed to improve the quality of care"),
+                ("MinimiseWaste", "Work in ways that minimise waste and reduce harmful environment impact")
+            };
+
+            foreach (var (key, title) in questions)
+            {
+                var scores = GetMSFScoresForQuestion(responses, key)
+                    .Where(score => score != 0) // Exclude "Not Applicable" (0) responses
+                    .ToList();
+
+                if (scores.Any())
+                {
+                    questionAverages[key] = scores.Average();
+                }
+                else
+                {
+                    questionAverages[key] = 0.0;
+                }
+            }
+
+            return questionAverages;
+        }
+
+        private List<int> GetMSFScoresForQuestion(List<MSFResponse> responses, string questionKey)
+        {
+            return questionKey switch
+            {
+                // Communication Topic
+                "TreatWithCompassion" => responses.Where(r => r.TreatWithCompassionScore.HasValue).Select(r => r.TreatWithCompassionScore!.Value).ToList(),
+                "EnableInformedDecisions" => responses.Where(r => r.EnableInformedDecisionsScore.HasValue).Select(r => r.EnableInformedDecisionsScore!.Value).ToList(),
+                "RecogniseCommunicationNeeds" => responses.Where(r => r.RecogniseCommunicationNeedsScore.HasValue).Select(r => r.RecogniseCommunicationNeedsScore!.Value).ToList(),
+                "ProduceClearCommunications" => responses.Where(r => r.ProduceClearCommunicationsScore.HasValue).Select(r => r.ProduceClearCommunicationsScore!.Value).ToList(),
+                
+                // Professionalism Topic
+                "DemonstrateIntegrity" => responses.Where(r => r.DemonstrateIntegrityScore.HasValue).Select(r => r.DemonstrateIntegrityScore!.Value).ToList(),
+                "WorkWithinScope" => responses.Where(r => r.WorkWithinScopeScore.HasValue).Select(r => r.WorkWithinScopeScore!.Value).ToList(),
+                "EngageWithDevelopment" => responses.Where(r => r.EngageWithDevelopmentScore.HasValue).Select(r => r.EngageWithDevelopmentScore!.Value).ToList(),
+                "KeepPracticeUpToDate" => responses.Where(r => r.KeepPracticeUpToDateScore.HasValue).Select(r => r.KeepPracticeUpToDateScore!.Value).ToList(),
+                "FacilitateLearning" => responses.Where(r => r.FacilitateLearningScore.HasValue).Select(r => r.FacilitateLearningScore!.Value).ToList(),
+                "InteractWithColleagues" => responses.Where(r => r.InteractWithColleaguesScore.HasValue).Select(r => r.InteractWithColleaguesScore!.Value).ToList(),
+                "PromoteEquality" => responses.Where(r => r.PromoteEqualityScore.HasValue).Select(r => r.PromoteEqualityScore!.Value).ToList(),
+                
+                // Management and Leadership Topic
+                "RecogniseImpactOfBehaviours" => responses.Where(r => r.RecogniseImpactOfBehavioursScore.HasValue).Select(r => r.RecogniseImpactOfBehavioursScore!.Value).ToList(),
+                "ManageTimeAndResources" => responses.Where(r => r.ManageTimeAndResourcesScore.HasValue).Select(r => r.ManageTimeAndResourcesScore!.Value).ToList(),
+                "WorkAsTeamMember" => responses.Where(r => r.WorkAsTeamMemberScore.HasValue).Select(r => r.WorkAsTeamMemberScore!.Value).ToList(),
+                "WorkToStandards" => responses.Where(r => r.WorkToStandardsScore.HasValue).Select(r => r.WorkToStandardsScore!.Value).ToList(),
+                "ParticipateInImprovement" => responses.Where(r => r.ParticipateInImprovementScore.HasValue).Select(r => r.ParticipateInImprovementScore!.Value).ToList(),
+                "MinimiseWaste" => responses.Where(r => r.MinimiseWasteScore.HasValue).Select(r => r.MinimiseWasteScore!.Value).ToList(),
                 _ => new List<int>()
             };
         }

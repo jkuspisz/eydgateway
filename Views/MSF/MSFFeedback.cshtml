@@ -1,0 +1,375 @@
+@model EYDGateway.ViewModels.SubmitMSFResponseDto
+
+@{
+    ViewData["Title"] = "Multi-Source Feedback";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-comments"></i> Multi-Source Feedback</h4>
+                    <small>Assessment for: @ViewBag.PerformerName</small>
+                </div>
+                
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Instructions:</strong> Please rate each competency using the scale below. Your feedback is anonymous and will help improve professional development.
+                    </div>
+
+                    <div class="mb-4">
+                        <h6>Rating Scale:</h6>
+                        <div class="row text-center">
+                            <div class="col-3">
+                                <span class="badge bg-warning text-dark">1 - Working Towards</span>
+                            </div>
+                            <div class="col-3">
+                                <span class="badge bg-success">2 - Meets</span>
+                            </div>
+                            <div class="col-3">
+                                <span class="badge bg-primary">3 - Exceeds</span>
+                            </div>
+                            <div class="col-3">
+                                <span class="badge bg-secondary">NA - Not Applicable</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form asp-action="MSFFeedback" method="post">
+                        <input type="hidden" asp-for="QuestionnaireCode" />
+                        @Html.AntiForgeryToken()
+
+                        <!-- Communication Section -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0"><i class="fas fa-comments"></i> Communication</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Question 1 -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">1. Treat patients, carers and colleagues with compassion, dignity and respect</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <input type="radio" class="btn-check" name="TreatWithCompassionScore" id="q1_1" value="1" required>
+                                        <label class="btn btn-outline-warning" for="q1_1">1</label>
+                                        <input type="radio" class="btn-check" name="TreatWithCompassionScore" id="q1_2" value="2" required>
+                                        <label class="btn btn-outline-success" for="q1_2">2</label>
+                                        <input type="radio" class="btn-check" name="TreatWithCompassionScore" id="q1_3" value="3" required>
+                                        <label class="btn btn-outline-primary" for="q1_3">3</label>
+                                        <input type="radio" class="btn-check" name="TreatWithCompassionScore" id="q1_0" value="0" required>
+                                        <label class="btn btn-outline-secondary" for="q1_0">NA</label>
+                                    </div>
+                                    <span asp-validation-for="TreatWithCompassionScore" class="text-danger"></span>
+                                </div>
+
+                                <!-- Question 2 -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">2. Enable patients to make informed decisions about their care</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <input type="radio" class="btn-check" name="EnableInformedDecisionsScore" id="q2_1" value="1" required>
+                                        <label class="btn btn-outline-warning" for="q2_1">1</label>
+                                        <input type="radio" class="btn-check" name="EnableInformedDecisionsScore" id="q2_2" value="2" required>
+                                        <label class="btn btn-outline-success" for="q2_2">2</label>
+                                        <input type="radio" class="btn-check" name="EnableInformedDecisionsScore" id="q2_3" value="3" required>
+                                        <label class="btn btn-outline-primary" for="q2_3">3</label>
+                                        <input type="radio" class="btn-check" name="EnableInformedDecisionsScore" id="q2_0" value="0" required>
+                                        <label class="btn btn-outline-secondary" for="q2_0">NA</label>
+                                    </div>
+                                    <span asp-validation-for="EnableInformedDecisionsScore" class="text-danger"></span>
+                                </div>
+
+                                <!-- Question 3 -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">3. Recognise and respond appropriately to the individual communication needs of all patients</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <input type="radio" class="btn-check" name="RecogniseCommunicationNeedsScore" id="q3_1" value="1" required>
+                                        <label class="btn btn-outline-warning" for="q3_1">1</label>
+                                        <input type="radio" class="btn-check" name="RecogniseCommunicationNeedsScore" id="q3_2" value="2" required>
+                                        <label class="btn btn-outline-success" for="q3_2">2</label>
+                                        <input type="radio" class="btn-check" name="RecogniseCommunicationNeedsScore" id="q3_3" value="3" required>
+                                        <label class="btn btn-outline-primary" for="q3_3">3</label>
+                                        <input type="radio" class="btn-check" name="RecogniseCommunicationNeedsScore" id="q3_0" value="0" required>
+                                        <label class="btn btn-outline-secondary" for="q3_0">NA</label>
+                                    </div>
+                                    <span asp-validation-for="RecogniseCommunicationNeedsScore" class="text-danger"></span>
+                                </div>
+
+                                <!-- Question 4 -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">4. Produce clearly written, timely and appropriate professional communications</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <input type="radio" class="btn-check" name="ProduceClearCommunicationsScore" id="q4_1" value="1" required>
+                                        <label class="btn btn-outline-warning" for="q4_1">1</label>
+                                        <input type="radio" class="btn-check" name="ProduceClearCommunicationsScore" id="q4_2" value="2" required>
+                                        <label class="btn btn-outline-success" for="q4_2">2</label>
+                                        <input type="radio" class="btn-check" name="ProduceClearCommunicationsScore" id="q4_3" value="3" required>
+                                        <label class="btn btn-outline-primary" for="q4_3">3</label>
+                                        <input type="radio" class="btn-check" name="ProduceClearCommunicationsScore" id="q4_0" value="0" required>
+                                        <label class="btn btn-outline-secondary" for="q4_0">NA</label>
+                                    </div>
+                                    <span asp-validation-for="ProduceClearCommunicationsScore" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Professionalism Section -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0"><i class="fas fa-user-tie"></i> Professionalism</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Question 5 -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">5. Demonstrate integrity and honesty in all professional interactions</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <input type="radio" class="btn-check" name="DemonstrateIntegrityScore" id="q5_1" value="1" required>
+                                        <label class="btn btn-outline-warning" for="q5_1">1</label>
+                                        <input type="radio" class="btn-check" name="DemonstrateIntegrityScore" id="q5_2" value="2" required>
+                                        <label class="btn btn-outline-success" for="q5_2">2</label>
+                                        <input type="radio" class="btn-check" name="DemonstrateIntegrityScore" id="q5_3" value="3" required>
+                                        <label class="btn btn-outline-primary" for="q5_3">3</label>
+                                        <input type="radio" class="btn-check" name="DemonstrateIntegrityScore" id="q5_0" value="0" required>
+                                        <label class="btn btn-outline-secondary" for="q5_0">NA</label>
+                                    </div>
+                                    <span asp-validation-for="DemonstrateIntegrityScore" class="text-danger"></span>
+                                </div>
+
+                                <!-- Question 6 -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">6. Work within my permitted scope of practice, seeking guidance or support when needed</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <input type="radio" class="btn-check" name="WorkWithinScopeScore" id="q6_1" value="1" required>
+                                        <label class="btn btn-outline-warning" for="q6_1">1</label>
+                                        <input type="radio" class="btn-check" name="WorkWithinScopeScore" id="q6_2" value="2" required>
+                                        <label class="btn btn-outline-success" for="q6_2">2</label>
+                                        <input type="radio" class="btn-check" name="WorkWithinScopeScore" id="q6_3" value="3" required>
+                                        <label class="btn btn-outline-primary" for="q6_3">3</label>
+                                        <input type="radio" class="btn-check" name="WorkWithinScopeScore" id="q6_0" value="0" required>
+                                        <label class="btn btn-outline-secondary" for="q6_0">NA</label>
+                                    </div>
+                                    <span asp-validation-for="WorkWithinScopeScore" class="text-danger"></span>
+                                </div>
+
+                                <!-- Question 7 -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">7. Engage with opportunities to develop my professional practice</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <input type="radio" class="btn-check" name="EngageWithDevelopmentScore" id="q7_1" value="1" required>
+                                        <label class="btn btn-outline-warning" for="q7_1">1</label>
+                                        <input type="radio" class="btn-check" name="EngageWithDevelopmentScore" id="q7_2" value="2" required>
+                                        <label class="btn btn-outline-success" for="q7_2">2</label>
+                                        <input type="radio" class="btn-check" name="EngageWithDevelopmentScore" id="q7_3" value="3" required>
+                                        <label class="btn btn-outline-primary" for="q7_3">3</label>
+                                        <input type="radio" class="btn-check" name="EngageWithDevelopmentScore" id="q7_0" value="0" required>
+                                        <label class="btn btn-outline-secondary" for="q7_0">NA</label>
+                                    </div>
+                                    <span asp-validation-for="EngageWithDevelopmentScore" class="text-danger"></span>
+                                </div>
+
+                                <!-- Question 8 -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">8. Routinely takes steps to keep my practice up to date</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <input type="radio" class="btn-check" name="KeepPracticeUpToDateScore" id="q8_1" value="1" required>
+                                        <label class="btn btn-outline-warning" for="q8_1">1</label>
+                                        <input type="radio" class="btn-check" name="KeepPracticeUpToDateScore" id="q8_2" value="2" required>
+                                        <label class="btn btn-outline-success" for="q8_2">2</label>
+                                        <input type="radio" class="btn-check" name="KeepPracticeUpToDateScore" id="q8_3" value="3" required>
+                                        <label class="btn btn-outline-primary" for="q8_3">3</label>
+                                        <input type="radio" class="btn-check" name="KeepPracticeUpToDateScore" id="q8_0" value="0" required>
+                                        <label class="btn btn-outline-secondary" for="q8_0">NA</label>
+                                    </div>
+                                    <span asp-validation-for="KeepPracticeUpToDateScore" class="text-danger"></span>
+                                </div>
+
+                                <!-- Question 9 -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">9. Facilitate the learning of students and/or colleagues</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <input type="radio" class="btn-check" name="FacilitateLearningScore" id="q9_1" value="1" required>
+                                        <label class="btn btn-outline-warning" for="q9_1">1</label>
+                                        <input type="radio" class="btn-check" name="FacilitateLearningScore" id="q9_2" value="2" required>
+                                        <label class="btn btn-outline-success" for="q9_2">2</label>
+                                        <input type="radio" class="btn-check" name="FacilitateLearningScore" id="q9_3" value="3" required>
+                                        <label class="btn btn-outline-primary" for="q9_3">3</label>
+                                        <input type="radio" class="btn-check" name="FacilitateLearningScore" id="q9_0" value="0" required>
+                                        <label class="btn btn-outline-secondary" for="q9_0">NA</label>
+                                    </div>
+                                    <span asp-validation-for="FacilitateLearningScore" class="text-danger"></span>
+                                </div>
+
+                                <!-- Question 10 -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">10. Interact with colleagues in ways that recognise and value the contributions of the wider dental team</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <input type="radio" class="btn-check" name="InteractWithColleaguesScore" id="q10_1" value="1" required>
+                                        <label class="btn btn-outline-warning" for="q10_1">1</label>
+                                        <input type="radio" class="btn-check" name="InteractWithColleaguesScore" id="q10_2" value="2" required>
+                                        <label class="btn btn-outline-success" for="q10_2">2</label>
+                                        <input type="radio" class="btn-check" name="InteractWithColleaguesScore" id="q10_3" value="3" required>
+                                        <label class="btn btn-outline-primary" for="q10_3">3</label>
+                                        <input type="radio" class="btn-check" name="InteractWithColleaguesScore" id="q10_0" value="0" required>
+                                        <label class="btn btn-outline-secondary" for="q10_0">NA</label>
+                                    </div>
+                                    <span asp-validation-for="InteractWithColleaguesScore" class="text-danger"></span>
+                                </div>
+
+                                <!-- Question 11 -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">11. Actively promote equality, diversity and inclusion in all aspects of my work</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <input type="radio" class="btn-check" name="PromoteEqualityScore" id="q11_1" value="1" required>
+                                        <label class="btn btn-outline-warning" for="q11_1">1</label>
+                                        <input type="radio" class="btn-check" name="PromoteEqualityScore" id="q11_2" value="2" required>
+                                        <label class="btn btn-outline-success" for="q11_2">2</label>
+                                        <input type="radio" class="btn-check" name="PromoteEqualityScore" id="q11_3" value="3" required>
+                                        <label class="btn btn-outline-primary" for="q11_3">3</label>
+                                        <input type="radio" class="btn-check" name="PromoteEqualityScore" id="q11_0" value="0" required>
+                                        <label class="btn btn-outline-secondary" for="q11_0">NA</label>
+                                    </div>
+                                    <span asp-validation-for="PromoteEqualityScore" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Management and Leadership Section -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0"><i class="fas fa-users"></i> Management and Leadership</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Question 12 -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">12. Work in ways that recognise the impact of my behaviours on others</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <input type="radio" class="btn-check" name="RecogniseImpactOfBehavioursScore" id="q12_1" value="1" required>
+                                        <label class="btn btn-outline-warning" for="q12_1">1</label>
+                                        <input type="radio" class="btn-check" name="RecogniseImpactOfBehavioursScore" id="q12_2" value="2" required>
+                                        <label class="btn btn-outline-success" for="q12_2">2</label>
+                                        <input type="radio" class="btn-check" name="RecogniseImpactOfBehavioursScore" id="q12_3" value="3" required>
+                                        <label class="btn btn-outline-primary" for="q12_3">3</label>
+                                        <input type="radio" class="btn-check" name="RecogniseImpactOfBehavioursScore" id="q12_0" value="0" required>
+                                        <label class="btn btn-outline-secondary" for="q12_0">NA</label>
+                                    </div>
+                                    <span asp-validation-for="RecogniseImpactOfBehavioursScore" class="text-danger"></span>
+                                </div>
+
+                                <!-- Question 13 -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">13. Manage time and resources effectively and efficiently</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <input type="radio" class="btn-check" name="ManageTimeAndResourcesScore" id="q13_1" value="1" required>
+                                        <label class="btn btn-outline-warning" for="q13_1">1</label>
+                                        <input type="radio" class="btn-check" name="ManageTimeAndResourcesScore" id="q13_2" value="2" required>
+                                        <label class="btn btn-outline-success" for="q13_2">2</label>
+                                        <input type="radio" class="btn-check" name="ManageTimeAndResourcesScore" id="q13_3" value="3" required>
+                                        <label class="btn btn-outline-primary" for="q13_3">3</label>
+                                        <input type="radio" class="btn-check" name="ManageTimeAndResourcesScore" id="q13_0" value="0" required>
+                                        <label class="btn btn-outline-secondary" for="q13_0">NA</label>
+                                    </div>
+                                    <span asp-validation-for="ManageTimeAndResourcesScore" class="text-danger"></span>
+                                </div>
+
+                                <!-- Question 14 -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">14. Work well as a team member, taking the lead as appropriate</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <input type="radio" class="btn-check" name="WorkAsTeamMemberScore" id="q14_1" value="1" required>
+                                        <label class="btn btn-outline-warning" for="q14_1">1</label>
+                                        <input type="radio" class="btn-check" name="WorkAsTeamMemberScore" id="q14_2" value="2" required>
+                                        <label class="btn btn-outline-success" for="q14_2">2</label>
+                                        <input type="radio" class="btn-check" name="WorkAsTeamMemberScore" id="q14_3" value="3" required>
+                                        <label class="btn btn-outline-primary" for="q14_3">3</label>
+                                        <input type="radio" class="btn-check" name="WorkAsTeamMemberScore" id="q14_0" value="0" required>
+                                        <label class="btn btn-outline-secondary" for="q14_0">NA</label>
+                                    </div>
+                                    <span asp-validation-for="WorkAsTeamMemberScore" class="text-danger"></span>
+                                </div>
+
+                                <!-- Question 15 -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">15. Routinely work in ways consistent with relevant professional standards and legislation</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <input type="radio" class="btn-check" name="WorkToStandardsScore" id="q15_1" value="1" required>
+                                        <label class="btn btn-outline-warning" for="q15_1">1</label>
+                                        <input type="radio" class="btn-check" name="WorkToStandardsScore" id="q15_2" value="2" required>
+                                        <label class="btn btn-outline-success" for="q15_2">2</label>
+                                        <input type="radio" class="btn-check" name="WorkToStandardsScore" id="q15_3" value="3" required>
+                                        <label class="btn btn-outline-primary" for="q15_3">3</label>
+                                        <input type="radio" class="btn-check" name="WorkToStandardsScore" id="q15_0" value="0" required>
+                                        <label class="btn btn-outline-secondary" for="q15_0">NA</label>
+                                    </div>
+                                    <span asp-validation-for="WorkToStandardsScore" class="text-danger"></span>
+                                </div>
+
+                                <!-- Question 16 -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">16. Participate in projects and activities designed to improve the quality of care</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <input type="radio" class="btn-check" name="ParticipateInImprovementScore" id="q16_1" value="1" required>
+                                        <label class="btn btn-outline-warning" for="q16_1">1</label>
+                                        <input type="radio" class="btn-check" name="ParticipateInImprovementScore" id="q16_2" value="2" required>
+                                        <label class="btn btn-outline-success" for="q16_2">2</label>
+                                        <input type="radio" class="btn-check" name="ParticipateInImprovementScore" id="q16_3" value="3" required>
+                                        <label class="btn btn-outline-primary" for="q16_3">3</label>
+                                        <input type="radio" class="btn-check" name="ParticipateInImprovementScore" id="q16_0" value="0" required>
+                                        <label class="btn btn-outline-secondary" for="q16_0">NA</label>
+                                    </div>
+                                    <span asp-validation-for="ParticipateInImprovementScore" class="text-danger"></span>
+                                </div>
+
+                                <!-- Question 17 -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">17. Work in ways that minimise waste and reduce harmful environment impact</label>
+                                    <div class="btn-group d-flex" role="group">
+                                        <input type="radio" class="btn-check" name="MinimiseWasteScore" id="q17_1" value="1" required>
+                                        <label class="btn btn-outline-warning" for="q17_1">1</label>
+                                        <input type="radio" class="btn-check" name="MinimiseWasteScore" id="q17_2" value="2" required>
+                                        <label class="btn btn-outline-success" for="q17_2">2</label>
+                                        <input type="radio" class="btn-check" name="MinimiseWasteScore" id="q17_3" value="3" required>
+                                        <label class="btn btn-outline-primary" for="q17_3">3</label>
+                                        <input type="radio" class="btn-check" name="MinimiseWasteScore" id="q17_0" value="0" required>
+                                        <label class="btn btn-outline-secondary" for="q17_0">NA</label>
+                                    </div>
+                                    <span asp-validation-for="MinimiseWasteScore" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Text Feedback Section -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0"><i class="fas fa-comment"></i> Additional Feedback</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-4">
+                                    <label asp-for="DoesWellComment" class="form-label fw-bold">Anything you feel this dentist does particularly well?</label>
+                                    <textarea asp-for="DoesWellComment" class="form-control" rows="4" placeholder="Please share what this dentist does well..."></textarea>
+                                    <span asp-validation-for="DoesWellComment" class="text-danger"></span>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label asp-for="CouldImproveComment" class="form-label fw-bold">Anything you feel this dentist could improve upon?</label>
+                                    <textarea asp-for="CouldImproveComment" class="form-control" rows="4" placeholder="Please share areas for improvement..."></textarea>
+                                    <span asp-validation-for="CouldImproveComment" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-paper-plane"></i> Submit Feedback
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

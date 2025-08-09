@@ -1,0 +1,300 @@
+@model EYDGateway.ViewModels.MSFResultsDto
+
+@{
+    ViewData["Title"] = "Multi-Source Feedback Results";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-comments"></i> Multi-Source Feedback Results</h2>
+                <a href="@Url.Action("Index", "EYD")" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Portfolio
+                </a>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h3 class="mb-0">@Model.TotalResponses</h3>
+                            <small>Total Responses</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h3 class="mb-0">@Model.OverallAverage.ToString("F1")</h3>
+                            <small>Overall Average</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h3 class="mb-0">@Model.CommunicationAverage.ToString("F1")</h3>
+                            <small>Communication</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <h3 class="mb-0">@Model.ProfessionalismAverage.ToString("F1")</h3>
+                            <small>Professionalism</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QR Code Section - Always Visible -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-qrcode"></i> Colleague Access</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6>Share this MSF with colleagues:</h6>
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control" id="feedbackUrl" value="@Model.FeedbackUrl" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('feedbackUrl')">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                            <small class="text-muted">
+                                Share this link or QR code with colleagues to collect anonymous feedback. 
+                                No login required for respondents.
+                            </small>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <img src="@Url.Action("QRCode", "MSF", new { code = ViewBag.UniqueCode })" 
+                                 alt="QR Code for MSF" 
+                                 class="img-fluid" 
+                                 style="max-width: 150px;" />
+                            <div class="mt-2">
+                                <small class="text-muted">Scan to access MSF</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.TotalResponses > 0)
+            {
+                <!-- Communication Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-comments"></i> Communication (Average: @Model.CommunicationAverage.ToString("F1"))</h5>
+                    </div>
+                    <div class="card-body">
+                        @{
+                            var communicationQuestions = new[]
+                            {
+                                ("TreatWithCompassion", "Treat patients, carers and colleagues with compassion, dignity and respect"),
+                                ("EnableInformedDecisions", "Enable patients to make informed decisions about their care"),
+                                ("RecogniseCommunicationNeeds", "Recognise and respond appropriately to the individual communication needs of all patients"),
+                                ("ProduceClearCommunications", "Produce clearly written, timely and appropriate professional communications")
+                            };
+                        }
+                        
+                        @foreach (var (key, title) in communicationQuestions)
+                        {
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    <strong>@title</strong>
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    <span class="badge bg-@GetPerformanceBadgeClass(Model.QuestionAverages.ContainsKey(key) ? Model.QuestionAverages[key] : 0)">
+                                        @(Model.QuestionAverages.ContainsKey(key) ? Model.QuestionAverages[key].ToString("F1") : "N/A")
+                                    </span>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-@GetPerformanceBadgeClass(Model.QuestionAverages.ContainsKey(key) ? Model.QuestionAverages[key] : 0)" 
+                                             style="width: @GetPerformancePercentage(Model.QuestionAverages.ContainsKey(key) ? Model.QuestionAverages[key] : 0)%">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Professionalism Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-user-tie"></i> Professionalism (Average: @Model.ProfessionalismAverage.ToString("F1"))</h5>
+                    </div>
+                    <div class="card-body">
+                        @{
+                            var professionalismQuestions = new[]
+                            {
+                                ("DemonstrateIntegrity", "Demonstrate integrity and honesty in all professional interactions"),
+                                ("WorkWithinScope", "Work within my permitted scope of practice, seeking guidance or support when needed"),
+                                ("EngageWithDevelopment", "Engage with opportunities to develop my professional practice"),
+                                ("KeepPracticeUpToDate", "Routinely takes steps to keep my practice up to date"),
+                                ("FacilitateLearning", "Facilitate the learning of students and/or colleagues"),
+                                ("InteractWithColleagues", "Interact with colleagues in ways that recognise and value the contributions of the wider dental team"),
+                                ("PromoteEquality", "Actively promote equality, diversity and inclusion in all aspects of my work")
+                            };
+                        }
+                        
+                        @foreach (var (key, title) in professionalismQuestions)
+                        {
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    <strong>@title</strong>
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    <span class="badge bg-@GetPerformanceBadgeClass(Model.QuestionAverages.ContainsKey(key) ? Model.QuestionAverages[key] : 0)">
+                                        @(Model.QuestionAverages.ContainsKey(key) ? Model.QuestionAverages[key].ToString("F1") : "N/A")
+                                    </span>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-@GetPerformanceBadgeClass(Model.QuestionAverages.ContainsKey(key) ? Model.QuestionAverages[key] : 0)" 
+                                             style="width: @GetPerformancePercentage(Model.QuestionAverages.ContainsKey(key) ? Model.QuestionAverages[key] : 0)%">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Management and Leadership Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-users"></i> Management and Leadership (Average: @Model.ManagementLeadershipAverage.ToString("F1"))</h5>
+                    </div>
+                    <div class="card-body">
+                        @{
+                            var managementQuestions = new[]
+                            {
+                                ("RecogniseImpactOfBehaviours", "Work in ways that recognise the impact of my behaviours on others"),
+                                ("ManageTimeAndResources", "Manage time and resources effectively and efficiently"),
+                                ("WorkAsTeamMember", "Work well as a team member, taking the lead as appropriate"),
+                                ("WorkToStandards", "Routinely work in ways consistent with relevant professional standards and legislation"),
+                                ("ParticipateInImprovement", "Participate in projects and activities designed to improve the quality of care"),
+                                ("MinimiseWaste", "Work in ways that minimise waste and reduce harmful environment impact")
+                            };
+                        }
+                        
+                        @foreach (var (key, title) in managementQuestions)
+                        {
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    <strong>@title</strong>
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    <span class="badge bg-@GetPerformanceBadgeClass(Model.QuestionAverages.ContainsKey(key) ? Model.QuestionAverages[key] : 0)">
+                                        @(Model.QuestionAverages.ContainsKey(key) ? Model.QuestionAverages[key].ToString("F1") : "N/A")
+                                    </span>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-@GetPerformanceBadgeClass(Model.QuestionAverages.ContainsKey(key) ? Model.QuestionAverages[key] : 0)" 
+                                             style="width: @GetPerformancePercentage(Model.QuestionAverages.ContainsKey(key) ? Model.QuestionAverages[key] : 0)%">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Text Feedback -->
+                @if (Model.PositiveComments.Any() || Model.ImprovementComments.Any())
+                {
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5><i class="fas fa-comment-alt"></i> Written Feedback</h5>
+                        </div>
+                        <div class="card-body">
+                            @if (Model.PositiveComments.Any())
+                            {
+                                <h6 class="text-success"><i class="fas fa-thumbs-up"></i> What you do particularly well:</h6>
+                                <ul class="list-unstyled mb-4">
+                                    @foreach (var comment in Model.PositiveComments)
+                                    {
+                                        <li class="mb-2">
+                                            <div class="alert alert-success">
+                                                <i class="fas fa-quote-left"></i> @comment
+                                            </div>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+
+                            @if (Model.ImprovementComments.Any())
+                            {
+                                <h6 class="text-info"><i class="fas fa-lightbulb"></i> Areas for improvement:</h6>
+                                <ul class="list-unstyled">
+                                    @foreach (var comment in Model.ImprovementComments)
+                                    {
+                                        <li class="mb-2">
+                                            <div class="alert alert-info">
+                                                <i class="fas fa-quote-left"></i> @comment
+                                            </div>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-inbox text-muted" style="font-size: 3rem;"></i>
+                        <h4 class="mt-3 text-muted">No Responses Yet</h4>
+                        <p class="text-muted">Share the QR code or link above to start collecting colleague feedback.</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetPerformanceBadgeClass(double average)
+    {
+        if (average >= 2.5) return "success";      // Exceeds/Meets
+        if (average >= 1.5) return "primary";     // Meets
+        if (average >= 0.5) return "warning";     // Working Towards
+        return "secondary";                        // No responses
+    }
+    
+    int GetPerformancePercentage(double average)
+    {
+        return (int)((average / 3.0) * 100);      // Scale 0-3 to 0-100%
+    }
+}
+
+<script>
+function copyToClipboard(elementId) {
+    var copyText = document.getElementById(elementId);
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(copyText.value);
+    
+    // Show feedback
+    var button = event.target.closest('button');
+    var originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+    button.classList.add('btn-success');
+    button.classList.remove('btn-outline-secondary');
+    
+    setTimeout(function() {
+        button.innerHTML = originalText;
+        button.classList.remove('btn-success');
+        button.classList.add('btn-outline-secondary');
+    }, 2000);
+}
+</script>

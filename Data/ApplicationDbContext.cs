@@ -33,6 +33,10 @@ namespace EYDGateway.Data
         // PSQ (Patient Satisfaction Questionnaire) System
         public DbSet<PSQQuestionnaire> PSQQuestionnaires { get; set; }
         public DbSet<PSQResponse> PSQResponses { get; set; }
+        
+        // MSF (Multi-Source Feedback) System
+        public DbSet<MSFQuestionnaire> MSFQuestionnaires { get; set; }
+        public DbSet<MSFResponse> MSFResponses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
