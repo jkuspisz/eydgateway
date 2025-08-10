@@ -965,12 +965,12 @@ namespace EYDGateway.Controllers
                 return NotFound("User not found.");
             }
 
-            // Get or create IRCP review record (simplified for now)
-            // var ircpReview = await _context.IRCPReviews
-            //     .Include(r => r.ESAssessments)
-            //     .Include(r => r.EYDReflection)
-            //     .Include(r => r.PanelReview)
-            //     .FirstOrDefaultAsync(r => r.EYDUserId == targetUserId);
+            // Get or create IRCP review record
+            var ircpReview = await _context.IRCPReviews
+                .Include(r => r.ESAssessments)
+                .Include(r => r.EYDReflection)
+                .Include(r => r.PanelReview)
+                .FirstOrDefaultAsync(r => r.EYDUserId == targetUserId);
 
             // Get real EPA data for the target user
             var epas = await _epaService.GetAllActiveEPAsAsync();
@@ -1005,73 +1005,97 @@ namespace EYDGateway.Controllers
                 Total = userEPAMappings.Where(m => m.EPAId == epa.Id).Sum(m => m.Count)
             }).ToList();
 
-            // Check for section locks first
-            bool esLocked = TempData[$"IRCP_{targetUserId}_ES_Locked"] != null && TempData[$"IRCP_{targetUserId}_ES_Locked"].ToString() == "true";
-            bool eydLocked = TempData[$"IRCP_{targetUserId}_EYD_Locked"] != null && TempData[$"IRCP_{targetUserId}_EYD_Locked"].ToString() == "true";
-            bool panelLocked = TempData[$"IRCP_{targetUserId}_Panel_Locked"] != null && TempData[$"IRCP_{targetUserId}_Panel_Locked"].ToString() == "true";
+            // Check for section locks from database first, then fall back to TempData
+            bool esLocked = (ircpReview?.ESLocked ?? false) || 
+                           (TempData[$"IRCP_{targetUserId}_ES_Locked"] != null && TempData[$"IRCP_{targetUserId}_ES_Locked"].ToString() == "true");
+            bool eydLocked = (ircpReview?.EYDLocked ?? false) || 
+                            (TempData[$"IRCP_{targetUserId}_EYD_Locked"] != null && TempData[$"IRCP_{targetUserId}_EYD_Locked"].ToString() == "true");
+            bool panelLocked = (ircpReview?.PanelLocked ?? false) || 
+                              (TempData[$"IRCP_{targetUserId}_Panel_Locked"] != null && TempData[$"IRCP_{targetUserId}_Panel_Locked"].ToString() == "true");
             
-            // Keep lock data for next request
-            if (esLocked) TempData.Keep($"IRCP_{targetUserId}_ES_Locked");
-            if (eydLocked) TempData.Keep($"IRCP_{targetUserId}_EYD_Locked");
-            if (panelLocked) TempData.Keep($"IRCP_{targetUserId}_Panel_Locked");
+            // Keep lock data for next request if using TempData
+            if (TempData[$"IRCP_{targetUserId}_ES_Locked"] != null) TempData.Keep($"IRCP_{targetUserId}_ES_Locked");
+            if (TempData[$"IRCP_{targetUserId}_EYD_Locked"] != null) TempData.Keep($"IRCP_{targetUserId}_EYD_Locked");
+            if (TempData[$"IRCP_{targetUserId}_Panel_Locked"] != null) TempData.Keep($"IRCP_{targetUserId}_Panel_Locked");
 
-            // Check actual workflow status based on saved data and lock status
+            // Check actual workflow status based on database first, then saved data and lock status
             var esStatus = "NotStarted";
             var eydStatus = "NotStarted";
             var panelStatus = "NotStarted";
 
-            // Check if ES section has been completed
-            if (esLocked)
+            // Use database status if available, otherwise fall back to TempData logic
+            if (ircpReview != null)
             {
-                esStatus = "Completed";
+                esStatus = ircpReview.ESStatus.ToString();
+                eydStatus = ircpReview.EYDStatus.ToString();
+                panelStatus = ircpReview.PanelStatus.ToString();
             }
-            else if (TempData[$"IRCP_{targetUserId}_ES"] != null)
+            else
             {
-                var jsonData = TempData[$"IRCP_{targetUserId}_ES"].ToString();
-                var esData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                // Fallback to TempData logic for backwards compatibility
                 
-                // Check if ES has confirmed their assessment (this indicates completion)
-                if (esData.ContainsKey("ESConfirmation") && esData["ESConfirmation"] == "true")
+                // Check if ES section has been completed
+                if (esLocked)
                 {
                     esStatus = "Completed";
                 }
-                else if (esData.Count > 0)
+                else if (TempData[$"IRCP_{targetUserId}_ES"] != null)
                 {
-                    esStatus = "InProgress";
+                    var jsonData = TempData[$"IRCP_{targetUserId}_ES"]?.ToString();
+                    if (jsonData != null)
+                    {
+                        var esData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                        
+                        // Check if ES has confirmed their assessment (this indicates completion)
+                        if (esData.ContainsKey("ESConfirmation") && esData["ESConfirmation"] == "true")
+                        {
+                            esStatus = "Completed";
+                        }
+                        else if (esData.Count > 0)
+                        {
+                            esStatus = "InProgress";
+                        }
+                    }
+                    TempData.Keep($"IRCP_{targetUserId}_ES");
                 }
-                TempData.Keep($"IRCP_{targetUserId}_ES");
-            }
 
-            // Check EYD status
-            if (eydLocked)
-            {
-                eydStatus = "Completed";
-            }
-            else if (TempData[$"IRCP_{targetUserId}_EYD"] != null)
-            {
-                var jsonData = TempData[$"IRCP_{targetUserId}_EYD"].ToString();
-                var eydData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
-                if (eydData.Count > 0)
+                // Check EYD status
+                if (eydLocked)
                 {
-                    eydStatus = "InProgress";
+                    eydStatus = "Completed";
                 }
-                TempData.Keep($"IRCP_{targetUserId}_EYD");
-            }
+                else if (TempData[$"IRCP_{targetUserId}_EYD"] != null)
+                {
+                    var jsonData = TempData[$"IRCP_{targetUserId}_EYD"]?.ToString();
+                    if (jsonData != null)
+                    {
+                        var eydData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                        if (eydData.Count > 0)
+                        {
+                            eydStatus = "InProgress";
+                        }
+                    }
+                    TempData.Keep($"IRCP_{targetUserId}_EYD");
+                }
 
-            // Check Panel status
-            if (panelLocked)
-            {
-                panelStatus = "Completed";
-            }
-            else if (TempData[$"IRCP_{targetUserId}_Panel"] != null)
-            {
-                var jsonData = TempData[$"IRCP_{targetUserId}_Panel"].ToString();
-                var panelData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
-                if (panelData.Count > 0)
+                // Check Panel status
+                if (panelLocked)
                 {
-                    panelStatus = "InProgress";
+                    panelStatus = "Completed";
                 }
-                TempData.Keep($"IRCP_{targetUserId}_Panel");
+                else if (TempData[$"IRCP_{targetUserId}_Panel"] != null)
+                {
+                    var jsonData = TempData[$"IRCP_{targetUserId}_Panel"]?.ToString();
+                    if (jsonData != null)
+                    {
+                        var panelData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                        if (panelData.Count > 0)
+                        {
+                            panelStatus = "InProgress";
+                        }
+                    }
+                    TempData.Keep($"IRCP_{targetUserId}_Panel");
+                }
             }
 
             // Determine edit permissions based on workflow status and locks
@@ -1211,14 +1235,41 @@ namespace EYDGateway.Controllers
                     return RedirectToAction("InterimReview", new { id = userId });
                 }
 
-                // Check if user has permission to unlock (Admin or TPD)
-                if (currentUser.Role != "Admin" && currentUser.Role != "TPD")
+                // Check if user has permission to unlock (Admin, TPD, or Dean)
+                if (currentUser.Role != "Admin" && currentUser.Role != "TPD" && currentUser.Role != "Dean")
                 {
                     TempData["ErrorMessage"] = "You don't have permission to unlock sections";
                     return RedirectToAction("InterimReview", new { id = userId });
                 }
 
-                // Remove the lock
+                // Find or create the IRCP review record
+                var ircpReview = await _context.IRCPReviews
+                    .FirstOrDefaultAsync(r => r.EYDUserId == userId);
+
+                if (ircpReview != null)
+                {
+                    // Unlock the specific section in the database
+                    switch (section.ToUpper())
+                    {
+                        case "ES":
+                            ircpReview.ESLocked = false;
+                            break;
+                        case "EYD":
+                            ircpReview.EYDLocked = false;
+                            break;
+                        case "PANEL":
+                            ircpReview.PanelLocked = false;
+                            break;
+                        default:
+                            TempData["ErrorMessage"] = "Invalid section specified";
+                            return RedirectToAction("InterimReview", new { id = userId });
+                    }
+
+                    ircpReview.LastModifiedDate = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
+
+                // Also remove TempData lock for immediate effect
                 var lockKey = $"IRCP_{userId}_{section}_Locked";
                 TempData.Remove(lockKey);
 
