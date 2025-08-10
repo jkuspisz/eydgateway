@@ -120,12 +120,20 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRVNcVXNlckRhc2hib2FyZC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/james/Documents/EYDgateway/EYDGateway/Views/EYD/AdHocESReport.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRVlEXEFkSG9jRVNSZXBvcnQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/james/Documents/EYDgateway/EYDGateway/Views/EYD/Dashboard.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRVlEXERhc2hib2FyZC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/james/Documents/EYDgateway/EYDGateway/Views/EYD/EPAMatrix.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRVlEXEVQQU1hdHJpeC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/james/Documents/EYDgateway/EYDGateway/Views/EYD/FinalReview.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRVlEXEZpbmFsUmV2aWV3LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/james/Documents/EYDgateway/EYDGateway/Views/EYD/InterimReview.cshtml]

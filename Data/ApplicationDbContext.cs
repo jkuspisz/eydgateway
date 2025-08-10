@@ -52,6 +52,12 @@ namespace EYDGateway.Data
         // Ad Hoc ES Report System
         public DbSet<AdHocESReport> AdHocESReports { get; set; }
         public DbSet<AdHocESReportEPAAssessment> AdHocESReportEPAAssessments { get; set; }
+        
+        // FRCP (Final Review of Competence Progression) System
+        public DbSet<FRCPReview> FRCPReviews { get; set; }
+        public DbSet<FRCPESAssessment> FRCPESAssessments { get; set; }
+        public DbSet<FRCPEYDReflection> FRCPEYDReflections { get; set; }
+        public DbSet<FRCPPanelReview> FRCPPanelReviews { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

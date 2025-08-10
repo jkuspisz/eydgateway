@@ -1168,7 +1168,7 @@ namespace EYDGateway.Controllers
                 SavedPanelData = savedPanelData
             };
 
-            return View("InterimReview", viewModel);
+            return View("FinalReview", viewModel);
         }
 
         [HttpPost]
@@ -1415,7 +1415,321 @@ namespace EYDGateway.Controllers
 
 
 
-        public IActionResult FinalReview(string? id = null) => View("PlaceholderPage", new { Title = "Final Review of Competence Progression" });
+        public async Task<IActionResult> FinalReview(string? id = null)
+        {
+            // Get current user
+            var currentUser = await _context.Users
+                .FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
+
+            if (currentUser == null)
+            {
+                return NotFound("User not found");
+            }
+
+            // Determine target user
+            var targetUserId = id ?? currentUser.Id;
+            var targetUser = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == targetUserId);
+
+            if (targetUser == null)
+            {
+                return NotFound("Target user not found");
+            }
+
+            // Security checks
+            bool canAccess = false;
+            switch (currentUser.Role)
+            {
+                case "EYD":
+                    canAccess = targetUserId == currentUser.Id;
+                    break;
+                case "ES":
+                case "TPD":
+                case "Dean":
+                case "Admin":
+                    canAccess = true;
+                    break;
+                default:
+                    canAccess = false;
+                    break;
+            }
+
+            if (!canAccess)
+            {
+                return Forbid("You don't have permission to view this page");
+            }
+
+            // Get real EPA data for the target user
+            var epas = await _epaService.GetAllActiveEPAsAsync();
+            var activityColumns = ActivityTypes.GetStandardColumns();
+            
+            // Get target user's EPA mappings from database
+            var userEPAMappings = await _context.EPAMappings
+                .Include(m => m.EPA)
+                .Where(m => m.UserId == targetUserId)
+                .GroupBy(m => new { m.EPAId, m.EntityType })
+                .Select(g => new
+                {
+                    EPAId = g.Key.EPAId,
+                    EntityType = g.Key.EntityType,
+                    Count = g.Count(),
+                    LatestDate = g.Max(m => m.CreatedAt)
+                })
+                .ToListAsync();
+
+            // Create EPA matrix data for the view
+            var epaMatrixData = epas.Select(epa => new
+            {
+                Id = epa.Id,
+                Code = epa.Code,
+                Title = epa.Title,
+                Activities = activityColumns.Select(col => 
+                {
+                    var mapping = userEPAMappings
+                        .FirstOrDefault(m => m.EPAId == epa.Id && m.EntityType == col.EntityType);
+                    return mapping?.Count ?? 0;
+                }).ToArray(),
+                Total = userEPAMappings.Where(m => m.EPAId == epa.Id).Sum(m => m.Count)
+            }).ToList();
+
+            // Get or create FRCP review record
+            var frcpReview = await _context.FRCPReviews
+                .FirstOrDefaultAsync(r => r.EYDUserId == targetUserId);
+
+            if (frcpReview == null)
+            {
+                frcpReview = new FRCPReview
+                {
+                    EYDUserId = targetUserId,
+                    CreatedDate = DateTime.UtcNow,
+                    LastModifiedDate = DateTime.UtcNow
+                };
+                _context.FRCPReviews.Add(frcpReview);
+                await _context.SaveChangesAsync();
+            }
+
+            // Check lock status from database first, then fall back to TempData
+            bool esLocked = frcpReview.ESLocked;
+            bool eydLocked = frcpReview.EYDLocked;
+            bool panelLocked = frcpReview.PanelLocked;
+
+            // Check TempData for immediate lock changes (for same session)
+            if (TempData[$"FRCP_{targetUserId}_ES_Locked"] != null)
+            {
+                esLocked = TempData[$"FRCP_{targetUserId}_ES_Locked"]?.ToString() == "true";
+                TempData.Keep($"FRCP_{targetUserId}_ES_Locked");
+            }
+
+            if (TempData[$"FRCP_{targetUserId}_EYD_Locked"] != null)
+            {
+                eydLocked = TempData[$"FRCP_{targetUserId}_EYD_Locked"]?.ToString() == "true";
+                TempData.Keep($"FRCP_{targetUserId}_EYD_Locked");
+            }
+
+            if (TempData[$"FRCP_{targetUserId}_Panel_Locked"] != null)
+            {
+                panelLocked = TempData[$"FRCP_{targetUserId}_Panel_Locked"]?.ToString() == "true";
+                TempData.Keep($"FRCP_{targetUserId}_Panel_Locked");
+            }
+
+            // Get workflow status from the database
+            var esStatus = frcpReview.ESStatus.ToString();
+            var eydStatus = frcpReview.EYDStatus.ToString();
+            var panelStatus = frcpReview.PanelStatus.ToString();
+
+            // Determine edit permissions based on workflow status and locks
+            bool canEditES = currentUser.Role == "ES" && !esLocked;
+            
+            bool canEditEYD = currentUser.Role == "EYD" && targetUserId == currentUser.Id && !eydLocked;
+            
+            // TPD/Dean can always access their Panel section regardless of ES/EYD completion
+            bool canEditPanel = (currentUser.Role == "TPD" || currentUser.Role == "Dean") && !panelLocked;
+            
+            bool canUnlock = currentUser.Role == "Admin" || currentUser.Role == "TPD";
+
+            // Load saved form data if it exists
+            var savedESData = new Dictionary<string, string>();
+            var savedEYDData = new Dictionary<string, string>();
+            var savedPanelData = new Dictionary<string, string>();
+
+            if (TempData[$"FRCP_{targetUserId}_ES"] != null)
+            {
+                var jsonData = TempData[$"FRCP_{targetUserId}_ES"]?.ToString();
+                if (jsonData != null)
+                {
+                    savedESData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                }
+                TempData.Keep($"FRCP_{targetUserId}_ES"); // Keep for next request
+            }
+
+            if (TempData[$"FRCP_{targetUserId}_EYD"] != null)
+            {
+                var jsonData = TempData[$"FRCP_{targetUserId}_EYD"]?.ToString();
+                if (jsonData != null)
+                {
+                    savedEYDData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                }
+                TempData.Keep($"FRCP_{targetUserId}_EYD"); // Keep for next request
+            }
+
+            if (TempData[$"FRCP_{targetUserId}_Panel"] != null)
+            {
+                var jsonData = TempData[$"FRCP_{targetUserId}_Panel"]?.ToString();
+                if (jsonData != null)
+                {
+                    savedPanelData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                }
+                TempData.Keep($"FRCP_{targetUserId}_Panel"); // Keep for next request
+            }
+
+            // Create view model
+            var viewModel = new
+            {
+                UserId = targetUser.Id,
+                UserName = targetUser.DisplayName ?? targetUser.UserName,
+                CurrentUserRole = currentUser.Role,
+                IsCurrentUser = targetUserId == currentUser.Id,
+                
+                // Edit permissions
+                CanEditES = canEditES,
+                CanEditEYD = canEditEYD,
+                CanEditPanel = canEditPanel,
+                CanUnlock = canUnlock,
+                
+                // Lock status
+                ESLocked = esLocked,
+                EYDLocked = eydLocked,
+                PanelLocked = panelLocked,
+                
+                // Workflow status (mock for now)
+                ESStatus = esStatus,
+                EYDStatus = eydStatus,
+                PanelStatus = panelStatus,
+                
+                // Real EPA matrix data
+                EPAData = epaMatrixData,
+                ActivityColumns = activityColumns,
+                
+                // Saved form data
+                SavedESData = savedESData,
+                SavedEYDData = savedEYDData,
+                SavedPanelData = savedPanelData
+            };
+
+            return View("FinalReview", viewModel);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SaveFRCPSection(string section, string userId, string action)
+        {
+            try
+            {
+                var currentUser = await _context.Users
+                    .FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
+
+                if (currentUser == null)
+                {
+                    TempData["ErrorMessage"] = "User not found";
+                    return RedirectToAction("FinalReview", new { id = userId });
+                }
+
+                // For now, simulate saving by storing form data in TempData
+                // This will persist the data across the redirect so user can see it was saved
+                var formData = new Dictionary<string, string>();
+                foreach (var key in Request.Form.Keys)
+                {
+                    formData[key] = Request.Form[key].ToString();
+                }
+                
+                // Store the form data for this user and section
+                var sessionKey = $"FRCP_{userId}_{section}";
+                TempData[sessionKey] = System.Text.Json.JsonSerializer.Serialize(formData);
+
+                bool isSubmit = action == "submit";
+
+                // If submitting, lock the section
+                if (isSubmit)
+                {
+                    var lockKey = $"FRCP_{userId}_{section}_Locked";
+                    TempData[lockKey] = "true";
+                    TempData.Keep(lockKey);
+                }
+
+                // Set success message
+                TempData["SuccessMessage"] = isSubmit ? "Section submitted and locked successfully" : "Progress saved successfully";
+                
+                // Redirect back to the FinalReview page for the same user
+                return RedirectToAction("FinalReview", new { id = userId });
+            }
+            catch (Exception ex)
+            {
+                // Set error message and redirect back
+                TempData["ErrorMessage"] = $"Error saving section: {ex.Message}";
+                return RedirectToAction("FinalReview", new { id = userId });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UnlockFRCPSection(string section, string userId)
+        {
+            try
+            {
+                var currentUser = await _context.Users
+                    .FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
+
+                if (currentUser == null)
+                {
+                    TempData["ErrorMessage"] = "User not found";
+                    return RedirectToAction("FinalReview", new { id = userId });
+                }
+
+                // Check if user has permission to unlock (Admin, TPD, or Dean)
+                if (currentUser.Role != "Admin" && currentUser.Role != "TPD" && currentUser.Role != "Dean")
+                {
+                    TempData["ErrorMessage"] = "You don't have permission to unlock sections";
+                    return RedirectToAction("FinalReview", new { id = userId });
+                }
+
+                // Find or create the FRCP review record
+                var frcpReview = await _context.FRCPReviews
+                    .FirstOrDefaultAsync(r => r.EYDUserId == userId);
+
+                if (frcpReview != null)
+                {
+                    // Unlock the specific section in the database
+                    switch (section.ToUpper())
+                    {
+                        case "ES":
+                            frcpReview.ESLocked = false;
+                            break;
+                        case "EYD":
+                            frcpReview.EYDLocked = false;
+                            break;
+                        case "PANEL":
+                            frcpReview.PanelLocked = false;
+                            break;
+                        default:
+                            TempData["ErrorMessage"] = "Invalid section specified";
+                            return RedirectToAction("FinalReview", new { id = userId });
+                    }
+
+                    frcpReview.LastModifiedDate = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
+
+                // Also remove TempData lock for immediate effect
+                var lockKey = $"FRCP_{userId}_{section}_Locked";
+                TempData.Remove(lockKey);
+
+                TempData["SuccessMessage"] = $"{section} section unlocked successfully";
+                return RedirectToAction("FinalReview", new { id = userId });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error unlocking section: {ex.Message}";
+                return RedirectToAction("FinalReview", new { id = userId });
+            }
+        }
         
         private async Task<List<SLECompletionStat>> GetSLECompletionStats(string userId)
         {
