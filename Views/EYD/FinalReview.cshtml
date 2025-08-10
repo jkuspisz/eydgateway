@@ -313,6 +313,49 @@
                                   placeholder="Describe any outstanding development needs...">@savedDevelopmentNeeds</textarea>
                     </div>
                     
+                    <!-- Final Review Specific Fields -->
+                    <div class="mb-3">
+                        <label class="form-label"><strong>In your opinion is this dentist ready for independent practice?</strong></label>
+                        @{
+                            var savedReadyForIndependentPractice = Model.SavedESData.ContainsKey("ReadyForIndependentPractice") ? Model.SavedESData["ReadyForIndependentPractice"] : "";
+                        }
+                        <div class="form-check">
+                            @if (savedReadyForIndependentPractice == "true")
+                            {
+                                <input class="form-check-input" type="radio" name="ReadyForIndependentPractice" value="true" id="readyYes" checked>
+                            }
+                            else
+                            {
+                                <input class="form-check-input" type="radio" name="ReadyForIndependentPractice" value="true" id="readyYes">
+                            }
+                            <label class="form-check-label" for="readyYes">
+                                Yes
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            @if (savedReadyForIndependentPractice == "false")
+                            {
+                                <input class="form-check-input" type="radio" name="ReadyForIndependentPractice" value="false" id="readyNo" checked>
+                            }
+                            else
+                            {
+                                <input class="form-check-input" type="radio" name="ReadyForIndependentPractice" value="false" id="readyNo">
+                            }
+                            <label class="form-check-label" for="readyNo">
+                                No
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Any additional comments you would like to add in support of the above?</strong></label>
+                        @{
+                            var savedAdditionalComments = Model.SavedESData.ContainsKey("AdditionalComments") ? Model.SavedESData["AdditionalComments"] : "";
+                        }
+                        <textarea class="form-control" name="AdditionalComments" rows="4" 
+                                  placeholder="Please provide any additional comments in support of your assessment...">@savedAdditionalComments</textarea>
+                    </div>
+                    
                     <div class="form-check">
                         @{
                             var savedConfirmation = Model.SavedESData.ContainsKey("ESConfirmation") ? Model.SavedESData["ESConfirmation"] : "";
@@ -532,6 +575,50 @@
                                     }
                                 </div>
                                 
+                                <!-- Final Review Specific Fields - Read Only -->
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>In your opinion is this dentist ready for independent practice?</strong></label>
+                                    @{
+                                        var savedReadyForIndependentPractice = Model.SavedESData.ContainsKey("ReadyForIndependentPractice") ? Model.SavedESData["ReadyForIndependentPractice"] : "";
+                                    }
+                                    @if (!string.IsNullOrEmpty(savedReadyForIndependentPractice))
+                                    {
+                                        <div class="border rounded p-3 bg-light">
+                                            @if (savedReadyForIndependentPractice == "true")
+                                            {
+                                                <span class="badge bg-success"><i class="fas fa-check"></i> Yes</span>
+                                            }
+                                            else if (savedReadyForIndependentPractice == "false")
+                                            {
+                                                <span class="badge bg-danger"><i class="fas fa-times"></i> No</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">@savedReadyForIndependentPractice</span>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="border rounded p-3 bg-light text-muted">Not completed</div>
+                                    }
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Any additional comments you would like to add in support of the above?</strong></label>
+                                    @{
+                                        var savedAdditionalComments = Model.SavedESData.ContainsKey("AdditionalComments") ? Model.SavedESData["AdditionalComments"] : "";
+                                    }
+                                    @if (!string.IsNullOrEmpty(savedAdditionalComments))
+                                    {
+                                        <div class="border rounded p-3 bg-light">@savedAdditionalComments</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="border rounded p-3 bg-light text-muted">Not completed</div>
+                                    }
+                                </div>
+                                
                                 <div class="form-check">
                                     @{
                                         var savedConfirmation = Model.SavedESData.ContainsKey("ESConfirmation") ? Model.SavedESData["ESConfirmation"] : "";
@@ -718,29 +805,21 @@
                                         }
                                         <select class="form-select" name="RecommendedOutcome">
                                             <option value="">Select Outcome</option>
-                                            @if (savedOutcome == "Outcome1")
+                                            @if (savedOutcome == "Outcome3")
                                             {
-                                                <option value="Outcome1" selected>Outcome 1 Interim - Predefined competences being demonstrated at an appropriate rate</option>
+                                                <option value="Outcome3" selected>Outcome 3 - Remediation recommended at the discretion of the local Postgraduate Dental Dean.</option>
                                             }
                                             else
                                             {
-                                                <option value="Outcome1">Outcome 1 Interim - Predefined competences being demonstrated at an appropriate rate</option>
-                                            }
-                                            @if (savedOutcome == "Outcome2")
-                                            {
-                                                <option value="Outcome2" selected>Outcome 2 Interim - Development required with specific recommendations regarding the development of further competences during the remainder of that year of the training programme being made</option>
-                                            }
-                                            else
-                                            {
-                                                <option value="Outcome2">Outcome 2 Interim - Development required with specific recommendations regarding the development of further competences during the remainder of that year of the training programme being made</option>
+                                                <option value="Outcome3">Outcome 3 - Remediation recommended at the discretion of the local Postgraduate Dental Dean.</option>
                                             }
                                             @if (savedOutcome == "Outcome4")
                                             {
-                                                <option value="Outcome4" selected>Outcome 4 - Released from training without achieving all specified competences</option>
+                                                <option value="Outcome4" selected>Outcome 4 - Released from training without achieving all specified competences.</option>
                                             }
                                             else
                                             {
-                                                <option value="Outcome4">Outcome 4 - Released from training without achieving all specified competences</option>
+                                                <option value="Outcome4">Outcome 4 - Released from training without achieving all specified competences.</option>
                                             }
                                             @if (savedOutcome == "Outcome5")
                                             {
@@ -749,6 +828,14 @@
                                             else
                                             {
                                                 <option value="Outcome5">Outcome 5 - Incomplete evidence presented - additional training time may be required</option>
+                                            }
+                                            @if (savedOutcome == "Outcome6")
+                                            {
+                                                <option value="Outcome6" selected>Outcome 6 - Predefined competences successfully demonstrated</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="Outcome6">Outcome 6 - Predefined competences successfully demonstrated</option>
                                             }
                                         </select>
                                     </div>
@@ -906,17 +993,17 @@
                                         <div class="border rounded p-3 bg-light">
                                             @switch (savedOutcome)
                                             {
-                                                case "Outcome1":
-                                                    <span class="badge bg-secondary">Outcome 1 Interim - Predefined competences being demonstrated at an appropriate rate</span>
-                                                    break;
-                                                case "Outcome2":
-                                                    <span class="badge bg-secondary">Outcome 2 Interim - Development required with specific recommendations regarding the development of further competences during the remainder of that year of the training programme being made</span>
+                                                case "Outcome3":
+                                                    <span class="badge bg-secondary">Outcome 3 - Remediation recommended at the discretion of the local Postgraduate Dental Dean.</span>
                                                     break;
                                                 case "Outcome4":
-                                                    <span class="badge bg-secondary">Outcome 4 - Released from training without achieving all specified competences</span>
+                                                    <span class="badge bg-secondary">Outcome 4 - Released from training without achieving all specified competences.</span>
                                                     break;
                                                 case "Outcome5":
                                                     <span class="badge bg-secondary">Outcome 5 - Incomplete evidence presented - additional training time may be required</span>
+                                                    break;
+                                                case "Outcome6":
+                                                    <span class="badge bg-secondary">Outcome 6 - Predefined competences successfully demonstrated</span>
                                                     break;
                                                 default:
                                                     <span>@savedOutcome</span>

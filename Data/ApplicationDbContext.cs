@@ -56,6 +56,7 @@ namespace EYDGateway.Data
         // FRCP (Final Review of Competence Progression) System
         public DbSet<FRCPReview> FRCPReviews { get; set; }
         public DbSet<FRCPESAssessment> FRCPESAssessments { get; set; }
+        public DbSet<FRCPESSection> FRCPESSections { get; set; }
         public DbSet<FRCPEYDReflection> FRCPEYDReflections { get; set; }
         public DbSet<FRCPPanelReview> FRCPPanelReviews { get; set; }
 

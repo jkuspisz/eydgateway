@@ -90,6 +90,27 @@
                                     </div>
                                 }
                                 
+                                @* Special status indicators for FRCP section *@
+                                @if (portfolioSection.Id == "final-review")
+                                {
+                                    <div class="frcp-status-indicators mt-2">
+                                        <div class="d-flex justify-content-around">
+                                            <div class="frcp-status-box text-center">
+                                                <div class="status-indicator status-@Model.FRCPESStatus.ToLower()"></div>
+                                                <small class="d-block mt-1">ES</small>
+                                            </div>
+                                            <div class="frcp-status-box text-center">
+                                                <div class="status-indicator status-@Model.FRCPEYDStatus.ToLower()"></div>
+                                                <small class="d-block mt-1">EYD</small>
+                                            </div>
+                                            <div class="frcp-status-box text-center">
+                                                <div class="status-indicator status-@Model.FRCPPanelStatus.ToLower()"></div>
+                                                <small class="d-block mt-1">PANEL</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                
                                 @* Special status indicators for Ad Hoc ES Report section *@
                                 @if (portfolioSection.Id == "adhoc-es-report")
                                 {

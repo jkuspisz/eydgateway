@@ -32,6 +32,7 @@ namespace EYDGateway.Models
         
         // Navigation properties
         public virtual ICollection<FRCPESAssessment> ESAssessments { get; set; } = new List<FRCPESAssessment>();
+        public virtual FRCPESSection? ESSection { get; set; }
         public virtual FRCPEYDReflection? EYDReflection { get; set; }
         public virtual FRCPPanelReview? PanelReview { get; set; }
         
@@ -64,6 +65,32 @@ namespace EYDGateway.Models
         
         [ForeignKey("EPAId")]
         public virtual EPA? EPA { get; set; }
+    }
+
+    public class FRCPESSection
+    {
+        [Key]
+        public int Id { get; set; }
+        
+        [Required]
+        public int FRCPReviewId { get; set; }
+        
+        // ES Assessment Fields
+        public string? OverallAssessment { get; set; }
+        public string? NotablePractice { get; set; }
+        public string? PerformanceConcerns { get; set; }
+        public string? DevelopmentPriorities { get; set; }
+        public bool ConfirmAccuracy { get; set; } = false;
+        
+        // Final Review specific fields
+        public bool? ReadyForIndependentPractice { get; set; }
+        public string? AdditionalComments { get; set; }
+        
+        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+        public DateTime? LastModifiedDate { get; set; }
+        
+        [ForeignKey("FRCPReviewId")]
+        public virtual FRCPReview FRCPReview { get; set; } = null!;
     }
 
     public class FRCPEYDReflection

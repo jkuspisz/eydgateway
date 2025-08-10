@@ -126,6 +126,9 @@ namespace EYDGateway.Controllers
             // Get IRCP status for this user
             var ircpStatus = GetIRCPStatus(portfolioUser.Id);
             
+            // Get FRCP status for this user
+            var frcpStatus = GetFRCPStatus(portfolioUser.Id);
+            
             // Get PSQ status for this user
             var psqStatus = await GetPSQStatusAsync(portfolioUser.Id);
             
@@ -148,6 +151,10 @@ namespace EYDGateway.Controllers
                 IRCPESStatus = ircpStatus.ESStatus,
                 IRCPEYDStatus = ircpStatus.EYDStatus,
                 IRCPPanelStatus = ircpStatus.PanelStatus,
+                // FRCP Status
+                FRCPESStatus = frcpStatus.ESStatus,
+                FRCPEYDStatus = frcpStatus.EYDStatus,
+                FRCPPanelStatus = frcpStatus.PanelStatus,
                 // PSQ Status
                 PSQStatus = psqStatus,
                 // MSF Status
@@ -1532,10 +1539,11 @@ namespace EYDGateway.Controllers
                 TempData.Keep($"FRCP_{targetUserId}_Panel_Locked");
             }
 
-            // Get workflow status from the database
-            var esStatus = frcpReview.ESStatus.ToString();
-            var eydStatus = frcpReview.EYDStatus.ToString();
-            var panelStatus = frcpReview.PanelStatus.ToString();
+            // Get workflow status using the same logic as Portfolio page
+            var frcpStatus = GetFRCPStatus(targetUserId);
+            var esStatus = frcpStatus.ESStatus;
+            var eydStatus = frcpStatus.EYDStatus;
+            var panelStatus = frcpStatus.PanelStatus;
 
             // Determine edit permissions based on workflow status and locks
             bool canEditES = currentUser.Role == "ES" && !esLocked;
@@ -1829,6 +1837,86 @@ namespace EYDGateway.Controllers
             if (esLocked) TempData.Keep($"IRCP_{userId}_ES_Locked");
             if (eydLocked) TempData.Keep($"IRCP_{userId}_EYD_Locked");
             if (panelLocked) TempData.Keep($"IRCP_{userId}_Panel_Locked");
+
+            return (esStatus, eydStatus, panelStatus);
+        }
+
+        private (string ESStatus, string EYDStatus, string PanelStatus) GetFRCPStatus(string userId)
+        {
+            var esStatus = "NotStarted";
+            var eydStatus = "NotStarted";
+            var panelStatus = "NotStarted";
+
+            // Check for section locks first
+            bool esLocked = TempData[$"FRCP_{userId}_ES_Locked"]?.ToString() == "true";
+            bool eydLocked = TempData[$"FRCP_{userId}_EYD_Locked"]?.ToString() == "true";
+            bool panelLocked = TempData[$"FRCP_{userId}_Panel_Locked"]?.ToString() == "true";
+
+            // Check ES status
+            if (esLocked)
+            {
+                esStatus = "Completed";
+            }
+            else if (TempData[$"FRCP_{userId}_ES"] != null)
+            {
+                var jsonData = TempData[$"FRCP_{userId}_ES"]?.ToString();
+                if (!string.IsNullOrEmpty(jsonData))
+                {
+                    var esData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                    if (esData.ContainsKey("ESConfirmation") && esData["ESConfirmation"] == "true")
+                    {
+                        esStatus = "Completed";
+                    }
+                    else if (esData.Count > 0)
+                    {
+                        esStatus = "InProgress";
+                    }
+                }
+            }
+
+            // Check EYD status
+            if (eydLocked)
+            {
+                eydStatus = "Completed";
+            }
+            else if (TempData[$"FRCP_{userId}_EYD"] != null)
+            {
+                var jsonData = TempData[$"FRCP_{userId}_EYD"]?.ToString();
+                if (!string.IsNullOrEmpty(jsonData))
+                {
+                    var eydData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                    if (eydData.Count > 0)
+                    {
+                        eydStatus = "InProgress";
+                    }
+                }
+            }
+
+            // Check Panel status
+            if (panelLocked)
+            {
+                panelStatus = "Completed";
+            }
+            else if (TempData[$"FRCP_{userId}_Panel"] != null)
+            {
+                var jsonData = TempData[$"FRCP_{userId}_Panel"]?.ToString();
+                if (!string.IsNullOrEmpty(jsonData))
+                {
+                    var panelData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                    if (panelData.Count > 0)
+                    {
+                        panelStatus = "InProgress";
+                    }
+                }
+            }
+
+            // Keep TempData for future requests
+            if (TempData[$"FRCP_{userId}_ES"] != null) TempData.Keep($"FRCP_{userId}_ES");
+            if (TempData[$"FRCP_{userId}_EYD"] != null) TempData.Keep($"FRCP_{userId}_EYD");
+            if (TempData[$"FRCP_{userId}_Panel"] != null) TempData.Keep($"FRCP_{userId}_Panel");
+            if (esLocked) TempData.Keep($"FRCP_{userId}_ES_Locked");
+            if (eydLocked) TempData.Keep($"FRCP_{userId}_EYD_Locked");
+            if (panelLocked) TempData.Keep($"FRCP_{userId}_Panel_Locked");
 
             return (esStatus, eydStatus, panelStatus);
         }
@@ -2411,6 +2499,11 @@ namespace EYDGateway.Controllers
         public string IRCPESStatus { get; set; } = "NotStarted"; // NotStarted, InProgress, Completed
         public string IRCPEYDStatus { get; set; } = "NotStarted"; // NotStarted, InProgress, Completed
         public string IRCPPanelStatus { get; set; } = "NotStarted"; // NotStarted, InProgress, Completed
+        
+        // FRCP Status indicators
+        public string FRCPESStatus { get; set; } = "NotStarted"; // NotStarted, InProgress, Completed
+        public string FRCPEYDStatus { get; set; } = "NotStarted"; // NotStarted, InProgress, Completed
+        public string FRCPPanelStatus { get; set; } = "NotStarted"; // NotStarted, InProgress, Completed
         
         // PSQ Traffic Light Status
         public string PSQStatus { get; set; } = "NotStarted"; // NotStarted (red, 0 responses), InProgress (amber, 1+ responses), Completed (green, 20+ responses)
