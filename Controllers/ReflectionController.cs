@@ -408,6 +408,12 @@ namespace EYDGateway.Controllers
                 return RedirectToAction("Index", new { id = reflection.UserId });
             }
 
+            // Remove EPA mappings first to avoid orphaned mappings affecting EPA matrix counts
+            var epaMappings = await _context.EPAMappings
+                .Where(em => em.EntityType == "Reflection" && em.EntityId == reflection.Id)
+                .ToListAsync();
+            _context.EPAMappings.RemoveRange(epaMappings);
+
             _context.Reflections.Remove(reflection);
             await _context.SaveChangesAsync();
             

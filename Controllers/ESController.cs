@@ -65,13 +65,42 @@ namespace EYDGateway.Controllers
 
             // Get pending assessment invitations for this ES user
             var pendingInvitations = await _context.SLEs
-                .Where(sle => sle.AssessorUserId == currentUser.Id && 
-                             sle.Status == "Invited" && 
-                             !sle.IsAssessmentCompleted)
+                .Where(sle => sle.AssessorUserId == currentUser.Id &&
+                              sle.Status == "Invited" &&
+                              !sle.IsAssessmentCompleted)
                 .Include(sle => sle.EYDUser)
-                .Include(sle => sle.EPAMappings)
-                    .ThenInclude(em => em.EPA)
                 .ToListAsync();
+
+            // Since EPAMappings are polymorphic (EntityType/EntityId), EF can't auto-include them via navigation.
+            // Manually load mappings for these SLEs and attach them for the view to render EPA codes.
+            if (pendingInvitations.Count > 0)
+            {
+                var sleIds = pendingInvitations.Select(pi => pi.Id).ToList();
+                var mappings = await _context.EPAMappings
+                    .Where(m => m.EntityType == "SLE" && sleIds.Contains(m.EntityId))
+                    .Include(m => m.EPA)
+                    .ToListAsync();
+
+                var mappingsBySle = mappings
+                    .GroupBy(m => m.EntityId)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
+                foreach (var sle in pendingInvitations)
+                {
+                    if (mappingsBySle.TryGetValue(sle.Id, out var sleMappings))
+                    {
+                        sle.EPAMappings = sleMappings;
+                    }
+                    else
+                    {
+                        // Ensure it's an empty collection rather than null for safe view rendering
+                        sle.EPAMappings = new List<EPAMapping>();
+                    }
+                }
+
+                // DEBUG
+                Console.WriteLine($"DEBUG ES Dashboard: Loaded {mappings.Count} EPA mappings for {pendingInvitations.Count} pending invitations.");
+            }
 
             var viewModel = new ESDashboardViewModel
             {
@@ -98,8 +127,8 @@ namespace EYDGateway.Controllers
         {
             var currentUser = await _context.Users
                 .Include(u => u.Area)
-                    .ThenInclude(a => a.Schemes)
-                .FirstOrDefaultAsync(u => u.UserName == User.Identity.Name);
+                    .ThenInclude(a => a!.Schemes)
+                .FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
 
             if (currentUser?.Role != "ES")
             {
@@ -114,7 +143,7 @@ namespace EYDGateway.Controllers
             var viewModel = new AreaProgressViewModel
             {
                 Area = currentUser.Area,
-                ESName = currentUser.DisplayName ?? currentUser.UserName,
+                ESName = currentUser.DisplayName ?? currentUser.UserName ?? string.Empty,
                 AllUsers = allUsersInArea,
                 Schemes = currentUser.Area?.Schemes?.ToList() ?? new List<Scheme>()
             };
@@ -138,7 +167,7 @@ namespace EYDGateway.Controllers
 
             // Verify the ES manages this area
             var currentUser = await _context.Users
-                .FirstOrDefaultAsync(u => u.UserName == User.Identity.Name);
+                .FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
 
             if (currentUser?.AreaId != scheme.AreaId)
             {
@@ -157,8 +186,8 @@ namespace EYDGateway.Controllers
         {
             var currentUser = await _context.Users
                 .Include(u => u.Area)
-                    .ThenInclude(a => a.Schemes)
-                .FirstOrDefaultAsync(u => u.UserName == User.Identity.Name);
+                    .ThenInclude(a => a!.Schemes)
+                .FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
 
             if (currentUser?.Role != "ES")
             {
@@ -169,7 +198,7 @@ namespace EYDGateway.Controllers
             var reportData = new AreaReportViewModel
             {
                 Area = currentUser.Area,
-                GeneratedBy = currentUser.DisplayName ?? currentUser.UserName,
+                GeneratedBy = currentUser.DisplayName ?? currentUser.UserName ?? string.Empty,
                 GeneratedDate = DateTime.Now,
                 TotalSchemes = currentUser.Area?.Schemes?.Count ?? 0,
                 CompletedSchemes = 2, // Mock data
@@ -194,16 +223,16 @@ namespace EYDGateway.Controllers
 
     public class AreaProgressViewModel
     {
-        public Area Area { get; set; }
-        public string ESName { get; set; }
+    public Area? Area { get; set; }
+    public string ESName { get; set; } = string.Empty;
         public List<ApplicationUser> AllUsers { get; set; } = new List<ApplicationUser>();
         public List<Scheme> Schemes { get; set; } = new List<Scheme>();
     }
 
     public class AreaReportViewModel
     {
-        public Area Area { get; set; }
-        public string GeneratedBy { get; set; }
+    public Area? Area { get; set; }
+    public string GeneratedBy { get; set; } = string.Empty;
         public DateTime GeneratedDate { get; set; }
         public int TotalSchemes { get; set; }
         public int CompletedSchemes { get; set; }

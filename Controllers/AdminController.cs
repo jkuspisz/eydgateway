@@ -237,6 +237,49 @@ namespace EYDGateway.Controllers
             return RedirectToAction("CreateNewUser", "Superuser", model);
         }
 
+        // Maintenance: remove orphan EPA mappings whose parent entities no longer exist
+        [HttpPost]
+        public async Task<IActionResult> CleanupOrphanEPAMappings()
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser?.Role != "Admin")
+            {
+                return Unauthorized();
+            }
+
+            int removed = 0;
+
+            // Load ids of existing entities per type
+            var existingReflectionIds = await _context.Reflections.Select(r => r.Id).ToListAsync();
+            var existingSleIds = await _context.SLEs.Select(s => s.Id).ToListAsync();
+            var existingPltIds = await _context.ProtectedLearningTimes.Select(p => p.Id).ToListAsync();
+            var existingSeIds = await _context.SignificantEvents.Select(se => se.Id).ToListAsync();
+            var existingLearningLogIds = await _context.LearningLogs.Select(l => l.Id).ToListAsync();
+
+            // Fetch all mappings to evaluate (limited to known entity types)
+            var allMappings = await _context.EPAMappings.ToListAsync();
+
+            // Partition orphan mappings by type
+            var orphanReflections = allMappings.Where(m => m.EntityType == "Reflection" && !existingReflectionIds.Contains(m.EntityId)).ToList();
+            var orphanSles = allMappings.Where(m => m.EntityType == "SLE" && !existingSleIds.Contains(m.EntityId)).ToList();
+            var orphanPlts = allMappings.Where(m => m.EntityType == "ProtectedLearningTime" && !existingPltIds.Contains(m.EntityId)).ToList();
+            var orphanSignificantEvents = allMappings.Where(m => m.EntityType == "SignificantEvent" && !existingSeIds.Contains(m.EntityId)).ToList();
+            var orphanLearningLogs = allMappings.Where(m => m.EntityType == "LearningLog" && !existingLearningLogIds.Contains(m.EntityId)).ToList();
+
+            removed += orphanReflections.Count + orphanSles.Count + orphanPlts.Count + orphanSignificantEvents.Count + orphanLearningLogs.Count;
+
+            if (orphanReflections.Any()) _context.EPAMappings.RemoveRange(orphanReflections);
+            if (orphanSles.Any()) _context.EPAMappings.RemoveRange(orphanSles);
+            if (orphanPlts.Any()) _context.EPAMappings.RemoveRange(orphanPlts);
+            if (orphanSignificantEvents.Any()) _context.EPAMappings.RemoveRange(orphanSignificantEvents);
+            if (orphanLearningLogs.Any()) _context.EPAMappings.RemoveRange(orphanLearningLogs);
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Cleanup complete. Removed {removed} orphan EPA mapping(s).";
+            return RedirectToAction("Dashboard");
+        }
+
         public async Task<IActionResult> ManageAreas()
         {
             var areas = await _context.Areas

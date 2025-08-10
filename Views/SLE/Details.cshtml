@@ -3,15 +3,7 @@
     ViewData["Title"] = $"SLE Details - {Model.Title}";
 }
 
-<!-- VISIBLE DEBUGGING - Remove these after testing -->
-<div class="alert alert-warning">
-    <h6>DEBUG INFO:</h6>
-    <p><strong>Model.SLEType:</strong> '@Model.SLEType'</p>
-    <p><strong>Model.Title:</strong> '@Model.Title'</p>
-    <p><strong>EPAMappings Count:</strong> @(Model.EPAMappings?.Count ?? 0)</p>
-    <p><strong>EPAMappings Details:</strong> @(string.Join(", ", Model.EPAMappings?.Select(m => $"EPA:{m.EPAId},Entity:{m.EntityType}:{m.EntityId}") ?? new string[0]))</p>
-    <p><strong>SLETypes.GetTypeName Result:</strong> '@EYDGateway.Models.SLETypes.GetTypeName(Model.SLEType)'</p>
-</div>
+@* Debug block removed *@
 
 <!-- Main SLE Details Card - Full Width -->
 <div class="row">
@@ -144,12 +136,7 @@
                 </div>
 
                 <!-- Associated EPAs - Display prominently in main form -->
-                <div class="alert alert-info">
-                    <strong>EPA DEBUG:</strong> 
-                    Count = @(Model.EPAMappings?.Count ?? 0), 
-                    Is Null = @(Model.EPAMappings == null), 
-                    Has Any = @(Model.EPAMappings?.Any() == true)
-                </div>
+                @* EPA debug info removed *@
                 @if (Model.EPAMappings?.Any() == true)
                 {
                     <div class="row mb-3">
@@ -178,13 +165,6 @@
                         </div>
                         <div class="col-md-8">
                             <span class="text-muted">No EPAs associated with this SLE</span>
-                            <div class="alert alert-warning mt-2">
-                                <strong>EPA DEBUG:</strong> EPAMappings is @(Model.EPAMappings == null ? "NULL" : "empty collection")
-                                @if (Model.EPAMappings != null && !Model.EPAMappings.Any())
-                                {
-                                    <br/><strong>Collection exists but is empty</strong>
-                                }
-                            </div>
                         </div>
                     </div>
                 }

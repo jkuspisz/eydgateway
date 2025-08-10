@@ -445,8 +445,16 @@ namespace EYDGateway.Controllers
                     learningLogs = learningLogData.ToDictionary(l => l.Id, l => (object)new { l.Title });
                 }
                 
-                // Group mappings for matrix population
-                var groupedMappings = userEPAMappings
+                // Filter out orphan mappings where the parent activity no longer exists
+                var validMappings = userEPAMappings.Where(m =>
+                    (m.EntityType == "SLE" && sles.ContainsKey(m.EntityId)) ||
+                    (m.EntityType == "Reflection" && reflections.ContainsKey(m.EntityId)) ||
+                    (m.EntityType == "ProtectedLearningTime" && plts.ContainsKey(m.EntityId)) ||
+                    (m.EntityType == "LearningLog" && learningLogs.ContainsKey(m.EntityId))
+                ).ToList();
+
+                // Group mappings for matrix population using only valid (non-orphan) mappings
+                var groupedMappings = validMappings
                     .GroupBy(m => new { m.EPAId, m.EntityType })
                     .Select(g => new
                     {
@@ -506,17 +514,34 @@ namespace EYDGateway.Controllers
                     }
                 }
 
-                // Create summary based on grouped mappings
-                var totalActivities = groupedMappings.Sum(m => m.Count);
+                // Recompute Activity Distribution totals per type using validated mappings
+                var activityTypeTotals = new Dictionary<string, int>();
+                foreach (var col in activityColumns)
+                {
+                    // For types we validated against entity existence, use validMappings; otherwise fall back to all mappings
+                    var usesValidated = col.EntityType == "SLE" || col.EntityType == "Reflection" ||
+                                        col.EntityType == "ProtectedLearningTime" || col.EntityType == "LearningLog";
+                    var source = usesValidated ? validMappings : userEPAMappings;
+                    // Count unique activities (distinct EntityId) per type so multiple EPA mappings for one activity count once
+                    var totalForType = source
+                        .Where(m => m.EntityType == col.EntityType)
+                        .Select(m => m.EntityId)
+                        .Distinct()
+                        .Count();
+                    activityTypeTotals[col.DisplayName] = totalForType;
+                }
+
+                // Create summary based on grouped mappings and recomputed totals
+                var totalActivities = activityTypeTotals.Values.Sum();
                 var epasWithActivity = groupedMappings.Select(m => m.EPAId).Distinct().Count();
-                
+
                 var summary = new EPAProgressSummary
                 {
                     TotalActivities = totalActivities,
                     TotalEPAMappings = groupedMappings.Count,
                     EPAsWithActivity = epasWithActivity,
                     EPAsNotStarted = epas.Count - epasWithActivity,
-                    ActivityTypeTotals = activityColumns.ToDictionary(c => c.DisplayName, c => c.TotalCount)
+                    ActivityTypeTotals = activityTypeTotals
                 };
 
                 // Set most/least active EPAs based on real data

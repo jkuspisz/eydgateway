@@ -200,6 +200,9 @@
                             <i class="fas fa-times"></i> Cancel
                         </a>
                     </div>
+                    <!-- Hidden container to ensure selected EPA IDs are submitted -->
+                    <div id="selected-epa-hidden" style="display:none;"></div>
+
                 </form>
             </div>
         </div>
@@ -488,7 +491,7 @@
                 });
             }
             
-            // Add form submission debugging
+            // Add form submission handling to ensure selected EPA IDs are posted reliably
             $('form').on('submit', function(e) {
                 console.log('=== FORM SUBMISSION DEBUG ===');
                 console.log('SLE Type:', $('#SLEType').val());
@@ -508,6 +511,15 @@
                 console.log('Selected EPA IDs:', selectedEPAs.map(epa => epa.id));
                 console.log('EPA checkbox count:', $('.epa-checkbox:checked').length);
                 
+                // Ensure values are posted even if some checkboxes end up disabled by validation logic
+                // Also avoid duplicate posting (checkbox + hidden) by removing checkbox name attributes first
+                $('.epa-checkbox').removeAttr('name');
+                var hiddenContainer = $('#selected-epa-hidden');
+                hiddenContainer.empty();
+                selectedEPAs.forEach(function(epa) {
+                    hiddenContainer.append('<input type="hidden" name="SelectedEPAIds" value="' + epa.id + '" />');
+                });
+
                 // Log form data
                 var formData = new FormData(this);
                 console.log('Form data entries:');

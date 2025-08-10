@@ -69,8 +69,7 @@ namespace EYDGateway.Controllers
             var query = _context.SLEs
                 .Include(s => s.EYDUser)
                 .Include(s => s.AssessorUser)
-                .Include(s => s.EPAMappings)
-                    .ThenInclude(em => em.EPA)
+                // Note: EPAMappings is a polymorphic relation (EntityType/EntityId). We cannot Include it.
                 .Where(s => s.EYDUserId == targetUserId || s.AssessorUserId == currentUser.Id);
 
             // Apply type filter if specified
@@ -82,6 +81,16 @@ namespace EYDGateway.Controllers
             var sles = await query
                 .OrderByDescending(s => s.CreatedAt)
                 .ToListAsync();
+
+            // Load EPA mappings for these SLEs explicitly
+            var sleIds = sles.Select(s => s.Id).ToList();
+            var sleEpaMappings = await _context.EPAMappings
+                .Include(m => m.EPA)
+                .Where(m => m.EntityType == "SLE" && sleIds.Contains(m.EntityId))
+                .ToListAsync();
+            var epaCodesBySleId = sleEpaMappings
+                .GroupBy(m => m.EntityId)
+                .ToDictionary(g => g.Key, g => g.Select(m => m.EPA?.Code ?? string.Empty).Where(c => !string.IsNullOrEmpty(c)).ToList());
 
             var viewModel = new SLEListViewModel
             {
@@ -98,7 +107,7 @@ namespace EYDGateway.Controllers
                     Status = s.Status,
                     CreatedAt = s.CreatedAt,
                     IsAssessmentCompleted = s.IsAssessmentCompleted,
-                    LinkedEPAs = s.EPAMappings?.Select(em => em.EPA?.Code ?? "").ToList() ?? new List<string>()
+                    LinkedEPAs = epaCodesBySleId.TryGetValue(s.Id, out var codes) ? codes : new List<string>()
                 }).ToList(),
                 CanCreateSLE = await CanUserCreateSLE(currentUser)
             };
@@ -144,8 +153,20 @@ namespace EYDGateway.Controllers
             if (user == null) return Challenge();
 
             // Debug: Log received EPA IDs
-            Console.WriteLine($"DEBUG: Received SelectedEPAIds: [{string.Join(", ", model.SelectedEPAIds)}]");
-            Console.WriteLine($"DEBUG: SelectedEPAIds count: {model.SelectedEPAIds.Count}");
+            var rawSelected = Request?.Form["SelectedEPAIds"]; // raw form values for diagnostics
+            var rawSelectedArr = rawSelected?.ToArray() ?? Array.Empty<string>();
+            Console.WriteLine($"DEBUG: Raw form SelectedEPAIds: [{string.Join(", ", rawSelectedArr)}]");
+            // Normalize and deduplicate EPA IDs to avoid double-post issues
+            if (model.SelectedEPAIds == null)
+            {
+                model.SelectedEPAIds = new List<int>();
+            }
+            model.SelectedEPAIds = model.SelectedEPAIds
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+            Console.WriteLine($"DEBUG: Received SelectedEPAIds (normalized): [{string.Join(", ", model.SelectedEPAIds)}]");
+            Console.WriteLine($"DEBUG: SelectedEPAIds count (normalized): {model.SelectedEPAIds.Count}");
 
             // Debug: Log user role
             var isEYD = await _userManager.IsInRoleAsync(user, "EYD");
@@ -343,8 +364,7 @@ namespace EYDGateway.Controllers
             var sle = await _context.SLEs
                 .Include(s => s.EYDUser)
                 .Include(s => s.AssessorUser)
-                .Include(s => s.EPAMappings)
-                    .ThenInclude(em => em.EPA)
+                // EPAMappings must be loaded explicitly since it's polymorphic
                 .FirstOrDefaultAsync(s => s.Id == id);
 
             if (sle == null)
@@ -357,6 +377,14 @@ namespace EYDGateway.Controllers
 
             if (!hasAccess)
                 return Forbid();
+
+            // Explicitly load and attach EPA mappings so the view can render them
+            var linkedMappings = await _context.EPAMappings
+                .Include(m => m.EPA)
+                .Where(m => m.EntityType == "SLE" && m.EntityId == sle.Id)
+                .ToListAsync();
+            // Attach to the entity's collection for view compatibility
+            sle.EPAMappings = linkedMappings;
 
             return View(sle);
         }
