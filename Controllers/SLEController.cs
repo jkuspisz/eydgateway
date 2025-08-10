@@ -54,6 +54,11 @@ namespace EYDGateway.Controllers
                         return Forbid("You can only view SLE data for EYD users assigned to you.");
                     }
                 }
+                else if (currentUser.Role == "TPD" || currentUser.Role == "Dean")
+                {
+                    // TPD and Dean can view SLE data for any EYD user
+                    // No additional authorization check needed
+                }
                 else if (currentUser.Role == "EYD" && targetUserId != currentUser.Id)
                 {
                     return Forbid("You can only view your own SLE data.");

@@ -101,39 +101,176 @@
         </div>
     }
 
-    <!-- Assigned EYD Users -->
+    <!-- EYD Portfolio Status Overview -->
     <div class="row">
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h5><i class="fas fa-users me-2"></i>My Assigned EYD Users (@Model.EYDUsers.Count)</h5>
+                    <h5><i class="fas fa-chart-bar me-2"></i>EYD Portfolio Status Overview (@Model.EYDUsers.Count Users)</h5>
+                    <small class="text-muted">Click on status indicators to navigate directly to specific portfolio sections</small>
                 </div>
                 <div class="card-body">
-                    @if (Model.EYDUsers.Any())
+                    @if (Model.EYDPortfolioSummaries.Any())
                     {
-                        <div class="row">
-                            @foreach (var eydUser in Model.EYDUsers)
-                            {
-                                <div class="col-md-4 mb-3">
-                                    <div class="card border-left-primary">
-                                        <div class="card-body">
-                                            <h6 class="card-title">@eydUser.DisplayName</h6>
-                                            <p class="card-text">
-                                                <small class="text-muted">@eydUser.Email</small><br>
-                                                <span class="badge bg-info">@eydUser.Scheme?.Name</span>
-                                            </p>
-                                            <a href="/EYD/Portfolio/@eydUser.Id" class="btn btn-outline-primary btn-sm">
-                                                <i class="fas fa-folder me-1"></i>View Portfolio
-                                            </a>
-                                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th style="width: 15%;">EYD User</th>
+                                        <th style="width: 8%;" class="text-center">CBD</th>
+                                        <th style="width: 8%;" class="text-center">DOPS</th>
+                                        <th style="width: 8%;" class="text-center">MiniCEX</th>
+                                        <th style="width: 8%;" class="text-center">DOPSSim</th>
+                                        <th style="width: 8%;" class="text-center">DtCT</th>
+                                        <th style="width: 8%;" class="text-center">DENTL</th>
+                                        <th style="width: 8%;" class="text-center">PLTs</th>
+                                        <th style="width: 8%;" class="text-center">Rflcs</th>
+                                        <th style="width: 10%;" class="text-center">LNs</th>
+                                        <th style="width: 11%;" class="text-center">IRCP Status</th>
+                                        <th style="width: 10%;" class="text-center">FRCP Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var portfolio in Model.EYDPortfolioSummaries)
+                                    {
+                                        <tr class="portfolio-row" data-user-id="@portfolio.UserId">
+                                            <td>
+                                                <div class="d-flex flex-column">
+                                                    <a href="/EYD/Portfolio/@portfolio.UserId" class="text-decoration-none">
+                                                        <strong>@portfolio.UserName</strong>
+                                                    </a>
+                                                    <small class="text-muted">@portfolio.UserEmail</small>
+                                                    <span class="badge bg-info mt-1" style="font-size: 0.7em;">@portfolio.SchemeName</span>
+                                                </div>
+                                            </td>
+                                            
+                            <!-- CBD Status -->
+                            <td class="text-center">
+                                <a href="/SLE/Index/@portfolio.UserId?type=CBD" class="portfolio-link">
+                                    <div class="status-indicator @(portfolio.CBDStatus.ToLower())">
+                                        <div class="status-count">@portfolio.CBDCompleted/@portfolio.CBDTotal</div>
                                     </div>
-                                </div>
-                            }
+                                </a>
+                            </td>
+
+                            <!-- DOPS Status -->
+                            <td class="text-center">
+                                <a href="/SLE/Index/@portfolio.UserId?type=DOPS" class="portfolio-link">
+                                    <div class="status-indicator @(portfolio.DOPSStatus.ToLower())">
+                                        <div class="status-count">@portfolio.DOPSCompleted/@portfolio.DOPSTotal</div>
+                                    </div>
+                                </a>
+                            </td>
+
+                            <!-- MiniCEX Status -->
+                            <td class="text-center">
+                                <a href="/SLE/Index/@portfolio.UserId?type=MiniCEX" class="portfolio-link">
+                                    <div class="status-indicator @(portfolio.MiniCEXStatus.ToLower())">
+                                        <div class="status-count">@portfolio.MiniCEXCompleted/@portfolio.MiniCEXTotal</div>
+                                    </div>
+                                </a>
+                            </td>
+
+                            <!-- DOPSSim Status -->
+                            <td class="text-center">
+                                <a href="/SLE/Index/@portfolio.UserId?type=DOPSSim" class="portfolio-link">
+                                    <div class="status-indicator @(portfolio.DOPSSimStatus.ToLower())">
+                                        <div class="status-count">@portfolio.DOPSSimCompleted/@portfolio.DOPSSimTotal</div>
+                                    </div>
+                                </a>
+                            </td>
+
+                            <!-- DtCT Status -->
+                            <td class="text-center">
+                                <a href="/SLE/Index/@portfolio.UserId?type=DtCT" class="portfolio-link">
+                                    <div class="status-indicator @(portfolio.DtCTStatus.ToLower())">
+                                        <div class="status-count">@portfolio.DtCTCompleted/@portfolio.DtCTTotal</div>
+                                    </div>
+                                </a>
+                            </td>
+
+                            <!-- DENTL Status -->
+                            <td class="text-center">
+                                <a href="/SLE/Index/@portfolio.UserId?type=DENTL" class="portfolio-link">
+                                    <div class="status-indicator @(portfolio.DENTLStatus.ToLower())">
+                                        <div class="status-count">@portfolio.DENTLCompleted/@portfolio.DENTLTotal</div>
+                                    </div>
+                                </a>
+                            </td>
+
+                            <!-- PLT Status -->
+                            <td class="text-center">
+                                <a href="/ProtectedLearningTime/Index/@portfolio.UserId" class="portfolio-link">
+                                    <div class="status-indicator @(portfolio.PLTStatus.ToLower())">
+                                        <div class="status-count">@portfolio.PLTCompleted/@portfolio.PLTTotal</div>
+                                    </div>
+                                </a>
+                            </td>
+
+                            <!-- Reflection Status -->
+                            <td class="text-center">
+                                <a href="/Reflection/Index/@portfolio.UserId" class="portfolio-link">
+                                    <div class="status-indicator @(portfolio.ReflectionStatus.ToLower())">
+                                        <div class="status-count">@portfolio.ReflectionCompleted/@portfolio.ReflectionTotal</div>
+                                    </div>
+                                </a>
+                            </td>
+
+                            <!-- Learning Need Status -->
+                            <td class="text-center">
+                                <a href="/LearningNeed/Index/@portfolio.UserId" class="portfolio-link">
+                                    <div class="status-indicator @(portfolio.LearningNeedStatus.ToLower())">
+                                        <div class="status-count">@portfolio.LearningNeedCompleted/@portfolio.LearningNeedTotal</div>
+                                    </div>
+                                </a>
+                            </td>
+
+                                            <!-- IRCP Status -->
+                                            <td class="text-center">
+                                                <a href="/EYD/InterimReview/@portfolio.UserId" class="portfolio-link">
+                                                    <div class="ircp-status-group">
+                                                        <div class="status-row">
+                                                            <span class="badge badge-status @(portfolio.IRCPESStatus.ToLower().Replace(" ", "-"))">ES: @portfolio.IRCPESStatus</span>
+                                                        </div>
+                                                        <div class="status-row">
+                                                            <span class="badge badge-status @(portfolio.IRCPEYDStatus.ToLower().Replace(" ", "-"))">EYD: @portfolio.IRCPEYDStatus</span>
+                                                        </div>
+                                                        <div class="status-row">
+                                                            <span class="badge badge-status @(portfolio.IRCPPanelStatus.ToLower().Replace(" ", "-"))">Panel: @portfolio.IRCPPanelStatus</span>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </td>
+
+                                            <!-- FRCP Status -->
+                                            <td class="text-center">
+                                                <a href="/EYD/FinalReview/@portfolio.UserId" class="portfolio-link">
+                                                    <div class="frcp-status-group">
+                                                        <div class="status-row">
+                                                            <span class="badge badge-status @(portfolio.FRCPESStatus.ToLower().Replace(" ", "-"))">ES: @portfolio.FRCPESStatus</span>
+                                                        </div>
+                                                        <div class="status-row">
+                                                            <span class="badge badge-status @(portfolio.FRCPEYDStatus.ToLower().Replace(" ", "-"))">EYD: @portfolio.FRCPEYDStatus</span>
+                                                        </div>
+                                                        <div class="status-row">
+                                                            <span class="badge badge-status @(portfolio.FRCPPanelStatus.ToLower().Replace(" ", "-"))">Panel: @portfolio.FRCPPanelStatus</span>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
                         </div>
                     }
                     else
                     {
-                        <p class="text-muted">No EYD users assigned to your scheme.</p>
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No EYD users assigned to your scheme.</p>
+                            <small class="text-muted">Portfolio status information will appear here once users are assigned.</small>
+                        </div>
                     }
                 </div>
             </div>
@@ -150,5 +287,186 @@
     transform: translateY(-2px);
     transition: transform 0.2s ease-in-out;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Portfolio Status Indicators */
+.status-indicator {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 2px solid;
+    background: white;
+    min-width: 70px;
+    transition: all 0.3s ease;
+}
+
+.status-indicator:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.status-count {
+    font-weight: bold;
+    font-size: 0.9em;
+    line-height: 1.2;
+}
+
+/* Traffic Light Status Colors */
+.complete {
+    border-color: #28a745;
+    color: #28a745;
+    background: #f8fff9;
+}
+
+.in-progress {
+    border-color: #ffc107;
+    color: #856404;
+    background: #fffef5;
+}
+
+.not-started {
+    border-color: #dc3545;
+    color: #dc3545;
+    background: #fff5f5;
+}
+
+.warning {
+    border-color: #fd7e14;
+    color: #fd7e14;
+    background: #fff4e6;
+}
+
+/* Badge Status Colors */
+.badge-status {
+    font-size: 0.65em;
+    padding: 3px 6px;
+    margin: 1px 0;
+}
+
+.badge-status.completed {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-status.inprogress {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge-status.notstarted {
+    background-color: #dc3545;
+    color: white;
+}
+
+.badge-status.pending {
+    background-color: #6c757d;
+    color: white;
+}
+
+.badge-status.under-review {
+    background-color: #17a2b8;
+    color: white;
+}
+
+/* IRCP/FRCP Status Groups */
+.ircp-status-group, .frcp-status-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.status-row {
+    display: flex;
+    justify-content: center;
+}
+
+/* Portfolio Row Interactivity */
+.portfolio-row {
+    transition: background-color 0.2s ease;
+}
+
+.portfolio-row:hover {
+    background-color: #f8f9fa !important;
+}
+
+.portfolio-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.portfolio-link:hover {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Table Styling */
+.table th {
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    font-size: 0.9em;
+    padding: 12px 8px;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 12px 8px;
+}
+
+.table-dark th {
+    background-color: #343a40;
+    border-color: #454d55;
+}
+
+/* Summary Statistics */
+.stat-box {
+    padding: 10px;
+}
+
+.stat-number {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.stat-label {
+    font-size: 0.8em;
+    color: #6c757d;
+    margin-top: 2px;
+}
+
+/* Responsive Design */
+@@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.8em;
+    }
+    
+    .status-indicator {
+        min-width: 50px;
+        padding: 6px 8px;
+    }
+    
+    .status-count {
+        font-size: 0.8em;
+    }
+    
+    .ircp-status-group, .frcp-status-group {
+        font-size: 0.9em;
+    }
+}
+
+/* Loading Animation */
+.loading-indicator {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 </style>

@@ -57,6 +57,15 @@ namespace EYDGateway.Controllers
                 {
                     return Forbid("You can only view your own Learning Need data.");
                 }
+                else if (currentUser.Role == "TPD" || currentUser.Role == "Dean")
+                {
+                    // TPD and Dean users can view Learning Need data for any EYD user
+                    // No additional authorization check needed
+                }
+                else if (currentUser.Role != "Admin" && currentUser.Role != "Superuser")
+                {
+                    return Forbid("You are not authorized to view this Learning Need data.");
+                }
             }
 
             var learningNeeds = await _context.LearningNeeds

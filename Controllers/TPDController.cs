@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EYDGateway.Data;
 using EYDGateway.Models;
+using EYDGateway.ViewModels;
 
 namespace EYDGateway.Controllers
 {
@@ -83,6 +84,9 @@ namespace EYDGateway.Controllers
                     .ThenInclude(em => em.EPA)
                 .ToListAsync();
 
+            // Generate portfolio summaries for assigned users
+            var portfolioSummaries = await GeneratePortfolioSummaries(assignedUsers);
+
             var viewModel = new TPDDashboardViewModel
             {
                 UserId = currentUser.Id,
@@ -93,7 +97,8 @@ namespace EYDGateway.Controllers
                 EYDUsers = assignedUsers,
                 AssignedEYDUsers = assignedUsers, // Compatibility
                 PendingInvitations = pendingInvitations, // Individual assessment tasks for this TPD
-                CurrentSchemeId = currentUser.SchemeId // Track the currently selected scheme
+                CurrentSchemeId = currentUser.SchemeId, // Track the currently selected scheme
+                EYDPortfolioSummaries = portfolioSummaries // Enhanced portfolio data
             };
 
             ViewBag.UserRole = currentUser.Role;
@@ -231,6 +236,276 @@ namespace EYDGateway.Controllers
 
             return View(viewModel);
         }
+
+        private async Task<List<EYDPortfolioSummary>> GeneratePortfolioSummaries(List<ApplicationUser> eydUsers)
+        {
+            var summaries = new List<EYDPortfolioSummary>();
+
+            foreach (var user in eydUsers)
+            {
+                var summary = new EYDPortfolioSummary
+                {
+                    UserId = user.Id,
+                    UserName = user.DisplayName ?? user.UserName ?? "Unknown",
+                    UserEmail = user.Email ?? "",
+                    SchemeName = user.Scheme?.Name ?? "No Scheme"
+                };
+
+                // Individual SLE type data - using exact same logic as EYD Portfolio
+                var cbdTotal = await _context.SLEs.CountAsync(s => s.EYDUserId == user.Id && s.SLEType == "CBD");
+                var cbdComplete = await _context.SLEs.CountAsync(s => s.EYDUserId == user.Id && s.SLEType == "CBD" && s.IsAssessmentCompleted && s.ReflectionCompletedAt != null);
+                summary.CBDTotal = cbdTotal;
+                summary.CBDCompleted = cbdComplete;
+
+                var dopsTotal = await _context.SLEs.CountAsync(s => s.EYDUserId == user.Id && s.SLEType == "DOPS");
+                var dopsComplete = await _context.SLEs.CountAsync(s => s.EYDUserId == user.Id && s.SLEType == "DOPS" && s.IsAssessmentCompleted && s.ReflectionCompletedAt != null);
+                summary.DOPSTotal = dopsTotal;
+                summary.DOPSCompleted = dopsComplete;
+
+                var miniCexTotal = await _context.SLEs.CountAsync(s => s.EYDUserId == user.Id && s.SLEType == "MiniCEX");
+                var miniCexComplete = await _context.SLEs.CountAsync(s => s.EYDUserId == user.Id && s.SLEType == "MiniCEX" && s.IsAssessmentCompleted && s.ReflectionCompletedAt != null);
+                summary.MiniCEXTotal = miniCexTotal;
+                summary.MiniCEXCompleted = miniCexComplete;
+
+                var dopsSimTotal = await _context.SLEs.CountAsync(s => s.EYDUserId == user.Id && s.SLEType == "DOPSSim");
+                var dopsSimComplete = await _context.SLEs.CountAsync(s => s.EYDUserId == user.Id && s.SLEType == "DOPSSim" && s.IsAssessmentCompleted && s.ReflectionCompletedAt != null);
+                summary.DOPSSimTotal = dopsSimTotal;
+                summary.DOPSSimCompleted = dopsSimComplete;
+
+                var dtctTotal = await _context.SLEs.CountAsync(s => s.EYDUserId == user.Id && s.SLEType == "DtCT");
+                var dtctComplete = await _context.SLEs.CountAsync(s => s.EYDUserId == user.Id && s.SLEType == "DtCT" && s.IsAssessmentCompleted && s.ReflectionCompletedAt != null);
+                summary.DtCTTotal = dtctTotal;
+                summary.DtCTCompleted = dtctComplete;
+
+                var dentlTotal = await _context.SLEs.CountAsync(s => s.EYDUserId == user.Id && s.SLEType == "DENTL");
+                var dentlComplete = await _context.SLEs.CountAsync(s => s.EYDUserId == user.Id && s.SLEType == "DENTL" && s.IsAssessmentCompleted && s.ReflectionCompletedAt != null);
+                summary.DENTLTotal = dentlTotal;
+                summary.DENTLCompleted = dentlComplete;
+
+                // PLT data - using same logic as EYD Portfolio (IsLocked means completed)
+                var pltTotal = await _context.ProtectedLearningTimes.CountAsync(plt => plt.UserId == user.Id);
+                var pltComplete = await _context.ProtectedLearningTimes.CountAsync(plt => plt.UserId == user.Id && plt.IsLocked);
+                summary.PLTTotal = pltTotal;
+                summary.PLTCompleted = pltComplete;
+
+                // Reflection data - using same logic as EYD Portfolio (IsLocked means completed)
+                var reflections = await _context.Reflections
+                    .Where(r => r.UserId == user.Id)
+                    .ToListAsync();
+                summary.ReflectionTotal = reflections.Count;
+                summary.ReflectionCompleted = reflections.Count(r => r.IsLocked);
+
+                // Learning Need data - using same completion logic
+                var learningNeeds = await _context.LearningNeeds
+                    .Where(l => l.UserId == user.Id)
+                    .ToListAsync();
+                summary.LearningNeedTotal = learningNeeds.Count;
+                summary.LearningNeedCompleted = learningNeeds.Count(l => l.Status == LearningNeedStatus.Completed);
+
+                // IRCP/FRCP Status - using exact same methods as EYD Portfolio
+                var ircpStatus = GetIRCPStatus(user.Id);
+                summary.IRCPESStatus = ircpStatus.ESStatus;
+                summary.IRCPEYDStatus = ircpStatus.EYDStatus;
+                summary.IRCPPanelStatus = ircpStatus.PanelStatus;
+
+                var frcpStatus = GetFRCPStatus(user.Id);
+                summary.FRCPESStatus = frcpStatus.ESStatus;
+                summary.FRCPEYDStatus = frcpStatus.EYDStatus;
+                summary.FRCPPanelStatus = frcpStatus.PanelStatus;
+
+                // Update all status indicators
+                summary.UpdateStatuses();
+
+                summaries.Add(summary);
+            }
+
+            return summaries;
+        }
+
+        private (string ESStatus, string EYDStatus, string PanelStatus) GetIRCPStatus(string userId)
+        {
+            var esStatus = "NotStarted";
+            var eydStatus = "NotStarted";
+            var panelStatus = "NotStarted";
+
+            // Check for section locks first
+            bool esLocked = TempData[$"IRCP_{userId}_ES_Locked"]?.ToString() == "true";
+            bool eydLocked = TempData[$"IRCP_{userId}_EYD_Locked"]?.ToString() == "true";
+            bool panelLocked = TempData[$"IRCP_{userId}_Panel_Locked"]?.ToString() == "true";
+
+            // Check ES status
+            if (esLocked)
+            {
+                esStatus = "Completed";
+            }
+            else if (TempData[$"IRCP_{userId}_ES"] != null)
+            {
+                var jsonData = TempData[$"IRCP_{userId}_ES"]?.ToString();
+                if (!string.IsNullOrEmpty(jsonData))
+                {
+                    var esData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                    if (esData.ContainsKey("ESConfirmation") && esData["ESConfirmation"] == "true")
+                    {
+                        esStatus = "Completed";
+                    }
+                    else if (esData.Count > 0)
+                    {
+                        esStatus = "InProgress";
+                    }
+                }
+            }
+
+            // Check EYD status
+            if (eydLocked)
+            {
+                eydStatus = "Completed";
+            }
+            else if (TempData[$"IRCP_{userId}_EYD"] != null)
+            {
+                var jsonData = TempData[$"IRCP_{userId}_EYD"]?.ToString();
+                if (!string.IsNullOrEmpty(jsonData))
+                {
+                    var eydData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                    if (eydData.Count > 0)
+                    {
+                        eydStatus = "InProgress";
+                    }
+                }
+            }
+
+            // Check Panel status
+            if (panelLocked)
+            {
+                panelStatus = "Completed";
+            }
+            else if (TempData[$"IRCP_{userId}_Panel"] != null)
+            {
+                var jsonData = TempData[$"IRCP_{userId}_Panel"]?.ToString();
+                if (!string.IsNullOrEmpty(jsonData))
+                {
+                    var panelData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                    if (panelData.Count > 0)
+                    {
+                        panelStatus = "InProgress";
+                    }
+                }
+            }
+
+            // Keep TempData for future requests
+            if (TempData[$"IRCP_{userId}_ES"] != null) TempData.Keep($"IRCP_{userId}_ES");
+            if (TempData[$"IRCP_{userId}_EYD"] != null) TempData.Keep($"IRCP_{userId}_EYD");
+            if (TempData[$"IRCP_{userId}_Panel"] != null) TempData.Keep($"IRCP_{userId}_Panel");
+            if (esLocked) TempData.Keep($"IRCP_{userId}_ES_Locked");
+            if (eydLocked) TempData.Keep($"IRCP_{userId}_EYD_Locked");
+            if (panelLocked) TempData.Keep($"IRCP_{userId}_Panel_Locked");
+
+            return (esStatus, eydStatus, panelStatus);
+        }
+
+        private (string ESStatus, string EYDStatus, string PanelStatus) GetFRCPStatus(string userId)
+        {
+            var esStatus = "NotStarted";
+            var eydStatus = "NotStarted";
+            var panelStatus = "NotStarted";
+
+            // Check for section locks first
+            bool esLocked = TempData[$"FRCP_{userId}_ES_Locked"]?.ToString() == "true";
+            bool eydLocked = TempData[$"FRCP_{userId}_EYD_Locked"]?.ToString() == "true";
+            bool panelLocked = TempData[$"FRCP_{userId}_Panel_Locked"]?.ToString() == "true";
+
+            // Check ES status
+            if (esLocked)
+            {
+                esStatus = "Completed";
+            }
+            else if (TempData[$"FRCP_{userId}_ES"] != null)
+            {
+                var jsonData = TempData[$"FRCP_{userId}_ES"]?.ToString();
+                if (!string.IsNullOrEmpty(jsonData))
+                {
+                    var esData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                    if (esData.ContainsKey("ESConfirmation") && esData["ESConfirmation"] == "true")
+                    {
+                        esStatus = "Completed";
+                    }
+                    else if (esData.Count > 0)
+                    {
+                        esStatus = "InProgress";
+                    }
+                }
+            }
+
+            // Check EYD status
+            if (eydLocked)
+            {
+                eydStatus = "Completed";
+            }
+            else if (TempData[$"FRCP_{userId}_EYD"] != null)
+            {
+                var jsonData = TempData[$"FRCP_{userId}_EYD"]?.ToString();
+                if (!string.IsNullOrEmpty(jsonData))
+                {
+                    var eydData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                    if (eydData.Count > 0)
+                    {
+                        eydStatus = "InProgress";
+                    }
+                }
+            }
+
+            // Check Panel status
+            if (panelLocked)
+            {
+                panelStatus = "Completed";
+            }
+            else if (TempData[$"FRCP_{userId}_Panel"] != null)
+            {
+                var jsonData = TempData[$"FRCP_{userId}_Panel"]?.ToString();
+                if (!string.IsNullOrEmpty(jsonData))
+                {
+                    var panelData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonData) ?? new Dictionary<string, string>();
+                    if (panelData.Count > 0)
+                    {
+                        panelStatus = "InProgress";
+                    }
+                }
+            }
+
+            // Keep TempData for future requests
+            if (TempData[$"FRCP_{userId}_ES"] != null) TempData.Keep($"FRCP_{userId}_ES");
+            if (TempData[$"FRCP_{userId}_EYD"] != null) TempData.Keep($"FRCP_{userId}_EYD");
+            if (TempData[$"FRCP_{userId}_Panel"] != null) TempData.Keep($"FRCP_{userId}_Panel");
+            if (esLocked) TempData.Keep($"FRCP_{userId}_ES_Locked");
+            if (eydLocked) TempData.Keep($"FRCP_{userId}_EYD_Locked");
+            if (panelLocked) TempData.Keep($"FRCP_{userId}_Panel_Locked");
+
+            return (esStatus, eydStatus, panelStatus);
+        }
+
+        private string CalculateStatusColor(int completed, int total)
+        {
+            if (total == 0) return "not-started";
+            
+            var percentage = (completed * 100.0) / total;
+            
+            if (percentage >= 80) return "complete";
+            if (percentage >= 30) return "in-progress";
+            return "not-started";
+        }
+
+        private string GetReviewStatus(string? stage)
+        {
+            return stage switch
+            {
+                "Completed" => "Complete",
+                "Panel Review" => "Under Review",
+                "Educational Supervisor Review" => "In Progress",
+                "Draft" => "In Progress",
+                null => "Not Started",
+                "" => "Not Started",
+                _ => "Not Started"
+            };
+        }
     }
 
     public class TPDDashboardViewModel
@@ -245,6 +520,9 @@ namespace EYDGateway.Controllers
         public List<ApplicationUser> EYDUsers { get; set; } = new List<ApplicationUser>(); // Alias for compatibility
         public List<SLE> PendingInvitations { get; set; } = new List<SLE>(); // Assessment invitations for this TPD
         public int? CurrentSchemeId { get; set; } // Track currently selected scheme
+        
+        // Enhanced Portfolio Summary Data
+        public List<EYDPortfolioSummary> EYDPortfolioSummaries { get; set; } = new List<EYDPortfolioSummary>();
     }
 
     public class SchemeProgressViewModel

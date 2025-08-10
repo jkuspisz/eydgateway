@@ -75,7 +75,7 @@ namespace EYDGateway.Controllers
 
             // Security check: EYD users can only access their own portfolio
             // ES users can access portfolios of EYDs they supervise
-            // TPD and Dean can view portfolios for users in their area/scheme
+            // TPD and Dean can view any portfolio
             if (currentUser.Role == "EYD" && id != currentUser.Id)
             {
                 return Forbid("You can only access your own portfolio.");
@@ -93,18 +93,7 @@ namespace EYDGateway.Controllers
                     return Forbid("You can only view portfolios of EYD users assigned to you.");
                 }
             }
-            else if ((currentUser.Role == "TPD" || currentUser.Role == "Dean") && id != currentUser.Id)
-            {
-                // TPD and Dean can view portfolios for users in their area/scheme
-                var targetUser = await _context.Users.FindAsync(id);
-                if (targetUser == null || 
-                    (currentUser.Role == "TPD" && targetUser.SchemeId != currentUser.SchemeId) ||
-                    (currentUser.Role == "Dean" && targetUser.AreaId != currentUser.AreaId))
-                {
-                    return Forbid("You can only view portfolios for users in your area/scheme.");
-                }
-            }
-            // Admin can access any portfolio
+            // TPD, Dean, and Admin can access any portfolio
 
             // Get portfolio user data
             var portfolioUser = await _context.Users
@@ -1175,7 +1164,7 @@ namespace EYDGateway.Controllers
                 SavedPanelData = savedPanelData
             };
 
-            return View("FinalReview", viewModel);
+            return View("InterimReview", viewModel);
         }
 
         [HttpPost]
@@ -1624,7 +1613,7 @@ namespace EYDGateway.Controllers
                 SavedPanelData = savedPanelData
             };
 
-            return View("FinalReview", viewModel);
+            return View("InterimReview", viewModel);
         }
 
         [HttpPost]

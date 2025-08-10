@@ -50,6 +50,11 @@ namespace EYDGateway.Controllers
                 
                 if (!isAssigned) return Forbid();
             }
+            else if (currentUser.Role == "TPD" || currentUser.Role == "Dean")
+            {
+                // TPD and Dean users can view PLT entries for any EYD user
+                // No additional authorization check needed
+            }
             else if (currentUser.Role != "Admin" && currentUser.Role != "Superuser")
             {
                 return Forbid(); // Other roles are not allowed
