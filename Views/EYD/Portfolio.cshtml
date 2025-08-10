@@ -89,6 +89,54 @@
                                         </div>
                                     </div>
                                 }
+                                
+                                @* PSQ Traffic Light Status for Patient Satisfaction section *@
+                                @if (portfolioSection.Id == "patient-satisfaction")
+                                {
+                                    <div class="psq-status-indicators mt-2">
+                                        <div class="d-flex justify-content-center">
+                                            <div class="psq-status-box text-center">
+                                                <div class="status-indicator status-@Model.PSQStatus.ToLower()"></div>
+                                                <small class="d-block mt-1">
+                                                    @{
+                                                        string statusText = Model.PSQStatus switch
+                                                        {
+                                                            "NotStarted" => "0 Responses",
+                                                            "InProgress" => "1-19 Responses", 
+                                                            "Completed" => "20+ Responses",
+                                                            _ => "Unknown"
+                                                        };
+                                                    }
+                                                    @statusText
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                
+                                @* MSF Traffic Light Status for Multi-Source Feedback section *@
+                                @if (portfolioSection.Id == "multi-source-feedback")
+                                {
+                                    <div class="msf-status-indicators mt-2">
+                                        <div class="d-flex justify-content-center">
+                                            <div class="msf-status-box text-center">
+                                                <div class="status-indicator status-@Model.MSFStatus.ToLower()"></div>
+                                                <small class="d-block mt-1">
+                                                    @{
+                                                        string statusText = Model.MSFStatus switch
+                                                        {
+                                                            "NotStarted" => "0 Responses",
+                                                            "InProgress" => "1-7 Responses", 
+                                                            "Completed" => "8+ Responses",
+                                                            _ => "Unknown"
+                                                        };
+                                                    }
+                                                    @statusText
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
@@ -209,6 +257,40 @@
 }
 
 .ircp-status-box small {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #6c757d;
+}
+
+/* PSQ Status Indicators */
+.psq-status-indicators {
+    border-top: 1px solid #e9ecef;
+    padding-top: 8px;
+    margin-top: 8px;
+}
+
+.psq-status-box {
+    flex: 1;
+}
+
+.psq-status-box small {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #6c757d;
+}
+
+/* MSF Status Indicators */
+.msf-status-indicators {
+    border-top: 1px solid #e9ecef;
+    padding-top: 8px;
+    margin-top: 8px;
+}
+
+.msf-status-box {
+    flex: 1;
+}
+
+.msf-status-box small {
     font-size: 0.7rem;
     font-weight: 500;
     color: #6c757d;

@@ -125,6 +125,12 @@ namespace EYDGateway.Controllers
 
             // Get IRCP status for this user
             var ircpStatus = GetIRCPStatus(portfolioUser.Id);
+            
+            // Get PSQ status for this user
+            var psqStatus = await GetPSQStatusAsync(portfolioUser.Id);
+            
+            // Get MSF status for this user
+            var msfStatus = await GetMSFStatusAsync(portfolioUser.Id);
 
             var viewModel = new EYDPortfolioViewModel
             {
@@ -138,7 +144,11 @@ namespace EYDGateway.Controllers
                 // IRCP Status
                 IRCPESStatus = ircpStatus.ESStatus,
                 IRCPEYDStatus = ircpStatus.EYDStatus,
-                IRCPPanelStatus = ircpStatus.PanelStatus
+                IRCPPanelStatus = ircpStatus.PanelStatus,
+                // PSQ Status
+                PSQStatus = psqStatus,
+                // MSF Status
+                MSFStatus = msfStatus
             };
 
             Console.WriteLine($"DEBUG Portfolio: Created ViewModel for {viewModel.UserName} (UserID: {viewModel.UserId})");
@@ -1304,6 +1314,82 @@ namespace EYDGateway.Controllers
             return (esStatus, eydStatus, panelStatus);
         }
         
+        private async Task<string> GetPSQStatusAsync(string userId)
+        {
+            try
+            {
+                // Get the PSQ questionnaire for this user
+                var questionnaire = await _context.PSQQuestionnaires
+                    .FirstOrDefaultAsync(q => q.PerformerId == userId);
+
+                if (questionnaire == null)
+                {
+                    return "NotStarted"; // Red - No questionnaire created yet
+                }
+
+                // Count the responses for this questionnaire
+                var responseCount = await _context.PSQResponses
+                    .CountAsync(r => r.PSQQuestionnaireId == questionnaire.Id);
+
+                // Apply traffic light logic
+                if (responseCount >= 20)
+                {
+                    return "Completed"; // Green - 20+ responses
+                }
+                else if (responseCount >= 1)
+                {
+                    return "InProgress"; // Amber - 1-19 responses
+                }
+                else
+                {
+                    return "NotStarted"; // Red - 0 responses
+                }
+            }
+            catch (Exception)
+            {
+                // On error, default to NotStarted
+                return "NotStarted";
+            }
+        }
+        
+        private async Task<string> GetMSFStatusAsync(string userId)
+        {
+            try
+            {
+                // Get the MSF questionnaire for this user
+                var questionnaire = await _context.MSFQuestionnaires
+                    .FirstOrDefaultAsync(q => q.PerformerId == userId);
+
+                if (questionnaire == null)
+                {
+                    return "NotStarted"; // Red - No questionnaire created yet
+                }
+
+                // Count the responses for this questionnaire
+                var responseCount = await _context.MSFResponses
+                    .CountAsync(r => r.MSFQuestionnaireId == questionnaire.Id);
+
+                // Apply traffic light logic
+                if (responseCount >= 8)
+                {
+                    return "Completed"; // Green - 8+ responses
+                }
+                else if (responseCount >= 1)
+                {
+                    return "InProgress"; // Amber - 1-7 responses
+                }
+                else
+                {
+                    return "NotStarted"; // Red - 0 responses
+                }
+            }
+            catch (Exception)
+            {
+                // On error, default to NotStarted
+                return "NotStarted";
+            }
+        }
+        
         private string GetSLETypeName(string sleType)
         {
             return sleType switch
@@ -1583,6 +1669,12 @@ namespace EYDGateway.Controllers
         public string IRCPESStatus { get; set; } = "NotStarted"; // NotStarted, InProgress, Completed
         public string IRCPEYDStatus { get; set; } = "NotStarted"; // NotStarted, InProgress, Completed
         public string IRCPPanelStatus { get; set; } = "NotStarted"; // NotStarted, InProgress, Completed
+        
+        // PSQ Traffic Light Status
+        public string PSQStatus { get; set; } = "NotStarted"; // NotStarted (red, 0 responses), InProgress (amber, 1+ responses), Completed (green, 20+ responses)
+        
+        // MSF Traffic Light Status
+        public string MSFStatus { get; set; } = "NotStarted"; // NotStarted (red, 0 responses), InProgress (amber, 1-7 responses), Completed (green, 8+ responses)
     }
     
     public class SLECompletionStat
