@@ -150,19 +150,38 @@ namespace EYDGateway.Controllers
                 .Include(s => s.Area)
                 .ToListAsync();
 
+            // Get pending assessment invitations for this TPD (same as dashboard)
+            var pendingInvitations = await _context.SLEs
+                .Where(sle => sle.AssessorUserId == currentUser.Id && 
+                             sle.Status == "Invited" && 
+                             !sle.IsAssessmentCompleted)
+                .Include(sle => sle.EYDUser)
+                .Include(sle => sle.EPAMappings)
+                    .ThenInclude(em => em.EPA)
+                .ToListAsync();
+
+            // Generate portfolio summaries for the selected scheme's EYDs
+            var portfolioSummaries = await GeneratePortfolioSummaries(schemeEYDs);
+
             var viewModel = new TPDDashboardViewModel
             {
-                UserName = currentUser.DisplayName ?? currentUser.UserName,
+                UserId = currentUser.Id,
+                UserName = currentUser.DisplayName ?? currentUser.UserName ?? "Unknown User",
                 AssignedArea = currentUser.Scheme?.Area?.Name ?? "No Area Assigned",
-                ManagedSchemes = allAreaSchemes,
-                AssignedEYDUsers = schemeEYDs,
-                CurrentSchemeId = schemeId
+                AssignedScheme = currentUser.Scheme?.Name ?? "No Scheme Assigned",
+                AllAreaSchemes = allAreaSchemes,
+                EYDUsers = schemeEYDs,
+                AssignedEYDUsers = schemeEYDs, // Compatibility
+                PendingInvitations = pendingInvitations, // Individual assessment tasks for this TPD
+                CurrentSchemeId = schemeId, // Track the currently selected scheme
+                EYDPortfolioSummaries = portfolioSummaries // Enhanced portfolio data
             };
 
             ViewBag.UserRole = currentUser.Role;
             ViewBag.SelectedSchemeName = scheme.Name;
+            ViewBag.IsViewingOtherScheme = schemeId != currentUser.SchemeId;
 
-            return View("Dashboard", viewModel);
+            return View("UserDashboard", viewModel);
         }
 
         [HttpPost]

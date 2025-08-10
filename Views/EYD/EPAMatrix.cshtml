@@ -111,10 +111,11 @@
                                         data-entity-type="@column.EntityType"
                                         data-count="@cell.Count"
                                         data-bs-toggle="@(cell.Count > 0 ? "popover" : "")"
-                                        data-bs-trigger="hover"
+                                        data-bs-trigger="hover focus"
                                         data-bs-placement="top"
                                         data-bs-html="true"
                                         data-bs-content="@GetPopoverContent(cell)"
+                                        data-bs-delay='{"show":100,"hide":1000}'
                                         @(cell.Count > 0 ? "style=cursor:pointer;" : "")
                                         onclick="@(cell.Count > 0 ? $"showActivities({epa.Id}, '{column.EntityType}')" : "")">
                                         
@@ -280,8 +281,47 @@ document.addEventListener('DOMContentLoaded', function() {
     
     var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
     var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-        return new bootstrap.Popover(popoverTriggerEl);
+        return new bootstrap.Popover(popoverTriggerEl, {
+            trigger: 'hover focus',
+            delay: { "show": 100, "hide": 1000 },
+            html: true
+        });
     });
+    
+    // Keep popover open when hovering over it
+    document.addEventListener('mouseenter', function(e) {
+        if (e.target.classList.contains('popover') || e.target.closest('.popover')) {
+            // Cancel any pending hide action
+            var popoverId = e.target.getAttribute('aria-describedby') || e.target.closest('.popover').id;
+            if (popoverId) {
+                var triggerElement = document.querySelector(`[aria-describedby="${popoverId}"]`);
+                if (triggerElement) {
+                    var popoverInstance = bootstrap.Popover.getInstance(triggerElement);
+                    if (popoverInstance) {
+                        clearTimeout(popoverInstance._timeout);
+                    }
+                }
+            }
+        }
+    }, true);
+    
+    // Hide popover when leaving it
+    document.addEventListener('mouseleave', function(e) {
+        if (e.target.classList.contains('popover') || e.target.closest('.popover')) {
+            var popoverId = e.target.getAttribute('aria-describedby') || e.target.closest('.popover').id;
+            if (popoverId) {
+                var triggerElement = document.querySelector(`[aria-describedby="${popoverId}"]`);
+                if (triggerElement) {
+                    var popoverInstance = bootstrap.Popover.getInstance(triggerElement);
+                    if (popoverInstance) {
+                        popoverInstance._timeout = setTimeout(() => {
+                            popoverInstance.hide();
+                        }, 500);
+                    }
+                }
+            }
+        }
+    }, true);
 });
 
 function showActivities(epaId, entityType) {
@@ -350,7 +390,29 @@ function toggleTooltips() {
         {
             content += $"<small>Latest: {cell.LatestDate.Value.ToString("MMM dd, yyyy")}</small><br>";
         }
-        content += "<small class='text-muted'>Click to view details</small>";
+        
+        // Add individual activities with clickable links and dates
+        if (cell.Activities?.Any() == true)
+        {
+            content += "<hr class='my-2'>";
+            foreach (var activity in cell.Activities.Take(5)) // Limit to first 5 activities
+            {
+                content += $"<a href='{activity.ActionUrl}' class='d-block text-decoration-none text-primary mb-1' style='font-size: 0.85em;' onclick='event.stopPropagation();'>";
+                content += $"<i class='fas fa-external-link-alt me-1'></i>{activity.Title}";
+                content += $"<br><small class='text-muted ms-3'>{activity.CreatedDate.ToString("MMM dd, yyyy")}</small>";
+                content += "</a>";
+            }
+            
+            if (cell.Activities.Count > 5)
+            {
+                content += $"<small class='text-muted'>...and {cell.Activities.Count - 5} more</small>";
+            }
+        }
+        else
+        {
+            content += "<small class='text-muted'>Click to view details</small>";
+        }
+        
         return content;
     }
 }

@@ -403,19 +403,60 @@ namespace EYDGateway.Controllers
                 // Create the matrix
                 var matrix = new EPAActivityMatrix();
                 
-                // Get target user's EPA mappings from database (not current user!)
+                // Get target user's EPA mappings with detailed activity information
                 var userEPAMappings = await _context.EPAMappings
                     .Include(m => m.EPA)
-                    .Where(m => m.UserId == targetUserId)  // Use targetUserId instead of currentUser.Id
+                    .Where(m => m.UserId == targetUserId)
+                    .ToListAsync();
+
+                // Get related activity details for generating proper titles and URLs
+                var sleIds = userEPAMappings.Where(m => m.EntityType == "SLE").Select(m => m.EntityId).ToList();
+                var reflectionIds = userEPAMappings.Where(m => m.EntityType == "Reflection").Select(m => m.EntityId).ToList();
+                var pltIds = userEPAMappings.Where(m => m.EntityType == "ProtectedLearningTime").Select(m => m.EntityId).ToList();
+                var learningLogIds = userEPAMappings.Where(m => m.EntityType == "LearningLog").Select(m => m.EntityId).ToList();
+                
+                // Fetch activity details separately
+                Dictionary<int, object> sles = new Dictionary<int, object>();
+                Dictionary<int, object> reflections = new Dictionary<int, object>();  
+                Dictionary<int, object> plts = new Dictionary<int, object>();
+                Dictionary<int, object> learningLogs = new Dictionary<int, object>();
+                
+                if (sleIds.Any())
+                {
+                    var sleData = await _context.SLEs.Where(s => sleIds.Contains(s.Id)).ToListAsync();
+                    sles = sleData.ToDictionary(s => s.Id, s => (object)new { s.Title, s.SLEType });
+                }
+                
+                if (reflectionIds.Any())
+                {
+                    var reflectionData = await _context.Reflections.Where(r => reflectionIds.Contains(r.Id)).ToListAsync();
+                    reflections = reflectionData.ToDictionary(r => r.Id, r => (object)new { r.Title });
+                }
+                
+                if (pltIds.Any())
+                {
+                    var pltData = await _context.ProtectedLearningTimes.Where(p => pltIds.Contains(p.Id)).ToListAsync();
+                    plts = pltData.ToDictionary(p => p.Id, p => (object)new { p.Title });
+                }
+                
+                if (learningLogIds.Any())
+                {
+                    var learningLogData = await _context.LearningLogs.Where(l => learningLogIds.Contains(l.Id)).ToListAsync();
+                    learningLogs = learningLogData.ToDictionary(l => l.Id, l => (object)new { l.Title });
+                }
+                
+                // Group mappings for matrix population
+                var groupedMappings = userEPAMappings
                     .GroupBy(m => new { m.EPAId, m.EntityType })
                     .Select(g => new
                     {
                         EPAId = g.Key.EPAId,
                         EntityType = g.Key.EntityType,
                         Count = g.Count(),
-                        LatestDate = g.Max(m => m.CreatedAt)
+                        LatestDate = g.Max(m => m.CreatedAt),
+                        Mappings = g.ToList()
                     })
-                    .ToListAsync();
+                    .ToList();
 
                 // Get target user's name for display
                 var targetUser = await _context.Users.FindAsync(targetUserId);
@@ -426,31 +467,37 @@ namespace EYDGateway.Controllers
                 {
                     foreach (var column in activityColumns)
                     {
-                        // Get actual user data for this EPA and activity type
-                        var userMapping = userEPAMappings
+                        // Get grouped mapping data for this EPA and activity type
+                        var groupedMapping = groupedMappings
                             .FirstOrDefault(m => m.EPAId == epa.Id && m.EntityType == column.EntityType);
 
-                        var count = userMapping?.Count ?? 0;
+                        var count = groupedMapping?.Count ?? 0;
                         var activities = new List<ActivitySummary>();
                         
-                        // Create activity summaries based on actual data
-                        if (count > 0)
+                        // Create activity summaries from actual mapped activities
+                        if (groupedMapping != null && groupedMapping.Mappings.Any())
                         {
-                            activities.Add(new ActivitySummary
+                            foreach (var mapping in groupedMapping.Mappings)
                             {
-                                EntityId = epa.Id,
-                                Title = $"{column.DisplayName} for {epa.Title}",
-                                CreatedDate = userMapping?.LatestDate ?? DateTime.Now,
-                                ActionUrl = "#", // You can link to specific activity details here
-                                EntityType = column.EntityType
-                            });
+                                var activityTitle = GetActivityTitle(mapping, sles, reflections, plts, learningLogs);
+                                var actionUrl = GetActivityUrl(mapping);
+                                
+                                activities.Add(new ActivitySummary
+                                {
+                                    EntityId = mapping.EntityId,
+                                    Title = activityTitle,
+                                    CreatedDate = mapping.CreatedAt,
+                                    ActionUrl = actionUrl,
+                                    EntityType = mapping.EntityType
+                                });
+                            }
                         }
 
                         var cell = new EPAActivityCell
                         {
                             Count = count,
                             Activities = activities,
-                            LatestDate = userMapping?.LatestDate,
+                            LatestDate = groupedMapping?.LatestDate,
                             IntensityClass = GetIntensityClass(count)
                         };
 
@@ -459,26 +506,26 @@ namespace EYDGateway.Controllers
                     }
                 }
 
-                // Create summary based on real user data
-                var totalActivities = userEPAMappings.Sum(m => m.Count);
-                var epasWithActivity = userEPAMappings.Select(m => m.EPAId).Distinct().Count();
+                // Create summary based on grouped mappings
+                var totalActivities = groupedMappings.Sum(m => m.Count);
+                var epasWithActivity = groupedMappings.Select(m => m.EPAId).Distinct().Count();
                 
                 var summary = new EPAProgressSummary
                 {
                     TotalActivities = totalActivities,
-                    TotalEPAMappings = userEPAMappings.Count,
+                    TotalEPAMappings = groupedMappings.Count,
                     EPAsWithActivity = epasWithActivity,
                     EPAsNotStarted = epas.Count - epasWithActivity,
                     ActivityTypeTotals = activityColumns.ToDictionary(c => c.DisplayName, c => c.TotalCount)
                 };
 
                 // Set most/least active EPAs based on real data
-                if (epas.Any() && userEPAMappings.Any())
+                if (epas.Any() && groupedMappings.Any())
                 {
                     var epaActivityCounts = epas.Select(epa => new
                     {
                         EPA = epa,
-                        TotalCount = userEPAMappings.Where(m => m.EPAId == epa.Id).Sum(m => m.Count)
+                        TotalCount = groupedMappings.Where(m => m.EPAId == epa.Id).Sum(m => m.Count)
                     }).Where(x => x.TotalCount > 0).ToList();
 
                     if (epaActivityCounts.Any())
@@ -497,7 +544,7 @@ namespace EYDGateway.Controllers
                     ActivityColumns = activityColumns,
                     Matrix = matrix,
                     UserName = displayName,  // Use target user's name, not current user's name
-                    LastActivity = userEPAMappings.Any() ? userEPAMappings.Max(m => m.LatestDate) : null,
+                    LastActivity = groupedMappings.Any() ? groupedMappings.Max(m => m.LatestDate) : null,
                     Summary = summary
                 };
 
@@ -2531,6 +2578,31 @@ namespace EYDGateway.Controllers
                 TempData["ErrorMessage"] = $"Error unlocking section: {ex.Message}";
                 return RedirectToAction("AdHocESReport", new { id = userId });
             }
+        }
+
+        // Helper methods for EPA activity details
+        private string GetActivityTitle(EPAMapping mapping, Dictionary<int, object> sles, Dictionary<int, object> reflections, Dictionary<int, object> plts, Dictionary<int, object> learningLogs)
+        {
+            return mapping.EntityType switch
+            {
+                "SLE" => sles.ContainsKey(mapping.EntityId) ? $"{((dynamic)sles[mapping.EntityId]).SLEType}: {((dynamic)sles[mapping.EntityId]).Title}" : "SLE Activity",
+                "Reflection" => reflections.ContainsKey(mapping.EntityId) ? $"Reflection: {((dynamic)reflections[mapping.EntityId]).Title}" : "Reflection",
+                "ProtectedLearningTime" => plts.ContainsKey(mapping.EntityId) ? $"PLT: {((dynamic)plts[mapping.EntityId]).Title}" : "Protected Learning Time",
+                "LearningLog" => learningLogs.ContainsKey(mapping.EntityId) ? $"Learning Log: {((dynamic)learningLogs[mapping.EntityId]).Title}" : "Learning Log",
+                _ => $"{mapping.EntityType} Activity"
+            };
+        }
+
+        private string GetActivityUrl(EPAMapping mapping)
+        {
+            return mapping.EntityType switch
+            {
+                "SLE" => $"/SLE/Details/{mapping.EntityId}",
+                "Reflection" => $"/Reflection/Details/{mapping.EntityId}",
+                "ProtectedLearningTime" => $"/ProtectedLearningTime/Details/{mapping.EntityId}",
+                "LearningLog" => $"/LearningLog/Details/{mapping.EntityId}",
+                _ => "#"
+            };
         }
     }
 
