@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EYDGateway")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d34ffd68039492378c90c022fd74ff182aea3585")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b7647e8a2a186b6e9d913704e9b92bc3e352b4af")]
 [assembly: System.Reflection.AssemblyProductAttribute("EYDGateway")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EYDGateway")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

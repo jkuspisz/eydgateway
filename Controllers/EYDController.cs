@@ -1228,7 +1228,7 @@ namespace EYDGateway.Controllers
                 SavedPanelData = savedPanelData
             };
 
-            return View("InterimReview", viewModel);
+            return View("FinalReview", viewModel);
         }
 
         [HttpPost]
