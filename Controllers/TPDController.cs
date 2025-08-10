@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using EYDGateway.Data;
 using EYDGateway.Models;
 using EYDGateway.ViewModels;
+using EYDGateway.Services;
 
 namespace EYDGateway.Controllers
 {
@@ -11,10 +12,12 @@ namespace EYDGateway.Controllers
     public class TPDController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IAIAnalysisService _aiAnalysis;
 
-        public TPDController(ApplicationDbContext context)
+        public TPDController(ApplicationDbContext context, IAIAnalysisService aiAnalysis)
         {
             _context = context;
+            _aiAnalysis = aiAnalysis;
         }
 
         public async Task<IActionResult> Dashboard()
@@ -254,6 +257,49 @@ namespace EYDGateway.Controllers
             };
 
             return View(viewModel);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> AnalyzePortfolio(string eydUserId, string mode = "overall")
+        {
+            var currentUser = await _context.Users
+                .Include(u => u.Scheme)
+                    .ThenInclude(s => s!.Area)
+                .FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
+
+            if (currentUser?.Role != "TPD" && currentUser?.Role != "Dean")
+            {
+                return Unauthorized();
+            }
+
+            if (string.IsNullOrWhiteSpace(eydUserId))
+            {
+                return BadRequest(new { error = "Missing eydUserId" });
+            }
+
+            // Verify access: TPDs can only analyze EYDs within their area; Deans can analyze any
+            var target = await _context.Users
+                .Include(u => u.Scheme)
+                    .ThenInclude(s => s!.Area)
+                .FirstOrDefaultAsync(u => u.Id == eydUserId && u.Role == "EYD");
+
+            if (target == null)
+            {
+                return NotFound(new { error = "EYD not found" });
+            }
+
+            if (currentUser.Role == "TPD")
+            {
+                var currentAreaId = currentUser.Scheme?.AreaId;
+                var targetAreaId = target.Scheme?.AreaId;
+                if (!currentAreaId.HasValue || !targetAreaId.HasValue || currentAreaId.Value != targetAreaId.Value)
+                {
+                    return Forbid("Not permitted to analyze EYDs outside your area.");
+                }
+            }
+
+            var result = await _aiAnalysis.AnalyzePortfolioAsync(eydUserId, mode);
+            return Json(result);
         }
 
         private async Task<List<EYDPortfolioSummary>> GeneratePortfolioSummaries(List<ApplicationUser> eydUsers)

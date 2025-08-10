@@ -84,6 +84,7 @@ builder.Services.AddControllersWithViews();
 
 // Register custom services
 builder.Services.AddScoped<IEPAService, EPAService>();
+builder.Services.AddScoped<IAIAnalysisService, AIAnalysisService>();
 
 // Configure for Railway deployment
 if (builder.Environment.IsProduction())

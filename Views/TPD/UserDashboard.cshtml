@@ -144,53 +144,6 @@
         </div>
     }
 
-    <!-- Scheme Selection -->
-    @if (Model.AllAreaSchemes.Any())
-    {
-        <div class="row mb-4">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header bg-light">
-                        <h5><i class="fas fa-exchange-alt me-2"></i>View EYDs from Other Schemes</h5>
-                        <small class="text-muted">Your assigned scheme: <strong>@Model.AssignedScheme</strong> | Switch to view EYDs from other schemes in your area</small>
-                    </div>
-                    <div class="card-body">
-                        <form method="get" action="/TPD/ViewSchemeEYDs" class="row g-3">
-                            <div class="col-md-8">
-                                <label for="schemeSelect" class="form-label">Select Scheme to View:</label>
-                                <select class="form-select" id="schemeSelect" name="schemeId" required>
-                                    <option value="">Choose a scheme...</option>
-                                    @foreach (var scheme in Model.AllAreaSchemes.OrderBy(s => s.Name))
-                                    {
-                                        var isSelected = Model.CurrentSchemeId == scheme.Id;
-                                        <option value="@scheme.Id" selected="@isSelected">
-                                            @scheme.Name 
-                                            @if (scheme.Id == Model.CurrentSchemeId)
-                                            {
-                                                <text>(Your Assigned Scheme)</text>
-                                            }
-                                        </option>
-                                    }
-                                </select>
-                            </div>
-                            <div class="col-md-4 d-flex align-items-end">
-                                <button type="submit" class="btn btn-primary me-2">
-                                    <i class="fas fa-search me-1"></i>View EYDs
-                                </button>
-                                @if (Model.CurrentSchemeId != null && Model.AllAreaSchemes.Any(s => s.Id == Model.CurrentSchemeId))
-                                {
-                                    <a href="/TPD/UserDashboard" class="btn btn-outline-secondary">
-                                        <i class="fas fa-home me-1"></i>Return to My Scheme
-                                    </a>
-                                }
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
-
     <!-- EYD Portfolio Status Overview -->
     <div class="row">
         <div class="col-md-12">
@@ -231,6 +184,9 @@
                                     </a>
                                     <div class="small text-muted">@portfolio.UserEmail</div>
                                     <span class="badge bg-info" style="font-size: 0.65em;">@portfolio.SchemeName</span>
+                                    <button type="button" class="btn btn-sm btn-outline-primary ms-2 ai-analyze-btn" data-user-id="@portfolio.UserId" data-user-name="@portfolio.UserName">
+                                        <i class="fas fa-robot me-1"></i>AI Analysis
+                                    </button>
                                 </div>
                             </td>                            <!-- CBD Status -->
                             <td class="text-center">
@@ -364,6 +320,53 @@
             </div>
         </div>
     </div>
+
+    <!-- Scheme Selection - View Other Schemes -->
+    @if (Model.AllAreaSchemes.Any())
+    {
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5><i class="fas fa-exchange-alt me-2"></i>View EYDs from Other Schemes</h5>
+                        <small class="text-muted">Your assigned scheme: <strong>@Model.AssignedScheme</strong> | Switch to view EYDs from other schemes in your area</small>
+                    </div>
+                    <div class="card-body">
+                        <form method="get" action="/TPD/ViewSchemeEYDs" class="row g-3">
+                            <div class="col-md-8">
+                                <label for="schemeSelect" class="form-label">Select Scheme to View:</label>
+                                <select class="form-select" id="schemeSelect" name="schemeId" required>
+                                    <option value="">Choose a scheme...</option>
+                                    @foreach (var scheme in Model.AllAreaSchemes.OrderBy(s => s.Name))
+                                    {
+                                        var isSelected = Model.CurrentSchemeId == scheme.Id;
+                                        <option value="@scheme.Id" selected="@isSelected">
+                                            @scheme.Name 
+                                            @if (scheme.Id == Model.CurrentSchemeId)
+                                            {
+                                                <text>(Your Assigned Scheme)</text>
+                                            }
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary me-2">
+                                    <i class="fas fa-search me-1"></i>View EYDs
+                                </button>
+                                @if (Model.CurrentSchemeId != null && Model.AllAreaSchemes.Any(s => s.Id == Model.CurrentSchemeId))
+                                {
+                                    <a href="/TPD/UserDashboard" class="btn btn-outline-secondary">
+                                        <i class="fas fa-home me-1"></i>Return to My Scheme
+                                    </a>
+                                }
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 <style>
@@ -600,3 +603,105 @@
     100% { transform: rotate(360deg); }
 }
 </style>
+
+<!-- AI Analysis Modal -->
+<div class="modal fade" id="aiAnalysisModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="aiAnalysisTitle">AI Portfolio Analysis</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="aiAnalysisLoading" class="d-none">
+                        <span class="loading-indicator"></span>
+                        <span class="ms-2">Analyzing...</span>
+                </div>
+                <div id="aiAnalysisContent" class="d-none">
+                        <pre id="aiAnalysisSummary" class="mb-3" style="white-space: pre-wrap;"></pre>
+                        <div id="aiAnalysisHighlights" class="mb-3"></div>
+                        <div id="aiESInsight" class="border rounded p-2 d-none">
+                                <div class="fw-bold mb-1">Latest ES insight</div>
+                                <pre id="aiESInsightText" style="white-space: pre-wrap;"></pre>
+                        </div>
+                </div>
+                <div id="aiAnalysisError" class="alert alert-danger d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modalEl = document.getElementById('aiAnalysisModal');
+    const titleEl = document.getElementById('aiAnalysisTitle');
+    const loadingEl = document.getElementById('aiAnalysisLoading');
+    const contentEl = document.getElementById('aiAnalysisContent');
+    const errorEl = document.getElementById('aiAnalysisError');
+    const summaryEl = document.getElementById('aiAnalysisSummary');
+    const highlightsEl = document.getElementById('aiAnalysisHighlights');
+    const esInsightWrap = document.getElementById('aiESInsight');
+    const esInsightText = document.getElementById('aiESInsightText');
+
+    const modal = new bootstrap.Modal(modalEl);
+
+    function setState(state) {
+        loadingEl.classList.toggle('d-none', state !== 'loading');
+        contentEl.classList.toggle('d-none', state !== 'content');
+        errorEl.classList.toggle('d-none', state !== 'error');
+    }
+
+    function renderHighlights(items) {
+        highlightsEl.innerHTML = '';
+        if (!items || items.length === 0) return;
+        const ul = document.createElement('ul');
+        items.forEach(t => {
+            const li = document.createElement('li');
+            li.textContent = t;
+            ul.appendChild(li);
+        });
+        const wrap = document.createElement('div');
+        wrap.innerHTML = '<div class="fw-bold mb-1">Highlights</div>';
+        wrap.appendChild(ul);
+        highlightsEl.appendChild(wrap);
+    }
+
+    document.querySelectorAll('.ai-analyze-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const userId = btn.getAttribute('data-user-id');
+            const userName = btn.getAttribute('data-user-name');
+            titleEl.textContent = `AI Portfolio Analysis — ${userName}`;
+            summaryEl.textContent = '';
+            esInsightText.textContent = '';
+            esInsightWrap.classList.add('d-none');
+            renderHighlights([]);
+            setState('loading');
+            modal.show();
+
+            try {
+                const resp = await fetch(`/TPD/AnalyzePortfolio?eydUserId=${encodeURIComponent(userId)}`);
+                if (!resp.ok) {
+                    const text = await resp.text();
+                    errorEl.textContent = `Error (${resp.status}): ${text}`;
+                    setState('error');
+                    return;
+                }
+                const data = await resp.json();
+                summaryEl.textContent = data.summary || '';
+                renderHighlights(data.highlights || []);
+                if (data.esInsight) {
+                    esInsightText.textContent = data.esInsight;
+                    esInsightWrap.classList.remove('d-none');
+                }
+                setState('content');
+            } catch (e) {
+                errorEl.textContent = 'Unexpected error while fetching analysis.';
+                setState('error');
+            }
+        });
+    });
+});
+</script>
