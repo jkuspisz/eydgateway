@@ -10,7 +10,50 @@
                 <div>
                     <h2>TPD Personal Dashboard</h2>
                     <p class="text-muted">Welcome, @Model.UserName</p>
-                    <small class="text-muted">Area: @Model.AssignedArea | Scheme: @Model.AssignedScheme</small>
+                    <small class="text-/* Responsive Design */
+@@media (max-width: 1200px) {
+    .table-responsive {
+        font-size: 0.9em;
+    }
+    
+    .status-indicator {
+        min-width: 40px;
+        padding: 4px 6px;
+        font-size: 0.75em;
+    }
+    
+    .status-count {
+        font-size: 0.8em;
+    }
+    
+    .ircp-status-group, .frcp-status-group {
+        font-size: 0.75em;
+    }
+    
+    .badge-status {
+        font-size: 0.65em !important;
+        padding: 2px 4px;
+    }
+}
+
+@@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.85em;
+    }
+    
+    .status-indicator {
+        min-width: 45px;
+        padding: 5px 7px;
+    }
+    
+    .status-count {
+        font-size: 0.85em;
+    }
+    
+    .ircp-status-group, .frcp-status-group {
+        font-size: 0.8em;
+    }
+}.AssignedArea | Scheme: @Model.AssignedScheme</small>
                     <div class="mt-2">
                         <span class="badge bg-primary">Dashboard ID: @Model.UserId.Substring(0, 8)...</span>
                     </div>
@@ -113,38 +156,36 @@
                     @if (Model.EYDPortfolioSummaries.Any())
                     {
                         <div class="table-responsive">
-                            <table class="table table-hover table-striped">
+                            <table class="table table-hover table-striped table-sm">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th style="width: 15%;">EYD User</th>
-                                        <th style="width: 8%;" class="text-center">CBD</th>
-                                        <th style="width: 8%;" class="text-center">DOPS</th>
-                                        <th style="width: 8%;" class="text-center">MiniCEX</th>
-                                        <th style="width: 8%;" class="text-center">DOPSSim</th>
-                                        <th style="width: 8%;" class="text-center">DtCT</th>
-                                        <th style="width: 8%;" class="text-center">DENTL</th>
-                                        <th style="width: 8%;" class="text-center">PLTs</th>
-                                        <th style="width: 8%;" class="text-center">Rflcs</th>
-                                        <th style="width: 10%;" class="text-center">LNs</th>
-                                        <th style="width: 11%;" class="text-center">IRCP Status</th>
-                                        <th style="width: 10%;" class="text-center">FRCP Status</th>
+                                        <th style="width: 12%;">EYD User</th>
+                                        <th style="width: 6%;" class="text-center">CBD</th>
+                                        <th style="width: 6%;" class="text-center">DOPS</th>
+                                        <th style="width: 6%;" class="text-center">MiniCEX</th>
+                                        <th style="width: 6%;" class="text-center">DOPSSim</th>
+                                        <th style="width: 6%;" class="text-center">DtCT</th>
+                                        <th style="width: 6%;" class="text-center">DENTL</th>
+                                        <th style="width: 6%;" class="text-center">PLTs</th>
+                                        <th style="width: 6%;" class="text-center">Rflcs</th>
+                                        <th style="width: 6%;" class="text-center">LNs</th>
+                                        <th style="width: 17%;" class="text-center">IRCP Status</th>
+                                        <th style="width: 17%;" class="text-center">FRCP Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach (var portfolio in Model.EYDPortfolioSummaries)
                                     {
                                         <tr class="portfolio-row" data-user-id="@portfolio.UserId">
-                                            <td>
-                                                <div class="d-flex flex-column">
-                                                    <a href="/EYD/Portfolio/@portfolio.UserId" class="text-decoration-none">
-                                                        <strong>@portfolio.UserName</strong>
-                                                    </a>
-                                                    <small class="text-muted">@portfolio.UserEmail</small>
-                                                    <span class="badge bg-info mt-1" style="font-size: 0.7em;">@portfolio.SchemeName</span>
-                                                </div>
-                                            </td>
-                                            
-                            <!-- CBD Status -->
+                            <td>
+                                <div>
+                                    <a href="/EYD/Portfolio/@portfolio.UserId" class="text-decoration-none">
+                                        <strong style="font-size: 0.9em;">@portfolio.UserName</strong>
+                                    </a>
+                                    <div class="small text-muted">@portfolio.UserEmail</div>
+                                    <span class="badge bg-info" style="font-size: 0.65em;">@portfolio.SchemeName</span>
+                                </div>
+                            </td>                            <!-- CBD Status -->
                             <td class="text-center">
                                 <a href="/SLE/Index/@portfolio.UserId?type=CBD" class="portfolio-link">
                                     <div class="status-indicator @(portfolio.CBDStatus.ToLower())">
@@ -225,39 +266,39 @@
                                 </a>
                             </td>
 
-                                            <!-- IRCP Status -->
-                                            <td class="text-center">
-                                                <a href="/EYD/InterimReview/@portfolio.UserId" class="portfolio-link">
-                                                    <div class="ircp-status-group">
-                                                        <div class="status-row">
-                                                            <span class="badge badge-status @(portfolio.IRCPESStatus.ToLower().Replace(" ", "-"))">ES: @portfolio.IRCPESStatus</span>
-                                                        </div>
-                                                        <div class="status-row">
-                                                            <span class="badge badge-status @(portfolio.IRCPEYDStatus.ToLower().Replace(" ", "-"))">EYD: @portfolio.IRCPEYDStatus</span>
-                                                        </div>
-                                                        <div class="status-row">
-                                                            <span class="badge badge-status @(portfolio.IRCPPanelStatus.ToLower().Replace(" ", "-"))">Panel: @portfolio.IRCPPanelStatus</span>
-                                                        </div>
-                                                    </div>
-                                                </a>
-                                            </td>
+                            <!-- IRCP Status -->
+                            <td class="text-center">
+                                <a href="/EYD/InterimReview/@portfolio.UserId" class="portfolio-link">
+                                    <div class="ircp-status-group">
+                                        <div class="status-row mb-1">
+                                            <span class="badge badge-status @(portfolio.IRCPESStatus.ToLower().Replace(" ", "-"))" style="font-size: 0.7em;">ES: @portfolio.IRCPESStatus</span>
+                                        </div>
+                                        <div class="status-row mb-1">
+                                            <span class="badge badge-status @(portfolio.IRCPEYDStatus.ToLower().Replace(" ", "-"))" style="font-size: 0.7em;">EYD: @portfolio.IRCPEYDStatus</span>
+                                        </div>
+                                        <div class="status-row">
+                                            <span class="badge badge-status @(portfolio.IRCPPanelStatus.ToLower().Replace(" ", "-"))" style="font-size: 0.7em;">Panel: @portfolio.IRCPPanelStatus</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </td>
 
-                                            <!-- FRCP Status -->
-                                            <td class="text-center">
-                                                <a href="/EYD/FinalReview/@portfolio.UserId" class="portfolio-link">
-                                                    <div class="frcp-status-group">
-                                                        <div class="status-row">
-                                                            <span class="badge badge-status @(portfolio.FRCPESStatus.ToLower().Replace(" ", "-"))">ES: @portfolio.FRCPESStatus</span>
-                                                        </div>
-                                                        <div class="status-row">
-                                                            <span class="badge badge-status @(portfolio.FRCPEYDStatus.ToLower().Replace(" ", "-"))">EYD: @portfolio.FRCPEYDStatus</span>
-                                                        </div>
-                                                        <div class="status-row">
-                                                            <span class="badge badge-status @(portfolio.FRCPPanelStatus.ToLower().Replace(" ", "-"))">Panel: @portfolio.FRCPPanelStatus</span>
-                                                        </div>
-                                                    </div>
-                                                </a>
-                                            </td>
+                            <!-- FRCP Status -->
+                            <td class="text-center">
+                                <a href="/EYD/FinalReview/@portfolio.UserId" class="portfolio-link">
+                                    <div class="frcp-status-group">
+                                        <div class="status-row mb-1">
+                                            <span class="badge badge-status @(portfolio.FRCPESStatus.ToLower().Replace(" ", "-"))" style="font-size: 0.7em;">ES: @portfolio.FRCPESStatus</span>
+                                        </div>
+                                        <div class="status-row mb-1">
+                                            <span class="badge badge-status @(portfolio.FRCPEYDStatus.ToLower().Replace(" ", "-"))" style="font-size: 0.7em;">EYD: @portfolio.FRCPEYDStatus</span>
+                                        </div>
+                                        <div class="status-row">
+                                            <span class="badge badge-status @(portfolio.FRCPPanelStatus.ToLower().Replace(" ", "-"))" style="font-size: 0.7em;">Panel: @portfolio.FRCPPanelStatus</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </td>
                                         </tr>
                                     }
                                 </tbody>
@@ -404,17 +445,59 @@
     border-bottom: 2px solid #dee2e6;
     font-weight: 600;
     font-size: 0.9em;
-    padding: 12px 8px;
+    padding: 10px 6px;
 }
 
 .table td {
     vertical-align: middle;
-    padding: 12px 8px;
+    padding: 10px 6px;
+    font-size: 0.95em;
+}
+
+.table-sm th,
+.table-sm td {
+    padding: 8px 5px;
 }
 
 .table-dark th {
     background-color: #343a40;
     border-color: #454d55;
+}
+
+/* Status Indicators - More Compact */
+.status-indicator {
+    min-width: 45px;
+    max-width: 65px;
+    padding: 5px 7px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    margin: 0 auto;
+}
+
+.status-count {
+    font-weight: 600;
+    font-size: 0.85em;
+}
+
+/* Status Groups - Compact Layout */
+.ircp-status-group, .frcp-status-group {
+    font-size: 0.8em;
+}
+
+.ircp-status-group .badge, .frcp-status-group .badge {
+    display: block;
+    margin: 1px 0;
+    padding: 3px 5px;
+    font-size: 0.7em;
+    line-height: 1.2;
+}
+
+/* Compact Badge Status */
+.badge-status {
+    padding: 3px 6px;
+    font-size: 0.7em !important;
+    line-height: 1.1;
+    white-space: nowrap;
 }
 
 /* Summary Statistics */

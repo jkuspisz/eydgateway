@@ -1001,39 +1001,52 @@ namespace EYDGateway.Controllers
                 Total = userEPAMappings.Where(m => m.EPAId == epa.Id).Sum(m => m.Count)
             }).ToList();
 
-            // Check for section locks from database first, then fall back to TempData
-            bool esLocked = (ircpReview?.ESLocked ?? false) || 
-                           (TempData[$"IRCP_{targetUserId}_ES_Locked"] != null && TempData[$"IRCP_{targetUserId}_ES_Locked"].ToString() == "true");
-            bool eydLocked = (ircpReview?.EYDLocked ?? false) || 
-                            (TempData[$"IRCP_{targetUserId}_EYD_Locked"] != null && TempData[$"IRCP_{targetUserId}_EYD_Locked"].ToString() == "true");
-            bool panelLocked = (ircpReview?.PanelLocked ?? false) || 
-                              (TempData[$"IRCP_{targetUserId}_Panel_Locked"] != null && TempData[$"IRCP_{targetUserId}_Panel_Locked"].ToString() == "true");
+            // Check for section locks - TempData first, then database (TempData-first approach)
+            bool esLocked = TempData[$"IRCP_{targetUserId}_ES_Locked"]?.ToString() == "true";
+            bool eydLocked = TempData[$"IRCP_{targetUserId}_EYD_Locked"]?.ToString() == "true";
+            bool panelLocked = TempData[$"IRCP_{targetUserId}_Panel_Locked"]?.ToString() == "true";
+            
+            // If not locked in TempData, check database
+            if (!esLocked || !eydLocked || !panelLocked)
+            {
+                if (!esLocked)
+                    esLocked = ircpReview?.ESLocked ?? false;
+                if (!eydLocked)
+                    eydLocked = ircpReview?.EYDLocked ?? false;
+                if (!panelLocked)
+                    panelLocked = ircpReview?.PanelLocked ?? false;
+            }
             
             // Keep lock data for next request if using TempData
             if (TempData[$"IRCP_{targetUserId}_ES_Locked"] != null) TempData.Keep($"IRCP_{targetUserId}_ES_Locked");
             if (TempData[$"IRCP_{targetUserId}_EYD_Locked"] != null) TempData.Keep($"IRCP_{targetUserId}_EYD_Locked");
             if (TempData[$"IRCP_{targetUserId}_Panel_Locked"] != null) TempData.Keep($"IRCP_{targetUserId}_Panel_Locked");
 
-            // Check actual workflow status based on database first, then saved data and lock status
+            // Initialize status - TempData-first approach
             var esStatus = "NotStarted";
             var eydStatus = "NotStarted";
             var panelStatus = "NotStarted";
 
-            // Use database status if available, otherwise fall back to TempData logic
-            if (ircpReview != null)
+            // If locked in TempData, immediately set to Completed
+            if (esLocked)
             {
-                esStatus = ircpReview.ESStatus.ToString();
-                eydStatus = ircpReview.EYDStatus.ToString();
-                panelStatus = ircpReview.PanelStatus.ToString();
+                esStatus = "Completed";
             }
-            else
+            if (eydLocked)
             {
-                // Fallback to TempData logic for backwards compatibility
-                
-                // Check if ES section has been completed
-                if (esLocked)
+                eydStatus = "Completed";
+            }
+            if (panelLocked)
+            {
+                panelStatus = "Completed";
+            }
+
+            // If not locked, check database status first, then TempData content
+            if (!esLocked)
+            {
+                if (ircpReview != null)
                 {
-                    esStatus = "Completed";
+                    esStatus = ircpReview.ESStatus.ToString();
                 }
                 else if (TempData[$"IRCP_{targetUserId}_ES"] != null)
                 {
@@ -1054,11 +1067,13 @@ namespace EYDGateway.Controllers
                     }
                     TempData.Keep($"IRCP_{targetUserId}_ES");
                 }
+            }
 
-                // Check EYD status
-                if (eydLocked)
+            if (!eydLocked)
+            {
+                if (ircpReview != null)
                 {
-                    eydStatus = "Completed";
+                    eydStatus = ircpReview.EYDStatus.ToString();
                 }
                 else if (TempData[$"IRCP_{targetUserId}_EYD"] != null)
                 {
@@ -1073,11 +1088,13 @@ namespace EYDGateway.Controllers
                     }
                     TempData.Keep($"IRCP_{targetUserId}_EYD");
                 }
+            }
 
-                // Check Panel status
-                if (panelLocked)
+            if (!panelLocked)
+            {
+                if (ircpReview != null)
                 {
-                    panelStatus = "Completed";
+                    panelStatus = ircpReview.PanelStatus.ToString();
                 }
                 else if (TempData[$"IRCP_{targetUserId}_Panel"] != null)
                 {
@@ -1756,10 +1773,35 @@ namespace EYDGateway.Controllers
             var eydStatus = "NotStarted";
             var panelStatus = "NotStarted";
 
-            // Check for section locks first
+            // Check for section locks first (both TempData and database)
             bool esLocked = TempData[$"IRCP_{userId}_ES_Locked"]?.ToString() == "true";
             bool eydLocked = TempData[$"IRCP_{userId}_EYD_Locked"]?.ToString() == "true";
             bool panelLocked = TempData[$"IRCP_{userId}_Panel_Locked"]?.ToString() == "true";
+
+            // Check database for locks if not found in TempData
+            var ircpReview = _context.IRCPReviews
+                .FirstOrDefault(r => r.EYDUserId == userId);
+
+            if (ircpReview != null)
+            {
+                // Update lock status from database if not set in TempData
+                if (!esLocked) esLocked = ircpReview.ESLocked;
+                if (!eydLocked) eydLocked = ircpReview.EYDLocked;
+                if (!panelLocked) panelLocked = ircpReview.PanelLocked;
+            }
+
+            // Debug output
+            Console.WriteLine($"DEBUG IRCP Status for {userId}:");
+            Console.WriteLine($"  TempData ES_Locked: {TempData[$"IRCP_{userId}_ES_Locked"]?.ToString()}");
+            Console.WriteLine($"  TempData EYD_Locked: {TempData[$"IRCP_{userId}_EYD_Locked"]?.ToString()}");
+            Console.WriteLine($"  TempData Panel_Locked: {TempData[$"IRCP_{userId}_Panel_Locked"]?.ToString()}");
+            if (ircpReview != null)
+            {
+                Console.WriteLine($"  DB ESLocked: {ircpReview.ESLocked}, ESStatus: {ircpReview.ESStatus}");
+                Console.WriteLine($"  DB EYDLocked: {ircpReview.EYDLocked}, EYDStatus: {ircpReview.EYDStatus}");
+                Console.WriteLine($"  DB PanelLocked: {ircpReview.PanelLocked}, PanelStatus: {ircpReview.PanelStatus}");
+            }
+            Console.WriteLine($"  Final locks: ES={esLocked}, EYD={eydLocked}, Panel={panelLocked}");
 
             // Check ES status
             if (esLocked)
@@ -1782,6 +1824,11 @@ namespace EYDGateway.Controllers
                     }
                 }
             }
+            else if (ircpReview != null)
+            {
+                // Fallback to database status if no TempData
+                esStatus = ircpReview.ESStatus.ToString();
+            }
 
             // Check EYD status
             if (eydLocked)
@@ -1799,6 +1846,11 @@ namespace EYDGateway.Controllers
                         eydStatus = "InProgress";
                     }
                 }
+            }
+            else if (ircpReview != null)
+            {
+                // Fallback to database status if no TempData
+                eydStatus = ircpReview.EYDStatus.ToString();
             }
 
             // Check Panel status
@@ -1818,6 +1870,13 @@ namespace EYDGateway.Controllers
                     }
                 }
             }
+            else if (ircpReview != null)
+            {
+                // Fallback to database status if no TempData
+                panelStatus = ircpReview.PanelStatus.ToString();
+            }
+
+            Console.WriteLine($"  Final status: ES={esStatus}, EYD={eydStatus}, Panel={panelStatus}");
 
             // Keep TempData for future requests
             if (TempData[$"IRCP_{userId}_ES"] != null) TempData.Keep($"IRCP_{userId}_ES");
