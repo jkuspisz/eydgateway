@@ -90,6 +90,23 @@
                                     </div>
                                 }
                                 
+                                @* Special status indicators for Ad Hoc ES Report section *@
+                                @if (portfolioSection.Id == "adhoc-es-report")
+                                {
+                                    <div class="adhoc-status-indicators mt-2">
+                                        <div class="d-flex justify-content-around">
+                                            <div class="adhoc-status-box text-center">
+                                                <div class="status-indicator status-@Model.AdHocESReportESStatus.ToLower()"></div>
+                                                <small class="d-block mt-1">ES</small>
+                                            </div>
+                                            <div class="adhoc-status-box text-center">
+                                                <div class="status-indicator status-@Model.AdHocESReportEYDStatus.ToLower()"></div>
+                                                <small class="d-block mt-1">EYD</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                
                                 @* PSQ Traffic Light Status for Patient Satisfaction section *@
                                 @if (portfolioSection.Id == "patient-satisfaction")
                                 {
@@ -291,6 +308,23 @@
 }
 
 .msf-status-box small {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #6c757d;
+}
+
+/* Ad Hoc ES Report Status Indicators */
+.adhoc-status-indicators {
+    border-top: 1px solid #e9ecef;
+    padding-top: 8px;
+    margin-top: 8px;
+}
+
+.adhoc-status-box {
+    flex: 1;
+}
+
+.adhoc-status-box small {
     font-size: 0.7rem;
     font-weight: 500;
     color: #6c757d;

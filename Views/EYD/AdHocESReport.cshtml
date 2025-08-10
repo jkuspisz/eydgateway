@@ -1,0 +1,584 @@
+@model dynamic
+
+@{
+    ViewData["Title"] = "Ad Hoc ES Report";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-file-medical text-primary me-2"></i>
+                        Ad Hoc ES Report
+                    </h2>
+                    <p class="text-muted mb-0">Assessment for @Model.TargetUser.DisplayName</p>
+                </div>
+                @if (Model.CanUnlock)
+                {
+                    <div>
+                        <i class="fas fa-save"></i> Save Progress
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Workflow Status Indicators -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card border-@(Model.ESStatus == "Completed" ? "success" : Model.ESStatus == "InProgress" ? "warning" : "secondary")">
+                <div class="card-header bg-@(Model.ESStatus == "Completed" ? "success" : Model.ESStatus == "InProgress" ? "warning" : "secondary") text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-md me-2"></i>
+                        Educational Supervisor Assessment
+                        @if (Model.ESStatus == "Completed")
+                        {
+                            <span class="badge bg-light text-success float-end">
+                                <i class="fas fa-check"></i> Completed
+                            </span>
+                        }
+                        else if (Model.ESStatus == "InProgress")
+                        {
+                            <span class="badge bg-light text-warning float-end">
+                                <i class="fas fa-clock"></i> In Progress
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-light text-secondary float-end">
+                                <i class="fas fa-hourglass"></i> Not Started
+                            </span>
+                        }
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>Role:</strong> Educational Supervisor completes EPA assessments and written evaluation</p>
+                    @if (Model.Report.ESCompletedAt != null)
+                    {
+                        <p class="mb-0"><small class="text-muted">Completed: @Model.Report.ESCompletedAt.ToString("dd/MM/yyyy HH:mm")</small></p>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card border-@(Model.EYDStatus == "Completed" ? "success" : Model.EYDStatus == "InProgress" ? "warning" : "secondary")">
+                <div class="card-header bg-@(Model.EYDStatus == "Completed" ? "success" : Model.EYDStatus == "InProgress" ? "warning" : "secondary") text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-graduate me-2"></i>
+                        EYD Self-Reflection
+                        @if (Model.EYDStatus == "Completed")
+                        {
+                            <span class="badge bg-light text-success float-end">
+                                <i class="fas fa-check"></i> Completed
+                            </span>
+                        }
+                        else if (Model.EYDStatus == "InProgress")
+                        {
+                            <span class="badge bg-light text-warning float-end">
+                                <i class="fas fa-clock"></i> In Progress
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-light text-secondary float-end">
+                                <i class="fas fa-hourglass"></i> Not Started
+                            </span>
+                        }
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>Role:</strong> EYD completes self-reflection and learning goals</p>
+                    @if (Model.Report.EYDCompletedAt != null)
+                    {
+                        <p class="mb-0"><small class="text-muted">Completed: @Model.Report.EYDCompletedAt.ToString("dd/MM/yyyy HH:mm")</small></p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Educational Supervisor Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-md me-2"></i>
+                        Educational Supervisor Assessment
+                        @if (!Model.CanEditES && Model.Report.IsESCompleted)
+                        {
+                            <span class="badge bg-success float-end">
+                                <i class="fas fa-lock"></i> Completed & Locked
+                            </span>
+                        }
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.CurrentUser.Role == "ES" || Model.CurrentUser.Role == "Admin" || Model.CurrentUser.Role == "TPD" || Model.CurrentUser.Role == "Dean")
+                    {
+                        <form method="post" action="/EYD/SaveAdHocESSection">
+                            <input type="hidden" name="userId" value="@Model.TargetUser.Id" />
+                            <input type="hidden" name="section" value="ES" />
+
+                            <!-- EPA Assessment Table -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-primary mb-3">EPA Assessment with Activity Data</h6>
+                                    <small class="text-muted mb-3 d-block">Complete EPA entrustment levels and provide justifications</small>
+                                    
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered ircp-epa-table">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th rowspan="2" class="epa-column sticky-column">EPA</th>
+                                                    @foreach (var column in Model.ActivityColumns)
+                                                    {
+                                                        <th class="text-center activity-column">
+                                                            @column.DisplayName
+                                                            <br><small class="text-muted">(@column.TotalCount total)</small>
+                                                        </th>
+                                                    }
+                                                    <th rowspan="2" class="text-center totals-column">Total</th>
+                                                    <th rowspan="2" class="entrustment-column">Progress Level</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var epa in Model.EPAMatrixData)
+                                                {
+                                                    <!-- EPA Info Row -->
+                                                    <tr class="@(epa.Total == 0 ? "table-warning" : "")">
+                                                        <td class="epa-info sticky-column">
+                                                            <div class="epa-info">
+                                                                <strong>@epa.Code</strong><br>
+                                                                <small>@epa.Title</small>
+                                                            </div>
+                                                        </td>
+                                                        
+                                                        @for (int i = 0; i < epa.Activities.Length; i++)
+                                                        {
+                                                            <td class="text-center activity-cell">
+                                                                @if (epa.Activities[i] > 0)
+                                                                {
+                                                                    <span class="badge bg-primary">@epa.Activities[i]</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span class="text-muted">-</span>
+                                                                }
+                                                            </td>
+                                                        }
+                                                        
+                                                        <td class="text-center totals-cell">
+                                                            <strong>@epa.Total</strong>
+                                                        </td>
+                                                        
+                                                        <!-- Progress Level -->
+                                                        <td class="text-center">
+                                                            @{
+                                                                AdHocESReportEPAAssessment assessment = null;
+                                                                foreach (var a in Model.Report.EPAAssessments)
+                                                                {
+                                                                    if (a.EPAId == epa.Id)
+                                                                    {
+                                                                        assessment = a;
+                                                                        break;
+                                                                    }
+                                                                }
+                                                            }
+                                                            <select class="form-select entrustment-select" name="EPA_@(epa.Id)_ProgressLevel" @(!Model.CanEditES ? "disabled" : "")>
+                                                                <option value="">Select Level</option>
+                                                                <option value="Level 1" selected="@(assessment?.ProgressLevel == "Level 1")">Level 1</option>
+                                                                <option value="Level 2" selected="@(assessment?.ProgressLevel == "Level 2")">Level 2</option>
+                                                                <option value="Level 3" selected="@(assessment?.ProgressLevel == "Level 3")">Level 3</option>
+                                                                <option value="Level 4" selected="@(assessment?.ProgressLevel == "Level 4")">Level 4</option>
+                                                            </select>
+                                                        </td>
+                                                    </tr>
+                                                    
+                                                    <!-- Reason and Justification Row -->
+                                                    <tr class="justification-row">
+                                                        <td colspan="@(Model.ActivityColumns.Count + 3)" class="p-3">
+                                                            <label class="form-label"><strong>Reason and Justification for @epa.Code:</strong></label>
+                                                            <textarea class="form-control" name="EPA_@(epa.Id)_Comments" rows="3" @(!Model.CanEditES ? "readonly" : "")
+                                                                      placeholder="Provide reason and justification for this entrustment level...">@(assessment?.Comments ?? "")</textarea>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ES Assessment Fields -->
+                            <div class="row mt-4">
+                                <div class="col-md-12">
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Performance to Date</strong></label>
+                                        <textarea class="form-control" name="ESOverallAssessment" rows="4" @(!Model.CanEditES ? "readonly" : "")
+                                                  placeholder="Describe the trainee's performance to date...">@Model.Report.ESOverallAssessment</textarea>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Progress made since start of training</strong></label>
+                                        <textarea class="form-control" name="ESProgressSinceLastReview" rows="4" @(!Model.CanEditES ? "readonly" : "")
+                                                  placeholder="Describe progress made since the start of training...">@Model.Report.ESProgressSinceLastReview</textarea>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Areas of notable practice</strong></label>
+                                        <textarea class="form-control" name="ESStrengths" rows="4" @(!Model.CanEditES ? "readonly" : "")
+                                                  placeholder="Describe areas of notable practice...">@Model.Report.ESStrengths</textarea>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Any performance concerns</strong></label>
+                                        <textarea class="form-control" name="ESAreasForDevelopment" rows="4" @(!Model.CanEditES ? "readonly" : "")
+                                                  placeholder="Describe any performance concerns...">@Model.Report.ESAreasForDevelopment</textarea>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Immediate priorities for development (learning needs)</strong></label>
+                                        <textarea class="form-control" name="ESRecommendations" rows="4" @(!Model.CanEditES ? "readonly" : "")
+                                                  placeholder="Describe immediate priorities for development...">@Model.Report.ESRecommendations</textarea>
+                                    </div>
+                                    
+                                    <div class="form-check mb-4">
+                                        <input class="form-check-input" type="checkbox" name="ESConfirmation" value="true" id="esConfirmation" @(!Model.CanEditES ? "disabled" : "")>
+                                        <label class="form-check-label" for="esConfirmation">
+                                            <strong>I confirm the above are true comments about the named dentist</strong>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if (Model.CanEditES)
+                            {
+                                <div class="d-flex gap-2 mt-4">
+                                    <button type="submit" name="action" value="save" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>Save Progress
+                                    </button>
+                                    <button type="submit" name="action" value="complete" class="btn btn-success">
+                                        <i class="fas fa-check-circle me-2"></i>Complete & Lock Section
+                                    </button>
+                                </div>
+                            }
+                        </form>
+                    }
+                    else
+                    {
+                        <!-- Read-only view for EYD users -->
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            This section shows the Educational Supervisor's assessment. You can view but not edit this content.
+                        </div>
+                        
+                        <!-- Display the same content but read-only -->
+                        <!-- EPA Assessment Table -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3">EPA Assessment with Activity Data</h6>
+                                <small class="text-muted mb-3 d-block">EPA entrustment levels and justifications</small>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-bordered ircp-epa-table">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th rowspan="2" class="epa-column sticky-column">EPA</th>
+                                                @foreach (var column in Model.ActivityColumns)
+                                                {
+                                                    <th class="text-center activity-column">
+                                                        @column.DisplayName
+                                                        <br><small class="text-muted">(@column.TotalCount total)</small>
+                                                    </th>
+                                                }
+                                                <th rowspan="2" class="text-center totals-column">Total</th>
+                                                <th rowspan="2" class="entrustment-column">Progress Level</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var epa in Model.EPAMatrixData)
+                                            {
+                                                <!-- EPA Info Row -->
+                                                <tr class="@(epa.Total == 0 ? "table-warning" : "")">
+                                                    <td class="epa-info sticky-column">
+                                                        <div class="epa-info">
+                                                            <strong>@epa.Code</strong><br>
+                                                            <small>@epa.Title</small>
+                                                        </div>
+                                                    </td>
+                                                    
+                                                    @for (int i = 0; i < epa.Activities.Length; i++)
+                                                    {
+                                                        <td class="text-center activity-cell">
+                                                            @if (epa.Activities[i] > 0)
+                                                            {
+                                                                <span class="badge bg-primary">@epa.Activities[i]</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="text-muted">-</span>
+                                                            }
+                                                        </td>
+                                                    }
+                                                    
+                                                    <td class="text-center totals-cell">
+                                                        <strong>@epa.Total</strong>
+                                                    </td>
+                                                    
+                                                    <!-- Progress Level (Read-only) -->
+                                                    <td class="text-center">
+                                                        @{
+                                                            AdHocESReportEPAAssessment assessment = null;
+                                                            foreach (var a in Model.Report.EPAAssessments)
+                                                            {
+                                                                if (a.EPAId == epa.Id)
+                                                                {
+                                                                    assessment = a;
+                                                                    break;
+                                                                }
+                                                            }
+                                                        }
+                                                        @if (!string.IsNullOrEmpty(assessment?.ProgressLevel))
+                                                        {
+                                                            <span class="badge bg-primary">@assessment.ProgressLevel</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">Not assessed</span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                                
+                                                <!-- Comments Row (Read-only) -->
+                                                @if (!string.IsNullOrEmpty(assessment?.Comments))
+                                                {
+                                                    <tr class="justification-row">
+                                                        <td colspan="@(Model.ActivityColumns.Count + 3)" class="p-3">
+                                                            <label class="form-label"><strong>Comments for @epa.Code:</strong></label>
+                                                            <div class="bg-light p-2 rounded">@assessment.Comments</div>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ES Assessment Fields (Read-only) -->
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                @if (!string.IsNullOrEmpty(Model.Report.ESOverallAssessment))
+                                {
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Performance to Date</strong></label>
+                                        <div class="bg-light p-3 rounded">@Model.Report.ESOverallAssessment</div>
+                                    </div>
+                                }
+                                
+                                @if (!string.IsNullOrEmpty(Model.Report.ESProgressSinceLastReview))
+                                {
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Progress made since start of training</strong></label>
+                                        <div class="bg-light p-3 rounded">@Model.Report.ESProgressSinceLastReview</div>
+                                    </div>
+                                }
+                                
+                                @if (!string.IsNullOrEmpty(Model.Report.ESStrengths))
+                                {
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Areas of notable practice</strong></label>
+                                        <div class="bg-light p-3 rounded">@Model.Report.ESStrengths</div>
+                                    </div>
+                                }
+                                
+                                @if (!string.IsNullOrEmpty(Model.Report.ESAreasForDevelopment))
+                                {
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Any performance concerns</strong></label>
+                                        <div class="bg-light p-3 rounded">@Model.Report.ESAreasForDevelopment</div>
+                                    </div>
+                                }
+                                
+                                @if (!string.IsNullOrEmpty(Model.Report.ESRecommendations))
+                                {
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Immediate priorities for development (learning needs)</strong></label>
+                                        <div class="bg-light p-3 rounded">@Model.Report.ESRecommendations</div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EYD Reflection Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-graduate me-2"></i>
+                        EYD Self-Reflection
+                        @if (!Model.CanEditEYD && Model.Report.IsEYDCompleted)
+                        {
+                            <span class="badge bg-light text-success float-end">
+                                <i class="fas fa-lock"></i> Completed & Locked
+                            </span>
+                        }
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="/EYD/SaveAdHocESSection">
+                        <input type="hidden" name="userId" value="@Model.TargetUser.Id" />
+                        <input type="hidden" name="section" value="EYD" />
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">EYD Comments/Reflection</label>
+                                    <textarea name="EYDReflectionComments" class="form-control" rows="8" @(!Model.CanEditEYD ? "readonly" : "") placeholder="Reflect on your learning, progress, and professional development during this period...">@Model.Report.EYDReflectionComments</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (Model.CanEditEYD)
+                        {
+                            <div class="d-flex gap-2 mt-4">
+                                <button type="submit" name="action" value="save" class="btn btn-success">
+                                    <i class="fas fa-save me-2"></i>Save Reflection
+                                </button>
+                                <button type="submit" name="action" value="complete" class="btn btn-primary">
+                                    <i class="fas fa-check-circle me-2"></i>Complete & Submit
+                                </button>
+                            </div>
+                        }
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unlock Controls for Admin/TPD -->
+    @if (Model.CanUnlock && (Model.Report.IsESCompleted || Model.Report.IsEYDCompleted))
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                            <i class="fas fa-unlock me-2"></i>
+                            Administrative Controls
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="/EYD/UnlockAdHocESSection">
+                            <input type="hidden" name="userId" value="@Model.TargetUser.Id" />
+                            <div class="d-flex gap-2">
+                                @if (Model.Report.IsESCompleted)
+                                {
+                                    <button type="submit" name="section" value="ES" class="btn btn-outline-warning btn-sm">
+                                        <i class="fas fa-unlock me-1"></i>Unlock ES Section
+                                    </button>
+                                }
+                                @if (Model.Report.IsEYDCompleted)
+                                {
+                                    <button type="submit" name="section" value="EYD" class="btn btn-outline-warning btn-sm">
+                                        <i class="fas fa-unlock me-1"></i>Unlock EYD Section
+                                    </button>
+                                }
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Navigation -->
+    <div class="row">
+        <div class="col-12">
+            <a href="/EYD/Portfolio/@Model.TargetUser.Id" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Portfolio
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card-header h5 {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    
+    .table-responsive {
+        border-radius: 0.375rem;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+    }
+    
+    .form-control:read-only,
+    .form-select:disabled {
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+    }
+    
+    .text-primary {
+        color: #0d6efd !important;
+    }
+    
+    .bg-info {
+        background-color: #0dcaf0 !important;
+    }
+    
+    .border-primary {
+        border-color: #0d6efd !important;
+    }
+    
+    .border-success {
+        border-color: #198754 !important;
+    }
+    
+    .border-warning {
+        border-color: #ffc107 !important;
+    }
+</style>

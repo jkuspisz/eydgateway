@@ -131,6 +131,9 @@ namespace EYDGateway.Controllers
             
             // Get MSF status for this user
             var msfStatus = await GetMSFStatusAsync(portfolioUser.Id);
+            
+            // Get Ad Hoc ES Report status for this user
+            var adHocESReportStatuses = await GetAdHocESReportStatusesAsync(portfolioUser.Id);
 
             var viewModel = new EYDPortfolioViewModel
             {
@@ -148,7 +151,10 @@ namespace EYDGateway.Controllers
                 // PSQ Status
                 PSQStatus = psqStatus,
                 // MSF Status
-                MSFStatus = msfStatus
+                MSFStatus = msfStatus,
+                // Ad Hoc ES Report Status
+                AdHocESReportESStatus = adHocESReportStatuses.ESStatus,
+                AdHocESReportEYDStatus = adHocESReportStatuses.EYDStatus
             };
 
             Console.WriteLine($"DEBUG Portfolio: Created ViewModel for {viewModel.UserName} (UserID: {viewModel.UserId})");
@@ -738,7 +744,155 @@ namespace EYDGateway.Controllers
                 return View("PlaceholderPage", new { Title = "Multi Source Feedback Questionnaire - Error Loading Data" });
             }
         }
-        public IActionResult AdHocESReport(string? id = null) => View("PlaceholderPage", new { Title = "Ad hoc ES Report" });
+        
+        public async Task<IActionResult> AdHocESReport(string? id = null)
+        {
+            var currentUser = await _context.Users
+                .Include(u => u.Scheme)
+                .ThenInclude(s => s!.Area)
+                .FirstOrDefaultAsync(u => u.UserName == User.Identity!.Name);
+
+            if (currentUser == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Allow EYD, ES, TPD, Dean, and Admin users to access Ad Hoc ES Reports
+            if (currentUser.Role != "EYD" && currentUser.Role != "ES" && currentUser.Role != "TPD" && 
+                currentUser.Role != "Dean" && currentUser.Role != "Admin")
+            {
+                return Unauthorized();
+            }
+
+            // Determine target user ID
+            string targetUserId;
+            if (string.IsNullOrEmpty(id))
+            {
+                targetUserId = currentUser.Id;
+            }
+            else
+            {
+                targetUserId = id;
+                
+                // Security check for different user roles
+                if (currentUser.Role == "EYD" && targetUserId != currentUser.Id)
+                {
+                    return Forbid("You can only view your own Ad Hoc ES Report data.");
+                }
+                else if (currentUser.Role == "ES")
+                {
+                    // Check if the ES user supervises this EYD
+                    var isAssigned = await _context.EYDESAssignments
+                        .AnyAsync(assignment => assignment.ESUserId == currentUser.Id && 
+                                 assignment.EYDUserId == targetUserId && 
+                                 assignment.IsActive);
+                    
+                    if (!isAssigned)
+                    {
+                        return Forbid("You can only access Ad Hoc ES Reports for EYD users assigned to you.");
+                    }
+                }
+                else if (currentUser.Role == "TPD" || currentUser.Role == "Dean")
+                {
+                    // TPD and Dean can view reports for users in their area/scheme
+                    var portfolioUser = await _context.Users.FindAsync(targetUserId);
+                    if (portfolioUser == null || 
+                        (currentUser.Role == "TPD" && portfolioUser.SchemeId != currentUser.SchemeId) ||
+                        (currentUser.Role == "Dean" && portfolioUser.AreaId != currentUser.AreaId))
+                    {
+                        return Forbid("You can only view Ad Hoc ES Report data for users in your area/scheme.");
+                    }
+                }
+                // Admin can access any report
+            }
+
+            // Get target user details
+            var targetUser = await _context.Users
+                .Include(u => u.Scheme)
+                .ThenInclude(s => s!.Area)
+                .FirstOrDefaultAsync(u => u.Id == targetUserId);
+
+            if (targetUser == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            // Get or create Ad Hoc ES Report record
+            var report = await _context.AdHocESReports
+                .Include(r => r.EPAAssessments)
+                .ThenInclude(a => a.EPA)
+                .FirstOrDefaultAsync(r => r.EYDUserId == targetUserId);
+
+            if (report == null)
+            {
+                report = new AdHocESReport
+                {
+                    EYDUserId = targetUserId,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.AdHocESReports.Add(report);
+                await _context.SaveChangesAsync();
+            }
+
+            // Get real EPA data for the target user
+            var epas = await _epaService.GetAllActiveEPAsAsync();
+            var activityColumns = ActivityTypes.GetStandardColumns();
+            
+            // Get target user's EPA mappings from database
+            var userEPAMappings = await _context.EPAMappings
+                .Include(m => m.EPA)
+                .Where(m => m.UserId == targetUserId)
+                .GroupBy(m => new { m.EPAId, m.EntityType })
+                .Select(g => new
+                {
+                    EPAId = g.Key.EPAId,
+                    EntityType = g.Key.EntityType,
+                    Count = g.Count(),
+                    LatestDate = g.Max(m => m.CreatedAt)
+                })
+                .ToListAsync();
+
+            // Create EPA matrix data for the view
+            var epaMatrixData = epas.Select(epa => new
+            {
+                Id = epa.Id,
+                Code = epa.Code,
+                Title = epa.Title,
+                Activities = activityColumns.Select(col => 
+                {
+                    var mapping = userEPAMappings
+                        .FirstOrDefault(m => m.EPAId == epa.Id && m.EntityType == col.EntityType);
+                    return mapping?.Count ?? 0;
+                }).ToArray(),
+                Total = userEPAMappings.Where(m => m.EPAId == epa.Id).Sum(m => m.Count)
+            }).ToList();
+
+            // Determine workflow status
+            var esStatus = report.IsESCompleted ? "Completed" : (report.ESCompletedAt.HasValue ? "InProgress" : "NotStarted");
+            var eydStatus = report.IsEYDCompleted ? "Completed" : (report.EYDCompletedAt.HasValue ? "InProgress" : "NotStarted");
+            
+            // Determine edit permissions
+            bool canEditES = currentUser.Role == "ES" && !report.IsESCompleted;
+            bool canEditEYD = currentUser.Role == "EYD" && targetUserId == currentUser.Id && !report.IsEYDCompleted;
+            bool canUnlock = currentUser.Role == "Admin" || currentUser.Role == "TPD";
+
+            var viewModel = new
+            {
+                CurrentUser = currentUser,
+                TargetUser = targetUser,
+                Report = report,
+                EPAs = epas,
+                EPAMatrixData = epaMatrixData,
+                ActivityColumns = activityColumns,
+                ESStatus = esStatus,
+                EYDStatus = eydStatus,
+                CanEditES = canEditES,
+                CanEditEYD = canEditEYD,
+                CanUnlock = canUnlock
+            };
+
+            return View("AdHocESReport", viewModel);
+        }
         public async Task<IActionResult> InterimReview(string? id = null)
         {
             var currentUser = await _context.Users
@@ -1390,6 +1544,96 @@ namespace EYDGateway.Controllers
             }
         }
         
+        private async Task<string> GetAdHocESReportStatusAsync(string userId)
+        {
+            try
+            {
+                // Get the Ad Hoc ES Report for this user
+                var adHocReport = await _context.AdHocESReports
+                    .FirstOrDefaultAsync(r => r.EYDUserId == userId);
+
+                if (adHocReport == null)
+                {
+                    return "NotStarted"; // Red - No report exists
+                }
+
+                // Check if the report is completed
+                if (adHocReport.IsESCompleted && adHocReport.IsEYDCompleted)
+                {
+                    return "Completed"; // Green - Both ES and EYD sections completed
+                }
+                else if (!string.IsNullOrEmpty(adHocReport.ESOverallAssessment) || 
+                         !string.IsNullOrEmpty(adHocReport.EYDReflectionComments))
+                {
+                    return "InProgress"; // Amber - Some data saved but not completed
+                }
+                else
+                {
+                    return "NotStarted"; // Red - Report exists but no content
+                }
+            }
+            catch (Exception)
+            {
+                // On error, default to NotStarted
+                return "NotStarted";
+            }
+        }
+        
+        private async Task<(string ESStatus, string EYDStatus)> GetAdHocESReportStatusesAsync(string userId)
+        {
+            try
+            {
+                // Get the Ad Hoc ES Report for this user
+                var adHocReport = await _context.AdHocESReports
+                    .FirstOrDefaultAsync(r => r.EYDUserId == userId);
+
+                if (adHocReport == null)
+                {
+                    return ("NotStarted", "NotStarted"); // Red - No report exists
+                }
+
+                // Check ES Section Status
+                string esStatus;
+                if (adHocReport.IsESCompleted)
+                {
+                    esStatus = "Completed"; // Green - ES section completed
+                }
+                else if (!string.IsNullOrEmpty(adHocReport.ESOverallAssessment) || 
+                         !string.IsNullOrEmpty(adHocReport.ESStrengths) ||
+                         !string.IsNullOrEmpty(adHocReport.ESAreasForDevelopment))
+                {
+                    esStatus = "InProgress"; // Amber - Some ES data saved
+                }
+                else
+                {
+                    esStatus = "NotStarted"; // Red - No ES content
+                }
+
+                // Check EYD Section Status
+                string eydStatus;
+                if (adHocReport.IsEYDCompleted)
+                {
+                    eydStatus = "Completed"; // Green - EYD section completed
+                }
+                else if (!string.IsNullOrEmpty(adHocReport.EYDReflectionComments) ||
+                         !string.IsNullOrEmpty(adHocReport.EYDLearningGoals))
+                {
+                    eydStatus = "InProgress"; // Amber - Some EYD data saved
+                }
+                else
+                {
+                    eydStatus = "NotStarted"; // Red - No EYD content
+                }
+
+                return (esStatus, eydStatus);
+            }
+            catch (Exception)
+            {
+                // On error, default to NotStarted
+                return ("NotStarted", "NotStarted");
+            }
+        }
+        
         private string GetSLETypeName(string sleType)
         {
             return sleType switch
@@ -1654,6 +1898,139 @@ namespace EYDGateway.Controllers
                 _ => new List<int>()
             };
         }
+        
+        [HttpPost]
+        public async Task<IActionResult> SaveAdHocESSection(string section, string userId, string action)
+        {
+            try
+            {
+                // Get or create Ad Hoc ES Report
+                var report = await _context.AdHocESReports
+                    .Include(r => r.EPAAssessments)
+                    .FirstOrDefaultAsync(r => r.EYDUserId == userId);
+
+                if (report == null)
+                {
+                    report = new AdHocESReport
+                    {
+                        EYDUserId = userId,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.AdHocESReports.Add(report);
+                    await _context.SaveChangesAsync();
+                }
+
+                if (section == "ES")
+                {
+                    // Update ES section fields (mapped to our 5 required fields)
+                    report.ESOverallAssessment = Request.Form["ESOverallAssessment"]; // Performance to Date
+                    report.ESProgressSinceLastReview = Request.Form["ESProgressSinceLastReview"]; // Progress made since start of training
+                    report.ESStrengths = Request.Form["ESStrengths"]; // Areas of notable practice
+                    report.ESAreasForDevelopment = Request.Form["ESAreasForDevelopment"]; // Any performance concerns
+                    report.ESRecommendations = Request.Form["ESRecommendations"]; // Immediate priorities for development
+                    
+                    // Handle confirmation checkbox
+                    var confirmationValue = Request.Form["ESConfirmation"].ToString();
+                    // Note: Checkbox confirmation is captured but stored in existing fields above
+
+                    // Handle EPA assessments
+                    var epas = await _epaService.GetAllActiveEPAsAsync();
+                    foreach (var epa in epas)
+                    {
+                        var progressLevel = Request.Form[$"EPA_{epa.Id}_ProgressLevel"].ToString();
+                        var comments = Request.Form[$"EPA_{epa.Id}_Comments"].ToString();
+
+                        if (!string.IsNullOrEmpty(progressLevel) || !string.IsNullOrEmpty(comments))
+                        {
+                            var assessment = report.EPAAssessments.FirstOrDefault(a => a.EPAId == epa.Id);
+                            if (assessment == null)
+                            {
+                                assessment = new AdHocESReportEPAAssessment
+                                {
+                                    AdHocESReportId = report.Id,
+                                    EPAId = epa.Id,
+                                    CreatedAt = DateTime.UtcNow
+                                };
+                                report.EPAAssessments.Add(assessment);
+                            }
+                            assessment.ProgressLevel = progressLevel;
+                            assessment.Comments = comments;
+                            assessment.UpdatedAt = DateTime.UtcNow;
+                        }
+                    }
+
+                    if (action == "complete")
+                    {
+                        report.IsESCompleted = true;
+                        report.ESCompletedAt = DateTime.UtcNow;
+                        TempData["SuccessMessage"] = "ES assessment completed and locked successfully.";
+                    }
+                    else
+                    {
+                        TempData["SuccessMessage"] = "ES assessment saved successfully.";
+                    }
+                }
+                else if (section == "EYD")
+                {
+                    // Update EYD section fields
+                    report.EYDReflectionComments = Request.Form["EYDReflectionComments"];
+
+                    if (action == "complete")
+                    {
+                        report.IsEYDCompleted = true;
+                        report.EYDCompletedAt = DateTime.UtcNow;
+                        TempData["SuccessMessage"] = "EYD reflection completed and submitted successfully.";
+                    }
+                    else
+                    {
+                        TempData["SuccessMessage"] = "EYD reflection saved successfully.";
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                return RedirectToAction("AdHocESReport", new { id = userId });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error saving data: {ex.Message}";
+                return RedirectToAction("AdHocESReport", new { id = userId });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UnlockAdHocESSection(string section, string userId)
+        {
+            try
+            {
+                var report = await _context.AdHocESReports
+                    .FirstOrDefaultAsync(r => r.EYDUserId == userId);
+
+                if (report != null)
+                {
+                    if (section == "ES")
+                    {
+                        report.IsESCompleted = false;
+                        report.ESCompletedAt = null;
+                        TempData["SuccessMessage"] = "ES section unlocked successfully.";
+                    }
+                    else if (section == "EYD")
+                    {
+                        report.IsEYDCompleted = false;
+                        report.EYDCompletedAt = null;
+                        TempData["SuccessMessage"] = "EYD section unlocked successfully.";
+                    }
+
+                    await _context.SaveChangesAsync();
+                }
+
+                return RedirectToAction("AdHocESReport", new { id = userId });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error unlocking section: {ex.Message}";
+                return RedirectToAction("AdHocESReport", new { id = userId });
+            }
+        }
     }
 
     public class EYDPortfolioViewModel
@@ -1675,6 +2052,10 @@ namespace EYDGateway.Controllers
         
         // MSF Traffic Light Status
         public string MSFStatus { get; set; } = "NotStarted"; // NotStarted (red, 0 responses), InProgress (amber, 1-7 responses), Completed (green, 8+ responses)
+        
+        // Ad Hoc ES Report Traffic Light Status
+        public string AdHocESReportESStatus { get; set; } = "NotStarted"; // NotStarted (red, not started), InProgress (yellow, draft saved), Completed (green, completed)
+        public string AdHocESReportEYDStatus { get; set; } = "NotStarted"; // NotStarted (red, not started), InProgress (yellow, draft saved), Completed (green, completed)
     }
     
     public class SLECompletionStat

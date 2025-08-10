@@ -48,6 +48,10 @@ namespace EYDGateway.Data
         public DbSet<IRCPESSection> IRCPESSections { get; set; }
         public DbSet<IRCPEYDReflection> IRCPEYDReflections { get; set; }
         public DbSet<IRCPPanelReview> IRCPPanelReviews { get; set; }
+        
+        // Ad Hoc ES Report System
+        public DbSet<AdHocESReport> AdHocESReports { get; set; }
+        public DbSet<AdHocESReportEPAAssessment> AdHocESReportEPAAssessments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
