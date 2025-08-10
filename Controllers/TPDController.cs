@@ -472,6 +472,9 @@ namespace EYDGateway.Controllers
             bool eydLocked = TempData[$"FRCP_{userId}_EYD_Locked"]?.ToString() == "true";
             bool panelLocked = TempData[$"FRCP_{userId}_Panel_Locked"]?.ToString() == "true";
 
+            // Load DB record to use as fallback when TempData isn't present
+            var frcpReview = _context.FRCPReviews.FirstOrDefault(r => r.EYDUserId == userId);
+
             // Check ES status
             if (esLocked)
             {
@@ -493,6 +496,10 @@ namespace EYDGateway.Controllers
                     }
                 }
             }
+            else if (frcpReview != null)
+            {
+                esStatus = frcpReview.ESStatus.ToString();
+            }
 
             // Check EYD status
             if (eydLocked)
@@ -511,6 +518,10 @@ namespace EYDGateway.Controllers
                     }
                 }
             }
+            else if (frcpReview != null)
+            {
+                eydStatus = frcpReview.EYDStatus.ToString();
+            }
 
             // Check Panel status
             if (panelLocked)
@@ -528,6 +539,10 @@ namespace EYDGateway.Controllers
                         panelStatus = "InProgress";
                     }
                 }
+            }
+            else if (frcpReview != null)
+            {
+                panelStatus = frcpReview.PanelStatus.ToString();
             }
 
             // Keep TempData for future requests
